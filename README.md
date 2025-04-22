@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/ranger-4297/yagpdb-ccs">
+  <a href="https://github.com/RhykerWells/yagpdb-ccs">
     <picture>
       <img src="https://yagpdb.xyz/static/img/logo_y.png" height="128">
     </picture>
@@ -8,17 +8,17 @@
 </p>
 
 <div align="center">
-<img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/Ranger-4297/YAGPDB-CCs">
-<img alt="GitHub" src="https://img.shields.io/github/license/Ranger-4297/YAGPDB-CCs">
-<img alt="GitHub issues" src="https://img.shields.io/github/issues/Ranger-4297/YAGPDB-CCs">
-<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/Ranger-4297/YAGPDB-CCs">
-<img alt="GitHub commits since latest release (by SemVer including pre-releases)" src="https://img.shields.io/github/commits-since/Ranger-4297/YAGPDB-CCs/V8.9">
+<img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/RhykerWells/YAGPDB-CCs">
+<img alt="GitHub" src="https://img.shields.io/github/license/RhykerWells/YAGPDB-CCs">
+<img alt="GitHub issues" src="https://img.shields.io/github/issues/RhykerWells/YAGPDB-CCs">
+<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/RhykerWells/YAGPDB-CCs">
+<img alt="GitHub commits since latest release (by SemVer including pre-releases)" src="https://img.shields.io/github/commits-since/RhykerWells/YAGPDB-CCs/V8.9">
 </div>
 
 <hr />
 <div>
   <p align="center">
-    <a href="https://github.com/Ranger-4297/YAGPDB-ccs/wiki"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/RhykerWells/YAGPDB-ccs/wiki"><strong>Explore the docs »</strong></a>
     <br />
     <a href="#welcome-message">Welcome message</a>
     ·
@@ -47,7 +47,7 @@ https://discord.gg/bbvzRgQvB7
 
 <p>This repository is licensed under the terms of the following license: The GNU, General Public License Version 3</p>
 
-<a href="https://github.com/Ranger-4297/YAGPDB-ccs/blob/main/LICENSE">Full License</a><br>
+<a href="https://github.com/RhykerWells/YAGPDB-ccs/blob/main/LICENSE">Full License</a><br>
 
 <p>The license essentially revolves down to these conditions:
 <ul>

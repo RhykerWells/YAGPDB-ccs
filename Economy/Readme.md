@@ -13,7 +13,7 @@ Optional plugins<br />
 More!
 
 ## Setup & Documentation
-If you're new to the system or are looking for documenation, please make your way to [the wiki](https://github.com/Ranger-4297/YAGPDB-ccs/wiki)
+If you're new to the system or are looking for documenation, please make your way to [the wiki](https://github.com/RhykerWells/YAGPDB-ccs/wiki)
 
 ## Other Info
 For the most part; this system is completely modular.<br />

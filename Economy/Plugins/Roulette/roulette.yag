@@ -6,7 +6,7 @@
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
-	Repository: https://github.com/Ranger-4297/YAGPDB-ccs
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs
 */}}
 
 
@@ -120,7 +120,7 @@
 {{end}}
 {{if eq $space "info"}}
 	{{$embed.Set "description" (print "**Payout:**\n[x35] Single number\n[x3] Dozens (1-12, 13-24, 25-36)\n[x3] Columns (1st, 2nd, 3rd)\n[x2] Halves (1-18, 19-36)\n[x2] Odd/Even\n[2x] Colours (red, black)")}}
-	{{$embed.Set "image" (sdict "url" "https://raw.githubusercontent.com/Ranger-4297/YAGPDB-ccs/main/Economy/Plugins/Roulette/roulette-board.png")}}
+	{{$embed.Set "image" (sdict "url" "https://raw.githubusercontent.com/RhykerWells/YAGPDB-ccs/main/Economy/Plugins/Roulette/roulette-board.png")}}
 	{{$embed.Set "color" $successColor}}
 	{{sendMessage nil (cembed $embed)}}
 	{{return}}
