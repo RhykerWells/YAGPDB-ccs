@@ -32,6 +32,11 @@
   </p>
 </div>
 
+> # :warning: **Deprecation notice**
+As of 22/04/2025 (22nd of April, 2025), this repository and the commands found within have been deprecated in favour of the bot I am writing, [ASBWIG](https://github.com/RhykerWells/asbwig). These commands should be stable as of writing this, with little to no errors.  
+
+This repository will stay open in case there are any major bugs.
+
 ## Welcome message
 Welcome to my YAGPDB CC repository! <br />
 This repository hosts the largest made economy system for the YAGPDB.xyz custom command system.<br />
