@@ -31,12 +31,7 @@ Note: Command is `create-item`/`new-item`. Use your severs default prefix
 {{$store := or (dbGet 0 "store").Value cslice}}
 {{$itemData := sdict "name" "" "desc" "" "price" 0 "quantity" 0 "role" 0 "replyMsg" "" "expiry" 0}}
 {{$perms := split (index (split (exec "viewperms") "\n") 2) ", "}}
-{{if .ExecData}}
-	{{sendMessage nil "Create-item was cancelled"}}
-	{{dbDel .User.ID "waitResponse"}}
-	{{dbDel 0 "createItem"}}
-	{{return}}
-{{end}}
+{{if .ExecData}}{{sendMessage nil "Create-item was cancelled"}}{{dbDel .User.ID "waitResponse"}}{{dbDel 0 "createItem"}}{{return}}{{end}}
 {{$symbol := ""}}
 {{if not $databaseValue}}
 	{{if reFind (print `\A(?i)` $trigger `(\s+|\z)`) .Message.Content}}
@@ -153,7 +148,7 @@ Note: Command is `create-item`/`new-item`. Use your severs default prefix
 			{{$qty = 0}}
 		{{end}}
 		{{$item := $createItem.item}}
-		{{$item.data.Set "quantity" $qty}}
+		{{$item.data.Set "quantity" (toInt $qty)}}
 		{{dbSet 0 "createItem" $createItem}}
 		{{if not $qty}}
 			{{$qty = "Infinite"}}
@@ -178,13 +173,17 @@ Note: Command is `create-item`/`new-item`. Use your severs default prefix
 		{{else}}
 			{{$role = getRole $role}}
 		{{end}}
+		{{$dataRole := 0}}
+		{{if $role}}
+			{{$dataRole = $role.ID}}
+		{{end}}
 		{{$item := $createItem.item}}
-		{{$item.data.Set "role" $role.ID}}
+		{{$item.data.Set "role" $dataRole}}
 		{{dbSet 0 "createItem" $createItem}}
 		{{if $role}}
 			{{$role = $role.Mention}}
 		{{else}}
-			{{$role = "none"}}
+			{{$role = "None"}}
 		{{end}}
 		{{$message := structToSdict (index (getMessage nil $createItem.embed).Embeds 0)}}
 		{{$fields := sdict "name" "Role-given" "value" (str $role) "inline" true}}
