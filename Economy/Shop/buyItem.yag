@@ -203,6 +203,7 @@
 {{end}}
 {{dbSet 0 "store" $newStore}}
 {{dbSet .User.ID "userEconData" $userData}}
+{{dbSet .User.ID "cash" (sub $bal $price)}}
 {{$embed.Set "description" (print "You've bought  " (humanizeThousands $buyQuantity) " of " $name " for " $symbol (humanizeThousands $price) "!")}}
 {{$embed.Set "color" $successColor}}
 {{sendMessage nil (cembed $embed)}}
