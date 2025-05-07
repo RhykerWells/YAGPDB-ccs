@@ -155,18 +155,20 @@
 	{{sendMessage nil (cembed $embed)}}
 	{{return}}
 {{end}}
+{{$inf := false}}
+{{if not $storeQuantity}}
+	{{$inf = true}}
+{{end}}
 {{$newStore := cslice}}
-{{if $storeQuantity}}
-	{{$storeQuantity = (sub $storeQuantity $buyQuantity)}}
-	{{range $k, $v := $store}}
-		{{if eq $item.name $v.name}}
-			{{$v.Set "quantity" $storeQuantity}}
-		{{end}}
-		{{if and (eq $item.name $v.name) (not $storeQuantity)}}
+{{range $k, $v := $store}}
+	{{if and (eq $item.name $v.name) (not $inf)}}
+		{{$storeQuantity = sub $storeQuantity $buyQuantity}}
+		{{$v.Set "quantity" $storeQuantity}}
+		{{if not $storeQuantity}}
 			{{continue}}
 		{{end}}
-		{{$newStore = $newStore.Append $v}}
 	{{end}}
+	{{$newStore = $newStore.Append $v}}
 {{end}}
 {{$inventoryItem := sdict}}
 {{$userQuantity = (add $userQuantity $buyQuantity)}}
