@@ -1,0 +1,129 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Modal Submission`
+	Trigger: `\A(?i)iota_forms`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{/* Scout report submission */}}
+{{if eq .StrippedID "ScoutReport"}}
+    {{$reportID := dbIncr 0 "reports" 1}}
+    {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" "Your report has been submitted!" "ephemeral" true)}}
+    {{deleteInteractionResponse .Interaction.Token $x}}
+    {{$fields := cslice
+        (sdict "name" "__Deployment reason__" "value" (print (index .Values 0)) "inline" true)
+        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+        (sdict "name" "__Notable findings__" "value" (print (index .Values 1)) "inline" true)
+        (sdict "name" "__Threat indicator__" "value" (print (index .Values 2)) "inline" true)
+        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+        (sdict "name" "__Other information__" "value" (print (or (index .Values 3) "None.")) "inline" true)}}
+    {{$embed := sdict "title" (printf "Report #%s" (humanizeThousands $reportID)) "description" (printf "Submitted by %s `(ID %d)`\nTime: <t:%d:f>" .User.Mention .User.ID currentTime.Unix) "fields" $fields "color" 0x4b9a4e}}
+    {{sendMessage 1383563860211929139 (complexMessage "embed" (cembed $embed))}}
+{{end}}
+
+{{/* Training log submission */}}
+{{if eq .StrippedID "TrainingLog"}}
+    {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
+    {{deleteInteractionResponse .Interaction.Token $x}}
+    {{$logID := dbIncr 0 "Tlog" 1}}
+    {{$timeOfLog := (printf "<t:%d:f>" currentTime.Unix)}}
+    {{$trainingHost := index .Values 0}}
+    {{$trainingType := ""}}{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "observer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}{{range $k, $role := .Member.Roles}}{{- range $_, $roleID := $rankRoles -}}{{if ne $role $roleID}}{{continue}}{{end}}{{$trainingType = getRole $roleID}}{{break}}{{end}}{{end}}
+    {{$trainingSummary := index .Values 1}}
+    {{$trainingResult := index .Values 2}}
+    {{$trainingProof := "https://cdn.discordapp.com/attachments/1376241183952736267/1383667642321338479/IE8a0qnsiC.png"}}{{if reFind `(http(s)?)://.+\.(gif|png|jpeg|jpg|webp)` (index .Values 3)}}{{$trainingProof = (index .Values 3)}}{{end}}
+    {{$fields := cslice 
+        (sdict "name" "__Training host__" "value" (print $trainingHost) "inline" true)
+        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+        (sdict "name" "__Training summary__" "value" (print $trainingSummary) "inline" true)
+        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+        (sdict "name" "__Result__" "value" (print $trainingResult) "inline" true)}}
+    {{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nTraining type: %s" $timeOfLog $trainingType.Mention) "fields" $fields "image" (sdict "url" $trainingProof) "color" 0x4b9a4e}}
+    {{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
+    {{$post := false}}
+    {{range .Guild.Threads}}
+        {{if ne .ParentID 1383638051984773241}}
+            {{continue}}
+        {{end}}
+        {{if eq .Name $robloxName}}
+            {{$post = .ID}}
+            {{break}}
+        {{end}}
+    {{end}}
+    {{if not $post}}
+        {{$post = (createForumPost 1383638051984773241 $robloxName (printf "%s's training log" .User.Mention)).ID}}
+    {{end}}
+    {{$x := sendMessageRetID $post (complexMessage "embed" (cembed $embed))}}
+    {{$trainingLog := sdict
+        "ID" $logID
+        "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID $post $x)
+        "User" .User
+        "Roblox" $robloxName
+        "Time" $timeOfLog
+        "Host" $trainingHost
+        "Type" $trainingType.ID
+        "Summary" $trainingSummary
+        "Result" $trainingResult
+        "Proof" $trainingProof
+    }}
+    {{$logs := (dbGet 0 "trainingLogs").Value.Append $trainingLog}}
+    {{dbSet 0 "trainingLogs" $logs}}
+{{end}}
+
+{{/* Deployment log submission */}}
+{{if eq .StrippedID "DeploymentLog"}}
+    {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
+    {{deleteInteractionResponse .Interaction.Token $x}}
+    {{$logID := dbIncr 0 "Dlog" 1}}
+    {{$timeOfLog := (printf "<t:%d:f>" currentTime.Unix)}}
+    {{$deploymentHost := index .Values 0}}
+    {{$deploymentType := index .Values 1}}
+    {{$deploymentSummary := index .Values 2}}
+    {{$deploymentSightings := or (index .Values 3) "`None`"}}
+    {{$deployedAs := ""}}{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "observer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}{{range $k, $role := .Member.Roles}}{{- range $_, $roleID := $rankRoles -}}{{if ne $role $roleID}}{{continue}}{{end}}{{$deployedAs = getRole $roleID}}{{break}}{{end}}{{end}}
+    {{$deploymentProof := "https://cdn.discordapp.com/attachments/1376241183952736267/1383667642321338479/IE8a0qnsiC.png"}}{{if reFind `(http(s)?)://.+\.(gif|png|jpeg|jpg|webp)` (index .Values 4)}}{{$deploymentProof = (index .Values 4)}}{{end}}
+    {{$fields := cslice 
+        (sdict "name" "__Deployment host__" "value" (print $deploymentHost) "inline" true)
+        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+        (sdict "name" "__Deployment type__" "value" (print $deploymentType) "inline" true)
+        (sdict "name" "__Deployment summary__" "value" (print $deploymentSummary) "inline" true)
+        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+        (sdict "name" "__Sightings__" "value" (print $deploymentSightings) "inline" true)}}
+    {{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nDeployed as: %s" $timeOfLog $deployedAs.Mention) "fields" $fields "image" (sdict "url" $deploymentProof) "color" 0x4b9a4e}}
+    {{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
+    {{$post := false}}
+    {{range .Guild.Threads}}
+        {{if ne .ParentID 1383919182889881790}}
+            {{continue}}
+        {{end}}
+        {{if eq .Name $robloxName}}
+            {{$post = .ID}}
+            {{break}}
+        {{end}}
+    {{end}}
+    {{if not $post}}
+        {{$post = (createForumPost 1383919182889881790 $robloxName (printf "%s's Deployment log" .User.Mention)).ID}}
+    {{end}}
+    {{$x := sendMessageRetID $post (complexMessage "embed" (cembed $embed))}}
+    {{$deploymentLog := sdict
+        "ID" $logID
+        "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID $post $x)
+        "User" .User
+        "Roblox" $robloxName
+        "Time" $timeOfLog
+        "Host" $deploymentHost
+        "Type" $deploymentType
+        "Rank" $deployedAs.ID
+        "Summary" $deploymentSummary
+        "Sightings" $deploymentSightings
+        "Proof" $deploymentProof
+    }}
+    {{$logs := (dbGet 0 "deploymentLogs").Value.Append $deploymentLog}}
+    {{dbSet 0 "deploymentLogs" $logs}}
+{{end}}

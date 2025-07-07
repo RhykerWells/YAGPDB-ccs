@@ -1,0 +1,106 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `getMorph`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{$targetMember := .Member}}
+
+{{if .CmdArgs}}
+    {{$target := index .CmdArgs 0}}
+    {{if not (getMember $target)}}
+        {{sendMessage nil (print "Invalid `User` argument provided.\n\n```getMorph [User:Mention/ID]```\nDefault to your own morph.")}}
+        {{return}}
+    {{end}}
+    {{$targetMember = getMember $target}}
+{{end}}
+{{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
+
+{{$rankProfiles := sdict
+    "Riftling" (sdict
+        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Riftling"
+        "loadout" "aug,m9"
+    )
+    "Rift Scout" (sdict
+        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Rift Scout"
+        "loadout" "aug,m9,tracker"
+    )
+    "Veil Operative" (sdict
+        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Veil Operative"
+        "loadout" "fn,m9,shield"
+    )
+    "Veil Seeker" (sdict
+        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Seeker"
+        "loadout" "aug,m9,tablet"
+    )
+    "Veil Lance" (sdict
+        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Lance"
+        "loadout" "arx,m9"
+    )
+    "Echo Relay" (sdict
+        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Echo Relay"
+        "loadout" "arx,m9"
+    )
+    "Veil Threader" (sdict
+        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Veil Threader"
+        "loadout" "fn,m9,spas"
+    )
+    "Drift Controller" (sdict
+        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Controller"
+        "loadout" "fn,m9,spas"
+    )
+    "Drift Overseer" (sdict
+        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Overseer"
+        "loadout" "fn,m9,spas"
+    )
+    "Echo Marshal" (sdict
+        "rtag" "[VC] Iota-4 | \"Veilrunners\" | Echo Marshal"
+        "loadout" "hellion,m9,spas"
+    )
+    "Warden of the Veil" (sdict
+        "rtag" "[VC] Iota-4 | \"Veilrunners\" | Warden of the Veil"
+        "loadout" "hellion,m9,spas"
+    )
+}}
+
+{{$selectRankProfile := sdict}}
+{{range .Member.Roles}}
+    {{$role := getRole .}}
+    {{range $k, $v := $rankProfiles}}
+        {{if eq $role.Name $k}}
+            {{- $selectRankProfile = $v -}}
+        {{end}}
+    {{end}}
+{{end}}
+
+{{$morph := sdict
+    "permmorph" "vest"
+    "permshirt" "9326560199"
+    "permpants" "4607034531"
+    "permhats" "0,qnvg 97 37 209,13770147630,13517980810,12201396170,16269019420,12201396170,8087415055,109131663471317,18970779951,18970871297,12383357842,holster"
+    "permrtag" $selectRankProfile.rtag
+    "permcrtag" "61 21 133"
+    "permcolornvg" "97 37 209"
+    "startergear" $selectRankProfile.loadout
+}}
+
+{{$morphParts := cslice}}
+{{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhats" "permrtag" "permcrtag" "permcolornvg" "startergear"}}
+{{range $_, $key := $orderedKeys}}
+    {{$morphParts = $morphParts.Append (print $key " " ($morph.Get $key))}}
+{{end}}
+{{$fullMorphPretty := (joinStr "\n" $morphParts)}}
+{{$fullMorphViaRun := (print "run " (joinStr " & " $morphParts))}}
+{{$fullMorph416 := printf "run team %[1]s iota & morph %[1]s i4 & startergear %[1]s %[2]s & ref %[1]s" $rblxName $morph.startergear}}
+
+{{sendMessage nil (printf "%s's morph\n**Pretty**\n```%s```\n**Run**\n`%s`\n**416**\n%s" $targetMember.Mention $fullMorphPretty $fullMorphViaRun $fullMorph416)}}

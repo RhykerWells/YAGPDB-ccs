@@ -1,0 +1,59 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Message Component`
+	Trigger: `\A(?i)iota_applications`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{/* Send application form */}}
+{{if eq (lower .StrippedID) "Apply"}}
+    {{if ($cooldown := dbGet .User.ID "applicationCooldown")}}
+        {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "You need to wait until <t:%d:f> to send a new application" $cooldown.ExpiresAt.Unix) "ephemeral" true)}}
+        {{deleteInteractionResponse .Interaction.Token $x}}
+        {{return}}
+    {{end}}
+    {{$fields := cslice
+        (sdict "label" "Why have you decided to join Iota-4?" "required" true "max_length" 250 "style" 2)
+        (sdict "label" "Have you fully read/understood the manual and what we do?" "required" true "max_length" 50 "style" 1)
+        (sdict "label" "What makes you stand out from the others?" "required" true "max_length" 250 "style" 2)
+        (sdict "label" "Why should you be a VeilRunner?" "required" true "max_length" 250 "style" 2)
+    }}
+    {{$modal := sdict "title" "Iota-4 application form" "custom_id" "iota_applicationsSubmit" "fields" $fields}}
+    {{sendModal $modal}}
+{{end}}
+
+{{/* Applications submission */}}
+{{if reFind `Accept|Deny|Interview` .StrippedID}}
+    {{$applicationEmbed := structToSdict (index (getMessage nil .Interaction.Message.ID).Embeds 0)}}{{range $k, $v := $applicationEmbed}}{{- if eq (kindOf $v true) "struct"}}{{- $applicationEmbed.Set $k (structToSdict $v)}}{{- end -}}{{end}}
+    {{$components := cslice (cbutton "label" "Accept" "custom_id" (print "iota_acceptApplication-" .User.ID) "style" "success" "disabled" true) (cbutton "label" "Deny" "custom_id" (print "iota_denyApplication-" .User.ID) "style" "danger" "disabled" true) (cbutton "label" "Interview" "custom_id" (print "iota_interviewApplicant-" .User.ID) "style" "primary" "disabled" true)}}
+    {{$userID := reReplace `[A-z]+-` .StrippedID ""}}
+    {{$user := userArg $userID}}
+    {{$member := getMember $userID}}
+    {{$x := ""}}
+    {{if reFind `Accept` .StrippedID}}
+        {{$applicationEmbed.Set "footer" (sdict "text" (print "Status: Accepted by " .Member.Nick))}}
+		{{$applicationEmbed.Set "color" 0x00FF7B}}
+        {{giveRoleID $userID 1375381774204665917}} {{/* VeilRunners */}}
+        {{giveRoleID $userID 1375379122926260264}} {{/* Field Assets */}}
+        {{giveRoleID $userID 1375378503024902164}} {{/* Riftling */}}
+        {{takeRoleID $userID 1375381740117430302}} {{/* Visitor */}}
+        {{takeRoleID $userID 1375381637646258186}} {{/* Unverified */}}
+        {{$x = sendResponseRetID .Interaction.Token (complexMessage "content" "Done" "ephemeral" true)}}
+    {{else if reFind `Deny` .StrippedID}}
+        {{$applicationEmbed.Set "footer" (sdict "text" (print "Status: Denied by " .Member.Nick))}}
+		{{$applicationEmbed.Set "color" 0xFF0000}}
+        {{sendTargetDM $user.ID (complexMessage "content" "Hi there, thank you for applying but unfortunately your application has been denied.\nThis may be due to bad responses or grammatical errors.\nPlease find attached your application to help you figure out where you went wrong.\nFeel free to apply again in a day!" "embed" $applicationEmbed)}}
+        {{$x = sendResponseRetID .Interaction.Token (complexMessage "content" "Done" "ephemeral" true)}}
+    {{else}}
+        {{$ticket := createTicket $user.ID (print $member.Nick "-" $userID)}}
+        {{sendResponse .Interaction.Token (complexMessage "content" (printf "Channel created at <#%d>" $ticket.ChannelID) "ephemeral" true)}}
+        {{deleteInteractionResponse .Interaction.Token $x}}
+        {{return}}
+    {{end}}
+    {{editMessage nil .Interaction.Message.ID (complexMessageEdit "embed" $applicationEmbed "components" $components)}}
+    {{deleteInteractionResponse .Interaction.Token $x}}
+{{end}}

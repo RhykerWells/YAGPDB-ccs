@@ -1,0 +1,29 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Modal Submission`
+	Trigger: `\A(?i)iota_applications`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+
+{{/* Applications submission */}}
+{{if eq .StrippedID "Submit"}}
+    {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" "Your application has been submitted!" "ephemeral" true)}}
+    {{deleteInteractionResponse .Interaction.Token $x}}
+    {{$applicationID := dbIncr 0 "applications" 1}}
+    {{$embed := sdict
+        "title" (printf "Application #%s" (humanizeThousands $applicationID))
+        "description" (printf "Submitted by %s `(ID %d)`\n\n**Why did you decide to join iota-4?**\n%s\n**Have you fully read and understood the rules?**\n%s\n**What makes you stand out?**\n%s\n**Why should you be a Veilrunner**\n%s" .User.Mention .User.ID (index .Values 0) (index .Values 1) (index .Values 2) (index .Values 3))
+        "color" 0x650678
+    }}
+    {{$components := cslice
+        (cbutton "label" "Accept" "custom_id" (print "iota_applicationsAccept-" .User.ID) "style" "success")
+        (cbutton "label" "Deny" "custom_id" (print "iota_applicationsDeny-" .User.ID) "style" "danger")
+        (cbutton "label" "Interview" "custom_id" (print "iota_applicationsInterview-" .User.ID) "style" "primary")
+    }}
+    {{sendMessage 1378406963284541501 (complexMessage "embed" (cembed $embed) "components" $components)}}
+{{end}}

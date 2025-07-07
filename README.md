@@ -1,24 +1,20 @@
 <p align="center">
-  <a href="https://github.com/RhykerWells/yagpdb-ccs">
+  <a href="https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4">
     <picture>
       <img src="https://yagpdb.xyz/static/img/logo_y.png" height="128">
     </picture>
-    <h1 align="center">YAGPDB.xyz Custom Commands</h1>
+    <h1 align="center">YAGPDB.xyz Custom Commands for SCP:RP subfaction Iota-4</h1>
   </a>
 </p>
 
 <div align="center">
-<img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/RhykerWells/YAGPDB-CCs">
 <img alt="GitHub" src="https://img.shields.io/github/license/RhykerWells/YAGPDB-CCs">
-<img alt="GitHub issues" src="https://img.shields.io/github/issues/RhykerWells/YAGPDB-CCs">
-<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/RhykerWells/YAGPDB-CCs">
-<img alt="GitHub commits since latest release (by SemVer including pre-releases)" src="https://img.shields.io/github/commits-since/RhykerWells/YAGPDB-CCs/V8.9">
 </div>
 
 <hr />
 <div>
   <p align="center">
-    <a href="https://github.com/RhykerWells/YAGPDB-ccs/wiki"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4/wiki"><strong>Explore the docs »</strong></a>
     <br />
     <a href="#welcome-message">Welcome message</a>
     ·
@@ -32,27 +28,15 @@
   </p>
 </div>
 
-> # :warning: **Deprecation notice**
-As of 22/04/2025 (22nd of April, 2025), this repository and the commands found within have been deprecated in favour of the bot I am writing, [ASBWIG](https://github.com/RhykerWells/asbwig). These commands should be stable as of writing this, with little to no errors.  
-
-This repository will stay open in case there are any major bugs.
-
 ## Welcome message
-Welcome to my YAGPDB CC repository! <br />
-This repository hosts the largest made economy system for the YAGPDB.xyz custom command system.<br />
-The economy system has been worked on since mid 2021 and has taken a lot of work to get it to the current state.<br />
-As you can see, a lot of effort has gone into these, and regardless as to whether they are used or not; they are still incredibly fun to make.<br />
-I appreciate every fork and star and those who use my commands!
-
-
-If you'd like to help test with commands and be the first to know when new releases will be coming, consider joining the server below:<br />
-https://discord.gg/bbvzRgQvB7
+This branch exists as the official home for the custom commands I have created<br />
+For a selfhosted version of YAGPDB used within the Iota-4 communication server.
 
 ## License
 
 <p>This repository is licensed under the terms of the following license: The GNU, General Public License Version 3</p>
 
-<a href="https://github.com/RhykerWells/YAGPDB-ccs/blob/main/LICENSE">Full License</a><br>
+<a href="https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4/blob/main/LICENSE">Full License</a><br>
 
 <p>The license essentially revolves down to these conditions:
 <ul>

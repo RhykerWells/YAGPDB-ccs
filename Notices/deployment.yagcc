@@ -1,0 +1,53 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `deploy(ment)?`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{if not (or (reFind $trigger .Message.Content) .ExecData)}}
+	{{return}}
+{{end}}
+
+{{if not .ExecData}}
+	{{/* Original announcement */}}
+	{{if not .CmdArgs}}
+		{{sendMessage nil (printf "Missing required arguments.\n\n```%s <In:Duration>```" .Cmd)}}
+		{{return}}
+	{{end}}
+	{{$duration := index .CmdArgs 0}}
+	{{if not (toDuration $duration)}}
+		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes")}}
+		{{return}}
+	{{end}}
+	{{$embed := sdict "title" (printf "Deployment notice") "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You cannot attend if you have not PASSED a training for your role**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix) "color" 0x650678}}
+	{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" "iota_joinDeployment" "style" "success") (cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedDeployment" "style" "secondary" "disabled" true)}}
+	{{$x := sendMessageNoEscapeRetID 1391567579813908633 (complexMessage "content" (printf "<@&1389242490095407156>") "embed" (cembed $embed) "components" $components)}}
+	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "DeploymentMsg" $x)}}
+	{{dbSetExpire $x "deployment" cslice (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
+	{{sendMessage nil (printf "You've successfully started a deployment notice. View the message [here](https://discord.com/channels/1375370805575155782/1391567579813908633/%d)" $x)}}
+{{else}}
+	{{with .ExecData}}
+		{{$confirmed := (dbGet .DeploymentMsg "deployment").Value}}
+		{{$strConfirmed := cslice}}
+		{{range $confirmed}}
+			{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
+		{{end}}
+		{{$message := getMessage 1391567579813908633 .DeploymentMsg}}
+		{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" "iota_joinDeployment" "style" "success" "disabled" true) (cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $confirmed))) "custom_id" "iota_confirmedDeployment" "style" "secondary" "disabled" true)}}
+		{{if lt (len $confirmed) 3}}
+			{{$embed := sdict "title" "Deployment notice" "description" (printf "Insufficient confirmations within time frame.\n\nDeployment cancelled.") "color" 0xFF0000}}
+			{{editMessage 1391567579813908633 .DeploymentMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
+			{{sendMessageNoEscape nil (complexMessage "content" (printf "%s confirmed" (joinStr "\n" $strConfirmed)))}}
+			{{return}}
+		{{end}}
+		{{$embed := sdict "title" "Deployment notice" "description" (printf "Attending: %s" (joinStr "\n" $strConfirmed)) "color" 0x4b9a4e}}
+		{{editMessage 1391567579813908633 .DeploymentMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
+		{{sendMessageNoEscape nil (complexMessage "content" (printf "%s please ping in <#1391567579813908633>" .Host))}}
+	{{end}}
+{{end}}
