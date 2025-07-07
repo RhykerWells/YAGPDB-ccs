@@ -10,7 +10,7 @@
 */}}
 
 {{/* Send application form */}}
-{{if eq (lower .StrippedID) "Apply"}}
+{{if eq .StrippedID "Apply"}}
     {{if ($cooldown := dbGet .User.ID "applicationCooldown")}}
         {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "You need to wait until <t:%d:f> to send a new application" $cooldown.ExpiresAt.Unix) "ephemeral" true)}}
         {{deleteInteractionResponse .Interaction.Token $x}}
@@ -18,7 +18,7 @@
     {{end}}
     {{$fields := cslice
         (sdict "label" "Why have you decided to join Iota-4?" "required" true "max_length" 250 "style" 2)
-        (sdict "label" "Have you fully read/understood the manual and what we do?" "required" true "max_length" 50 "style" 1)
+        (sdict "label" "Have you fully read/understood SOP?" "required" true "max_length" 50 "style" 1)
         (sdict "label" "What makes you stand out from the others?" "required" true "max_length" 250 "style" 2)
         (sdict "label" "Why should you be a VeilRunner?" "required" true "max_length" 250 "style" 2)
     }}
