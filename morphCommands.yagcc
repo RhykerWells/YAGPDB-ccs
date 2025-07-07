@@ -103,4 +103,4 @@
 {{$fullMorphViaRun := (print "run " (joinStr " & " $morphParts))}}
 {{$fullMorph416 := printf "run team %[1]s iota & morph %[1]s i4 & startergear %[1]s %[2]s & ref %[1]s" $rblxName $morph.startergear}}
 
-{{sendMessage nil (printf "%s's morph\n**Pretty**\n```%s```\n**Run**\n`%s`\n**416**\n%s" $targetMember.Mention $fullMorphPretty $fullMorphViaRun $fullMorph416)}}
+{{sendMessage nil (printf "%s's morph\n**Pretty**\n```%s```\n**Run**\n`%s`\n\n**416**\n`%s`" $targetMember.User.Mention $fullMorphPretty $fullMorphViaRun $fullMorph416)}}
