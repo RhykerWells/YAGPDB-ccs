@@ -10,7 +10,7 @@
 */}}
 
 {{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
-{{if not (or (reFind $trigger .Message.Content) .ExecData)}}
+{{if not (reFind $trigger .Message.Content)}}
 	{{return}}
 {{end}}
 
