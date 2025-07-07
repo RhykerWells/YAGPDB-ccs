@@ -90,7 +90,7 @@
     "permmorph" "vest"
     "permshirt" "9326560199"
     "permpants" "4607034531"
-    "permhats" "0,qnvg 97 37 209, 13770147630, 13517980810, 12201396170, 16269019420, 12201396170, 8087415055, 109131663471317, 18970779951, 18970871297, 12383357842, holster"
+    "permhat" "0,qnvg 97 37 209, 13770147630, 13517980810, 12201396170, 16269019420, 12201396170, 8087415055, 109131663471317, 18970779951, 18970871297, 12383357842, holster"
     "permrtag" $selectedRankProfile.rtag
     "permcrtag" "61 21 133"
     "permcolornvg" "97 37 209"
@@ -105,7 +105,7 @@
 }}
 
 {{$morphParts := cslice}}
-{{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhats" "permrtag" "permcrtag" "permcolornvg" "startergear"}}
+{{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhat" "permrtag" "permcrtag" "permcolornvg" "startergear"}}
 {{range $_, $key := $orderedKeys}}
     {{$morphParts = $morphParts.Append (printf "%s %s %s" $key $rblxName ($morph.Get $key))}}
 {{end}}
