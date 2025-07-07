@@ -126,4 +126,105 @@
     }}
     {{$logs := (dbGet 0 "deploymentLogs").Value.Append $deploymentLog}}
     {{dbSet 0 "deploymentLogs" $logs}}
+    {{template "checkPromotion" (sdict "User" .User "DeployedAs" $deployedAs.ID "DeploymentType" $deploymentType "Logs" (dbGet 0 "deploymentLogs").Value)}}
+{{end}}
+
+{{define "checkPromotion"}}
+    {{$member := getMember .User.ID}}
+    {{$currentRank := ""}}
+    {{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+    {{range $k, $role := .Member.Roles}}
+        {{- range $_, $roleID := $rankRoles -}}
+            {{if ne $role $roleID}}
+                {{continue}}
+            {{end}}
+            {{$deployedAs = getRole $roleID}}
+            {{break}}
+        {{end}}
+    {{end}}
+    {{$logs := .Logs}}
+    {{$userLogs := cslice}}
+    {{range $logs}}
+        {{if ne .User.ID $member.User.ID}}
+            {{continue}}
+        {{end}}
+        {{$userLogs = $userLogs.Append .}}
+    {{end}}
+    {{$logs = $userLogs}}
+    {{$logsAtCurrentRank := cslice}}
+    {{$logs = $userLogs}}
+    {{$logsAtCurrentRank := cslice}}
+    {{range $logs}}
+        {{if ne .Rank $currentRank.ID}}
+            {{continue}}
+        {{end}}
+        {{$logsAtCurrentRank = $logsAtCurrentRank.Append .}}
+    {{end}}
+    {{if hasRoleID 1375378503024902164}}
+        {{/* Riftling > Scout */}}
+        {{if ge (len $logsAtCurrentRank) 1}}
+            {{template "promoteUser" (sdict "User" .User "CurrentRank" $currentRank "NewRank" 1375436671948165143)}}
+        {{end}}
+    {{else if (hasRoleID 1375436671948165143)}}
+        {{/* Scout > Operative */}}
+        {{if ge (len $logsAtCurrentRank) 3}}
+            {{template "promoteUser" (sdict "User" .User "CurrentRank" $currentRank "NewRank" 1375378464336773142)}}
+        {{end}}
+    {{else if (hasRoleID 1375378464336773142)}}
+        {{/* Operative > Seeker */}}
+        {{if ge (len $logsAtCurrentRank) 4}}
+            {{template "promoteUser" (sdict "User" .User "CurrentRank" $currentRank "NewRank" 1375378431411228755)}}
+        {{end}}
+    {{end}}
+{{end}}
+{{define "promoteUser"}}
+    {{$targetMember := getMember .User.ID}}
+    {{$verifiedRole := 1375403523788898379}}
+    {{$removeRoles := sdict "unverified" 1375381637646258186 "visitor" 1375381740117430302}}
+    {{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704}}
+    {{$echelonRoles := sdict "fa" 1375379122926260264 "eu" 1375379240165576764 "mcd" 1375379607594991667}}
+    {{$allRemoveRoles := cslice}}
+    {{range $_, $roleID := $removeRoles}}
+        {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
+    {{end}}
+    {{range $_, $roleID := $rankRoles}}
+        {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
+    {{end}}
+    {{range $_, $roleID := $echelonRoles}}
+        {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
+    {{end}}
+    {{range $roleID := $targetMember.Roles}}
+        {{if in $allRemoveRoles $roleID}}
+            {{if $rankRoles.Get $roleID}}
+                {{$previousRank = $roleID}}
+            {{end}}
+            {{takeRoleID $targetMember.User.ID $roleID}}
+        {{end}}
+    {{end}}
+    {{$rank := ""}}
+    {{range $name, $id := $rankRoles}}
+        {{if eq $id .NewRank}}
+            {{$rank = $name}}
+            {{break}}
+        {{end}}
+    {{end}}
+    {{$echelonRole := ""}}
+    {{if eq $rank "scout" "operative"}}
+        {{$echelonRole = $echelonRoles.fa}}
+    {{else}}
+        {{$echelonRole = $echelonRoles.eu}}
+    {{end}}
+    {{giveRoleID $targetMember.User.ID ($rankRoles.Get $rank)}}
+    {{giveRoleID $targetMember.User.ID $echelonRole}}
+    {{giveRoleID $targetMember.User.ID 1375381774204665917}} {{/* Veilrunners role, in case we're ranking a visitor up */}}
+    {{$logEmbed := sdict
+        "title" "Rank updated"
+        "author" (sdict
+            "name" (reReplace ` \|.*` $targetMember.Nick "")
+            "icon_url" ($targetMember.User.AvatarURL "1024")
+        )
+        "description" (printf "%s automatically promoted based on rank requirements to <@&%d> by. Previous rank was <@&%s>" $targetMember.User.Mention ($rankRoles.Get $rank) .CurrentRank)
+        "color" (getRole ($rankRoles.Get $rank)).Color
+    }}
+    {{sendMessage 1384142646536048740 (cembed $logEmbed)}}
 {{end}}
