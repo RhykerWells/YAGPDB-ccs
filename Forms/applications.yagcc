@@ -25,5 +25,7 @@
         (cbutton "label" "Deny" "custom_id" (print "iota_applicationsDeny-" .User.ID) "style" "danger")
         (cbutton "label" "Interview" "custom_id" (print "iota_applicationsInterview-" .User.ID) "style" "primary")
     }}
-    {{sendMessage 1378406963284541501 (complexMessage "embed" (cembed $embed) "components" $components)}}
+    {{$x := sendMessageRetID 1378406963284541501 (complexMessage "embed" (cembed $embed) "components" $components)}}
+    {{$thread := createThread 1378406963284541501 $x (printf "%s's application" .Member.Nick) false 1440 false}}
+    {{sendMessage $thread.ID (printf "Use this space to discuss %s's application." .Member.Nick)}}
 {{end}}
