@@ -17,46 +17,57 @@
     "Riftling" (sdict
         "rtag" "[FA] Iota-4 | \"Veilrunners\" | Riftling"
         "loadout" "aug,m9"
+        "health" "105"
     )
     "Rift Scout" (sdict
         "rtag" "[FA] Iota-4 | \"Veilrunners\" | Rift Scout"
         "loadout" "aug,m9,tracker"
-    )
+        "health" "115"
+        )
     "Veil Operative" (sdict
         "rtag" "[FA] Iota-4 | \"Veilrunners\" | Veil Operative"
-        "loadout" "fn,m9,shield"
-    )
+        "loadout" "aug,m9,shield"
+        "health" "120"
+        )
     "Veil Seeker" (sdict
         "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Seeker"
-        "loadout" "aug,m9,tablet"
-    )
+        "loadout" "arx,m9,tablet"
+        "health" "130"
+        )
     "Veil Lance" (sdict
         "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Lance"
         "loadout" "arx,m9"
-    )
+        "health" "140"
+        )
     "Echo Relay" (sdict
         "rtag" "[EU] Iota-4 | \"Veilrunners\" | Echo Relay"
         "loadout" "arx,m9"
+        "health" "150"
     )
     "Veil Threader" (sdict
         "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Veil Threader"
         "loadout" "fn,m9,spas"
+        "health" "175"
     )
     "Drift Controller" (sdict
         "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Controller"
         "loadout" "fn,m9,spas"
+        "health" "175"
     )
     "Drift Overseer" (sdict
         "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Overseer"
         "loadout" "fn,m9,spas"
+        "health" "175"
     )
     "Echo Marshal" (sdict
         "rtag" "[VC] Iota-4 | \"Veilrunners\" | Echo Marshal"
         "loadout" "hellion,m9,spas"
+        "health" "200"
     )
     "Warden of the Veil" (sdict
         "rtag" "[VC] Iota-4 | \"Veilrunners\" | Warden of the Veil"
         "loadout" "hellion,m9,spas"
+        "health" "200"
     )
 }}
 
@@ -84,6 +95,7 @@
     "permcrtag" "61 21 133"
     "permcolornvg" "97 37 209"
     "startergear" $selectedRankProfile.loadout
+    "permmaxhealth" $selectedRankProfile.health
 }}
 
 {{$components := cslice 
@@ -99,7 +111,7 @@
 {{end}}
 {{$fullMorphPretty := (joinStr "\n" $morphParts)}}
 {{$fullMorphViaRun := (print "run " (joinStr " & " $morphParts))}}
-{{$fullMorph416 := printf "run team %[1]s iota & morph %[1]s i4 & startergear %[1]s %[2]s & ref %[1]s" $rblxName $morph.startergear}}
+{{$fullMorph416 := printf "run team %[1]s iota & morph %[1]s i4 & startergear %[1]s %[2]s & permmaxhealth %[1]s %[3]s & ref %[1]s" $rblxName $morph.startergear $morph.permmaxhealth}}
 
 {{/* Send initial prompt */}}
 {{if eq .StrippedID "Start"}}
