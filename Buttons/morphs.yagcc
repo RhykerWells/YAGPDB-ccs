@@ -95,7 +95,7 @@
 {{$morphParts := cslice}}
 {{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhats" "permrtag" "permcrtag" "permcolornvg" "startergear"}}
 {{range $_, $key := $orderedKeys}}
-    {{$morphParts = $morphParts.Append (print $key " " ($morph.Get $key))}}
+    {{$morphParts = $morphParts.Append (printf "%s %s %s" $key $rblxName ($morph.Get $key))}}
 {{end}}
 {{$fullMorphPretty := (joinStr "\n" $morphParts)}}
 {{$fullMorphViaRun := (print "run " (joinStr " & " $morphParts))}}
