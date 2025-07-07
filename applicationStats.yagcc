@@ -1,0 +1,21 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `app(licationStatistics|Stats)`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{if not (or (reFind $trigger .Message.Content) .ExecData)}}
+	{{return}}
+{{end}}
+
+{{$applicationStatEmbed := sdict "title" "Task Force Iota-4 | Application stats" "color" 0x650678}}
+{{$numberOfApplications := sub ((dbGet 0 "applications").Value | toInt) 60}}
+{{$applicationStats := (dbGet 0 "applicationStats").Value}}
+{{$applicationStatEmbed.Set "description" (printf "Stats tracked since 07/07/2025\n\nNumber of applications: %[1]d\n\n`ACCEPTED` applications: %[2]d/%[1]d (%[3]f%%)\n`DENIED` applications: %[4]d/%[1]d (%[5]f%%)\n\nApplicants interviewed %[6]d/%[1]d (%[7]f%%)" $numberOfApplications $applicationStats.Accepted (mult (fdiv $applicationStats.Accepted $numberOfApplications) 100) $applicationStats.Accepted (mult (fdiv $applicationStats.Denied $numberOfApplications) 100) $applicationStats.Interviewed (mult (fdiv $applicationStats.Interviewed $numberOfApplications) 100))}}
+{{sendMessage nil (cembed $applicationStatEmbed)}}
