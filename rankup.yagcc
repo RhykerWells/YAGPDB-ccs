@@ -39,11 +39,11 @@
     {{sendMessage nil (print "Invalid `User` argument provided.\n\n```rankto <User:Mention/ID> <Rank>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`")}}
     {{return}}
 {{end}}
+{{$targetMember = getMember $targetMember}}
 {{if eq .User.ID $targetMember.User.ID}}
     {{sendMessage nil "You cannot rank yourself."}}
     {{return}}
 {{end}}
-{{$targetMember = getMember $targetMember}}
 {{$positions := sdict "Staff" 0 "Target" 0}}
 {{range .Guild.Roles}}
     {{- if and (in $.Member.Roles .ID) (lt $positions.Staff .Position)}}
