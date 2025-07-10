@@ -60,7 +60,7 @@
     {{return}}
 {{end}}
 {{if not (in $targetMember.Roles $verifiedRole)}}
-    {{sendMessage nil "This user is not verified, I cannot rank them. Please ask them to verify their ROBLOX account."}}
+    {{sendMessage nil "This user is not verified with Bloxlink, I cannot rank them. Please ask them to verify their ROBLOX account."}}
     {{return}}
 {{end}}
 {{if not (gt (len .CmdArgs) 1)}}
