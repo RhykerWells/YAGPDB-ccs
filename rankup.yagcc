@@ -2,7 +2,7 @@
 		Made by ranger_4297 (765316548516380732)
 
 	Trigger Type: `Regex`
-	Trigger: `rank(up|to)`
+	Trigger: `rankto`
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
@@ -74,10 +74,12 @@
 {{end}}
 {{$previousRank :=  0}}
 {{range $roleID := $targetMember.Roles}}
-    {{if in $allRemoveRoles $roleID}}
-        {{if $rankRoles.Get $roleID}}
+    {{range $_, $rankRoleID := $rankRoles}}
+        {{if eq $rankRoleID $roleID}}
             {{$previousRank = $roleID}}
         {{end}}
+    {{end}}
+    {{if in $allRemoveRoles $roleID}}
         {{takeRoleID $targetMember.User.ID $roleID}}
     {{end}}
 {{end}}
@@ -96,7 +98,7 @@
         "name" (reReplace ` \|.*` $targetMember.Nick "")
         "icon_url" ($targetMember.User.AvatarURL "1024")
     )
-    "description" (printf "%s ranked to <@&%d> by %s. Previous rank was <@&%s>" $targetMember.User.Mention ($rankRoles.Get $rank) .User.Mention $previousRank)
+    "description" (printf "%s ranked to <@&%d> by %s. Previous rank was <@&%d>" $targetMember.User.Mention ($rankRoles.Get $rank) .User.Mention $previousRank)
     "color" (getRole ($rankRoles.Get $rank)).Color
 }}
 {{sendMessage 1384142646536048740 (cembed $logEmbed)}}
