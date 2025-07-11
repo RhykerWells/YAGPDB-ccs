@@ -133,7 +133,7 @@
     {{$member := getMember .User.ID}}
     {{$currentRank := ""}}
     {{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
-    {{range $k, $role := .Member.Roles}}
+    {{range $k, $role := $member.Roles}}
         {{- range $_, $roleID := $rankRoles -}}
             {{if ne $role $roleID}}
                 {{continue}}
@@ -200,7 +200,7 @@
     {{end}}
     {{$rank := ""}}
     {{range $name, $id := $rankRoles}}
-        {{if eq $id .NewRank}}
+        {{if eq $id $.NewRank}}
             {{$rank = $name}}
             {{break}}
         {{end}}
