@@ -220,7 +220,7 @@
             "name" (reReplace ` \|.*` $targetMember.Nick "")
             "icon_url" ($targetMember.User.AvatarURL "1024")
         )
-        "description" (printf "%s automatically promoted based on rank requirements to <@&%d> by. Previous rank was <@&%s>" $targetMember.User.Mention ($rankRoles.Get $rank) .CurrentRank.ID)
+        "description" (printf "%s automatically promoted based on rank requirements to <@&%d> by. Previous rank was <@&%d>" $targetMember.User.Mention ($rankRoles.Get $rank) .CurrentRank.ID)
         "color" (getRole ($rankRoles.Get $rank)).Color
     }}
     {{sendMessage 1384142646536048740 (cembed $logEmbed)}}
