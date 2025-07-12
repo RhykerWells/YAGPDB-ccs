@@ -2,7 +2,7 @@
 		Made by ranger_4297 (765316548516380732)
 
 	Trigger Type: `Regex`
-	Trigger: `updateRoles|listRequests|(view|accept)Request`
+	Trigger: `updateRanks|listRequests|(view|accept)Request`
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
@@ -18,7 +18,7 @@
 {{$group := getRobloxGroupByID 36098297}}
 {{$members := getMembers}}
 
-{{if reFind `updateroles` .Cmd}}
+{{if reFind `updateranks` .Cmd}}
 	{{$x := sendMessageRetID nil "Compiling settings..."}}
 	{{$mappedRoles := sdict "riftling" (sdict "Discord" 0 "Roblox" "") "scout" (sdict "Discord" 0 "Roblox" "") "operative" (sdict "Discord" 0 "Roblox" "") "seeker" (sdict "Discord" 0 "Roblox" "") "lance" (sdict "Discord" 0 "Roblox" "") "relay" (sdict "Discord" 0 "Roblox" "") "threader" (sdict "Discord" 0 "Roblox" "") "controller" (sdict "Discord" 0 "Roblox" "") "overseer" (sdict "Discord" 0 "Roblox" "") "marshal" (sdict "Discord" 0 "Roblox" "") "warden" (sdict "Discord" 0 "Roblox" "")}}
 	{{$robloxRoles := $group.GetRoles}}
