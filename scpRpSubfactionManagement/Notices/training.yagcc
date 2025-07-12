@@ -1,0 +1,69 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `tr(ain(ing)?)?`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{if not (or (reFind $trigger .Message.Content) .ExecData)}}
+	{{return}}
+{{end}}
+
+{{if not .ExecData}}
+	{{/* Original announcement */}}
+	{{if not .CmdArgs}}
+		{{sendMessage nil (printf "Missing required arguments.\n\n```training <Rank> <In:Duration>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Agent`, `Relay`")}}
+		{{return}}
+	{{end}}
+	{{$trainingRank := index .CmdArgs 0 | lower}}
+	{{if not (reFind `\b(riftling|scout|operative|seeker|lance|agent|relay)\b` $trainingRank)}}
+		{{sendMessage nil (printf "Invalid `rank` argument.\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance,`, `Agent`, `Relay`")}}
+		{{return}}
+	{{end}}
+	{{if not (gt (len .CmdArgs) 1)}}
+		{{sendMessage nil (printf "No `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes")}}
+		{{return}}
+	{{end}}
+	{{$duration := index .CmdArgs 1}}
+	{{if not (toDuration $duration)}}
+		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes")}}
+		{{return}}
+	{{end}}
+	{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "observer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+	{{range $rankName, $rankID := $rankRoles}}
+		{{if eq $trainingRank $rankName}}
+			{{$trainingRank = (getRole $rankID)}}
+			{{break}}
+		{{end}}
+	{{end}}
+	{{$embed := sdict "title" (printf "%s training" $trainingRank.Name) "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You cannot attend if you have PASSED a %s training**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix $trainingRank.Mention) "color" $trainingRank.Color}}
+	{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" (printf "iota_joinTraining-%d" $trainingRank.ID) "style" "success") (cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)}}
+	{{$x := sendMessageNoEscapeRetID 1391567531046863041 (complexMessage "content" (printf "%s" $trainingRank.Mention) "embed" (cembed $embed) "components" $components)}}
+	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "TrainingMsg" $x "TrainingRole" $trainingRank)}}
+	{{dbSetExpire $x "training" cslice (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
+	{{sendMessage nil (printf "You've successfully started a %s training for <t:%d:f>. View the message [here](https://discord.com/channels/1375370805575155782/1391567531046863041/%d)" $trainingRank.Name (currentTime.Add (toDuration $duration)).Unix $x)}}
+{{else}}
+	{{with .ExecData}}
+		{{$confirmed := (dbGet .TrainingMsg "training").Value}}
+		{{$strConfirmed := cslice}}
+		{{range $confirmed}}
+			{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
+		{{end}}
+		{{$message := getMessage 1391567531046863041 .TrainingMsg}}
+		{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" (printf "iota_joinTraining-%d" .TrainingRole.ID) "style" "success" "disabled" true) (cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $confirmed))) "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)}}
+		{{if lt (len $confirmed) 3}}
+			{{$embed := sdict "title" (printf "%s training" .TrainingRole.Name) "description" (printf "Insufficient confirmations within time frame.\n\nTraining cancelled.") "color" 0xFF0000}}
+			{{editMessage 1391567531046863041 .TrainingMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
+			{{sendMessageNoEscape nil (complexMessage "content" (printf "%s confirmed" (joinStr "\n" $strConfirmed)))}}
+			{{return}}
+		{{end}}
+		{{$embed := sdict "title" (printf "%s training" .TrainingRole.Name) "description" (printf "Attending:\n%s" (joinStr "\n" $strConfirmed)) "color" 0x4b9a4e}}
+		{{editMessage 1391567531046863041 .TrainingMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
+		{{sendMessageNoEscape nil (complexMessage "content" (printf "%s please ping %s in <#1391567531046863041> and the an SCP: RP server name" .Host (joinStr "\n" $strConfirmed)))}}
+	{{end}}
+{{end}}

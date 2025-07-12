@@ -1,0 +1,105 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `rankto`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{/* Initiates variables */}}
+{{$verifiedRole := 1375403523788898379}}
+{{$removeRoles := sdict "unverified" 1375381637646258186 "visitor" 1375381740117430302}}
+{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+{{$echelonRoles := sdict "fa" 1375379122926260264 "eu" 1375379240165576764 "mcd" 1375379607594991667}}
+{{$allRemoveRoles := cslice}}
+{{range $_, $roleID := $removeRoles}}
+    {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
+{{end}}
+{{range $_, $roleID := $rankRoles}}
+    {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
+{{end}}
+{{range $_, $roleID := $echelonRoles}}
+    {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
+{{end}}
+
+{{if not .CmdArgs}}
+    {{sendMessage nil (printf "Missing required arguments.\n\n```rankto <User:Mention/ID> <Rank>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`")}}
+    {{return}}
+{{end}}
+{{$targetMember := index .CmdArgs 0}}
+{{if not (getMember $targetMember)}}
+    {{sendMessage nil (print "Invalid `User` argument provided.\n\n```rankto <User:Mention/ID> <Rank>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`")}}
+    {{return}}
+{{end}}
+{{$targetMember = getMember $targetMember}}
+{{if eq .User.ID $targetMember.User.ID}}
+    {{sendMessage nil "You cannot rank yourself."}}
+    {{return}}
+{{end}}
+{{$positions := sdict "Staff" 0 "Target" 0}}
+{{range .Guild.Roles}}
+    {{- if and (in $.Member.Roles .ID) (lt $positions.Staff .Position)}}
+        {{- $positions.Set "Staff" .Position}}
+    {{- end -}}
+{{end}}
+{{range .Guild.Roles}}
+    {{- if and (in $targetMember.Roles .ID) (lt $positions.Target .Position)}}
+        {{- $positions.Set "Target" .Position}}
+    {{- end -}}
+{{end}}
+{{if or (eq $positions.Staff $positions.Target) (lt $positions.Staff $positions.Target)}}
+    {{sendMessage nil "You cannot assign a rank to a member higher or the same rank as you."}}
+    {{return}}
+{{end}}
+{{if not (in $targetMember.Roles $verifiedRole)}}
+    {{sendMessage nil "This user is not verified with Bloxlink, I cannot rank them. Please ask them to verify their ROBLOX account."}}
+    {{return}}
+{{end}}
+{{if not (gt (len .CmdArgs) 1)}}
+    {{sendMessage nil (printf "No `Rank` argument provided.\n\n```rankto <User:Mention/ID> <Rank>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`")}}
+    {{return}}
+{{end}}
+{{$rank := index .CmdArgs 1 | lower}}
+{{if not (reFind `\b(riftling|scout|operative|seeker|lance|agent|relay)\b` $rank)}}
+    {{sendMessage nil (printf "Invalid `Rank` argument provided.\n\n```rank <User:Mention/ID> <Rank>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`")}}
+    {{return}}
+{{end}}
+{{$previousRank :=  0}}
+{{range $roleID := $targetMember.Roles}}
+    {{range $_, $rankRoleID := $rankRoles}}
+        {{if eq $rankRoleID $roleID}}
+            {{$previousRank = $roleID}}
+        {{end}}
+    {{end}}
+    {{if in $allRemoveRoles $roleID}}
+        {{takeRoleID $targetMember.User.ID $roleID}}
+    {{end}}
+{{end}}
+{{$echelonRole := ""}}
+{{if eq $rank "riftling" "scout" "operative"}}
+    {{$echelonRole = $echelonRoles.fa}}
+{{else}}
+    {{$echelonRole = $echelonRoles.eu}}
+{{end}}
+{{giveRoleID $targetMember.User.ID ($rankRoles.Get $rank)}}
+{{giveRoleID $targetMember.User.ID $echelonRole}}
+{{giveRoleID $targetMember.User.ID 1375381774204665917}} {{/* Veilrunners role, in case we're ranking a visitor up */}}
+{{$logEmbed := sdict
+    "title" "Rank updated"
+    "author" (sdict
+        "name" (reReplace ` \|.*` $targetMember.Nick "")
+        "icon_url" ($targetMember.User.AvatarURL "1024")
+    )
+    "description" (printf "%s ranked to <@&%d> by %s. Previous rank was <@&%d>" $targetMember.User.Mention ($rankRoles.Get $rank) .User.Mention $previousRank)
+    "color" (getRole ($rankRoles.Get $rank)).Color
+}}
+{{sendMessage 1384142646536048740 (cembed $logEmbed)}}
+{{sendMessage nil (printf "Successfully set %s's rank to <@&%d> (<@&%d>)." $targetMember.User.Mention ($rankRoles.Get $rank) $echelonRole)}}

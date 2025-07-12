@@ -1,0 +1,105 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Message Component`
+	Trigger: `\A(?i)iota_join`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{/* Training button */}}
+{{if reFind `Training` .StrippedID}}
+	{{$trainingRole := reReplace `[A-z]+-` .StrippedID ""}}
+	{{if not (hasRoleID $trainingRole)}}
+		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You cannot join this training as you are not a <@&%s>." $trainingRole) "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+		{{return}}
+	{{end}}
+	{{$currentTraining := (dbGet .Message.ID "training").Value}}
+	{{if in $currentTraining .User.ID}}
+		{{$newTraining := cslice}}
+		{{range $currentTraining}}
+			{{if eq . $.User.ID}}
+				{{continue}}
+			{{end}}
+			{{$newTraining = $newTraining.Append .}}
+		{{end}}
+		{{$currentTraining = $newTraining}}
+		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've removed your confirmation from this training") "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{else}}
+		{{$logs := (dbGet 0 "trainingLogs").Value}}
+		{{$userLogs := cslice}}
+		{{range $logs}}
+			{{if eq .User.ID $.User.ID}}
+				{{$userLogs = $userLogs.Append .}}
+			{{end}}
+		{{end}}
+		{{range $userLogs}}
+			{{if eq (toInt .Type) (toInt $trainingRole)}}
+				{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've already completed the training for this role.") "ephemeral" true)}}
+				{{deleteInteractionResponse .Interaction.Token $x}}
+				{{break}}
+			{{end}}
+		{{end}}
+		{{$currentTraining = $currentTraining.Append .User.ID}}
+		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've added your confirmation to this training") "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{end}}
+    {{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" (printf "iota_joinTraining-%s" $trainingRole) "style" "success") (cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $currentTraining))) "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)}}
+	{{editMessageNoEscape nil .Message.ID (complexMessageEdit "components" $components)}}
+	{{dbSet .Message.ID "training" $currentTraining}}
+{{end}}
+
+{{/* Deployment button */}}
+{{if eq `Deployment` .StrippedID}}
+    {{$rank := ""}}
+	{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+	{{range $_, $role := .Member.Roles}}
+		{{- range $_, $roleID := $rankRoles -}}
+			{{if ne $role $roleID}}
+				{{continue}}
+			{{end}}
+			{{$rank = getRole $roleID}}
+			{{break}}
+		{{end}}
+	{{end}}
+	{{$currentDeployment := (dbGet .Message.ID "deployment").Value}}
+	{{if in $currentDeployment .User.ID}}
+		{{$newDeployment := cslice}}
+		{{range $currentDeployment}}
+			{{if eq . $.User.ID}}
+				{{continue}}
+			{{end}}
+			{{$newDeployment = $newDeployment.Append .}}
+		{{end}}
+		{{$currentDeployment = $newDeployment}}
+		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've removed your confirmation from this deployment") "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{else}}
+		{{$logs := (dbGet 0 "trainingLogs").Value}}
+		{{$userLogsAtRank := cslice}}
+		{{range $logs}}
+			{{if ne .User.ID $.User.ID}}
+				{{continue}}
+			{{end}}
+			{{if ne (toInt .Type) (toInt $rank.ID)}}
+				{{continue}}
+			{{end}}
+			{{$userLogsAtRank = $userLogsAtRank.Append .}}
+		{{end}}
+		{{if and (not (hasRoleID 1375378431411228755)) (not $userLogsAtRank)}}
+			{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've not completed the training for this role, you cannot deploy.") "ephemeral" true)}}
+			{{deleteInteractionResponse .Interaction.Token $x}}
+			{{return}}
+		{{end}}
+		{{$currentDeployment = $currentDeployment.Append .User.ID}}
+		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've added your confirmation to this deployment") "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{end}}
+    {{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" "iota_joinDeployment" "style" "success") (cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $currentDeployment))) "custom_id" "iota_confirmedDeployment" "style" "secondary" "disabled" true)}}
+	{{editMessageNoEscape nil .Message.ID (complexMessageEdit "components" $components)}}
+	{{dbSet .Message.ID "deployment" $currentDeployment}}
+{{end}}

@@ -1,0 +1,24 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `app(licationStatistics|Stats)`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{$applicationStatEmbed := sdict "title" "Task Force Iota-4 | Application stats" "color" 0x650678}}
+{{$numberOfApplications := sub ((dbGet 0 "applications").Value | toInt) 60}}
+{{$applicationStats := (dbGet 0 "applicationStats").Value}}
+{{$acceptedApplications := printf "`ACCEPTED` applications: %d/%d (%d%%)" $applicationStats.Accepted $numberOfApplications (mult (fdiv $applicationStats.Accepted $numberOfApplications) 100 | toInt)}}
+{{$deniedApplications := printf "`DENIED` applications: %d/%d (%d%%)" $applicationStats.Denied $numberOfApplications (mult (fdiv $applicationStats.Denied $numberOfApplications) 100 | toInt)}}
+{{$interviewedApplications := printf "`INTERVIEWED` applicants: %d/%d (%d%%)" $applicationStats.Interviewed $numberOfApplications (mult (fdiv $applicationStats.Interviewed $numberOfApplications) 100 | toInt)}}
+{{$applicationStatEmbed.Set "description" (printf "Stats tracked since 07/07/2025\n\nNumber of applications: `%[1]d`\n\n%s\n%s\n\n%s" $numberOfApplications $acceptedApplications $deniedApplications $interviewedApplications)}}
+{{sendMessage nil (cembed $applicationStatEmbed)}}

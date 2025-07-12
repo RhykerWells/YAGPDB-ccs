@@ -1,0 +1,78 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Message Component`
+	Trigger: `\A(?i)iota_log`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{/* Send scout report form */}}
+{{if eq .StrippedID "SubmitReport"}}
+    {{if not (hasRoleID 1375436671948165143)}}
+        {{sendResponse nil (complexMessage "content" "You must be a <@&1375436671948165143> to submit a scout report" "ephemeral" true)}}
+		{{return}}
+    {{end}}
+    {{$fields := cslice
+        (sdict "label" "Deployment reason?" "placeholder" "Reason that you deployed..." "required" true "max_length" 500 "style" 2)
+        (sdict "label" "Notable findings" "placeholder" "What notable sigils, marks or information did you find out?" "required" true "max_length" 500 "style" 2)
+        (sdict "label" "Threat indicator" "placeholder" "How dangerous is this to Iota-4s operation (0-10)" "max_length" 10 "required" true "style" 1)
+        (sdict "label" "Any other information?" "placeholder" "Leave blank for none." "style" 2)
+    }}
+    {{$modal := sdict "title" "Iota-4 | Scout report form" "custom_id" "iota_formsScoutReport" "fields" $fields}}
+    {{sendModal $modal}}
+{{end}}
+
+{{/* Send training log form */}}
+{{if eq .StrippedID "SubmitTLog"}}
+	{{$logs := (dbGet 0 "trainingLogs").Value}}
+    {{$userLogs := cslice}}
+	{{range $logs}}
+		{{if ne .User.ID $.User.ID}}
+			{{continue}}
+		{{end}}
+		{{$userLogs = $userLogs.Append .}}
+	{{end}}
+    {{$trainingType := ""}}
+    {{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+    {{range $_, $role := .Member.Roles}}
+        {{- range $_, $roleID := $rankRoles -}}
+            {{if ne $role $roleID}}
+                {{continue}}
+            {{end}}
+            {{$trainingType = getRole $roleID}}
+            {{break}}
+        {{end}}
+    {{end}}
+    {{range $userLogs}}
+        {{if ne .Type $trainingType.ID}}
+            {{continue}}
+        {{end}}
+        {{$x := sendResponseRetID nil (complexMessage "content" "You have already submit a training for this rank." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+        {{return}}
+    {{end}}
+	{{$fields := cslice 
+        (sdict "label" "ROBLOX username of host" "required" true "max_length" 50 "style" 1)
+        (sdict "label" "Training summary" "placeholder" "What did you accomplish during your training? What did you learn?" "required" true "max_length" 200 "style" 2)
+        (sdict "label" "Training result" "placeholder" "What was the result you were given for your training?" "placeholder" "PASS/FAIL" "required" true "max_length" 4 "style" 1)
+        (sdict "label" "PROOF" "placeholder" "1 attachment link" "required" true "style" 1)
+    }}
+    {{$modal := sdict "title" "Iota-4 | Training log form" "custom_id" "iota_formsTrainingLog" "fields" $fields}}
+    {{sendModal $modal}}
+{{end}}
+
+{{/* Send deployment log form */}}
+{{if eq .StrippedID "SubmitDLog"}}
+    {{$fields := cslice
+        (sdict "label" "ROBLOX username of deployment host" "placeholder" "NONE if self-deployment" "required" true "max_length" 50 "style" 1)
+        (sdict "label" "Deployment type" "placeholder" "Self/Official" "required" true "max_length" 15 "style" 1)
+        (sdict "label" "Deployment summary" "placeholder" "What happened, what did you do?" "required" true "max_length" 200 "style" 2)
+        (sdict "label" "Sightings" "placeholder" "What sort of anomalous sightings occured (if any)" "required" true "max_length" 200 "style" 1)
+        (sdict "label" "PROOF" "placeholder" "1 attachment link" "required" true "style" 1)
+    }}
+    {{$modal := sdict "title" "Iota-4 | Deployment log form" "custom_id" "iota_formsDeploymentLog" "fields" $fields}}
+    {{sendModal $modal}}
+{{end}}

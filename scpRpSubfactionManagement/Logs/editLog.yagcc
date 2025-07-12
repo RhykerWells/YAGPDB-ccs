@@ -1,0 +1,156 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `e(t|d)log`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{/* Initiates variables */}}
+{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+
+{{/* Per-log viewing */}}
+{{$options := ""}}
+{{if eq (lower .Cmd) "-etlog"}}
+    {{$options = "`Time`, `Host`, `Type`, `Summary`, `Result`, `Proof`"}}
+{{else}}
+    {{$options = "`Time`, `Host`, `Rank`, `Type`, `Summary`, `Sightings`, `Proof`"}}
+{{end}}
+{{if not .CmdArgs}}
+	{{sendMessage nil (printf "Not enough arguments passed.\n```%s <ID:Number> <Option> <Value>```\nAvailable options: %s" .Cmd $options)}}
+	{{return}}
+{{end}}
+{{if not (toInt (index .CmdArgs 0))}}
+    {{sendMessage nil (printf "Invalid `ID` argument.\n\n```%s <ID:Number> <Option> <Value>```\nAvailable options: %s" .Cmd $options)}}
+    {{return}}
+{{end}}
+{{$logID := index .CmdArgs 0 | toInt}}
+{{$logs := ""}}
+{{if eq (lower .Cmd) "-etlog"}}
+	{{$logs = (dbGet 0 "trainingLogs").Value}}
+    {{dbSet 0 "trainingLogBackup" $logs}}
+{{else}}
+	{{$logs = (dbGet 0 "deploymentLogs").Value}}
+    {{dbSet 0 "deploymentLogBackup" $logs}}
+{{end}}
+{{if lt (len $logs) $logID}}
+    {{sendMessage nil (printf "This log doesn't exist.")}}
+    {{return}}
+{{end}}
+{{$log := index $logs (sub $logID 1)}}
+{{if not (gt (len .CmdArgs) 1)}}
+    {{sendMessage nil (printf "No `Option` argument.\n\n```%s <ID:Number> <Option> <Value>```\nAvailable options: %s" .Cmd $options)}}
+    {{return}}
+{{end}}
+{{$option := index .CmdArgs 1 | lower}}
+{{$regexOptions := "time|host|type|summary|proof"}}
+{{if eq (lower .Cmd) "-etlog"}}
+	{{$regexOptions = printf "%s|result" $regexOptions}}
+{{else}}
+    {{$regexOptions = printf "%s|rank|sightings" $regexOptions}}
+{{end}}
+{{if not (reFind (printf `\b(%s)\b` $regexOptions) $option)}}
+    {{sendMessage nil (printf "Invalid `Option` argument.\n\n```%s <ID:Number> <Option> <Value>```\nAvailable options: %s" .Cmd $options)}}
+    {{return}}
+{{end}}
+{{if not (gt (len .CmdArgs) 2)}}
+	{{sendMessage nil (printf "No `Value` argument.\n\n```%s <ID:Number> <Option> <Value>```\nAvailable options: %s" .Cmd $options)}}
+	{{return}}
+{{end}}
+{{$value := index .CmdArgs 2}}
+{{$logData := sdict "Channel" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $log.Link) 0) 1) 1) "ID" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $log.Link) 0) 1) 2)}}
+{{$logPost := (getMessage $logData.Channel $logData.ID)}}
+{{$embed := structToSdict (index $logPost.Embeds 0)}}
+{{range $k, $v := $embed}}
+	{{if eq (kindOf $v true) "struct"}}
+		{{$embed.Set $k (structToSdict $v)}}
+	{{end}}
+{{end}}
+{{$embed.Set "Fields" (cslice.AppendSlice $embed.Fields)}}
+{{range $i, $fields := $embed.Fields}}
+	{{if eq (kindOf $fields true) "struct"}}
+		{{$embed.Fields.Set $i (structToSdict $fields)}}
+	{{end}}
+{{end}}
+{{if eq $option "time"}}
+	{{if not (reFind `<t:\d{10}:f>` $value)}}
+		{{sendMessage nil (printf "Invalid `Value` argument.\n\n```edittlog <ID:Number> <Option> <Value>```\nGet the timestamp from <https://hammertime.cyou/en-GB>, choose `<t:XXXXXXXXXX+:f>` format")}}
+		{{return}}
+	{{end}}
+    {{$embed.Set "description" (reReplace `Time: <t:\d{10}:f>` $embed.Description (printf "Time: %s" $value))}}
+{{else if eq $option "host"}}
+	{{if not (getMember $value)}}
+		{{sendMessage nil (printf "Invalid `Value` argument.\n\n```edittlog <ID:Number> <Option> <Value>```\nPlease use the hosts ID/Mention")}}
+		{{return}}
+	{{end}}
+	{{$value = (reReplace ` \|.*` (getMember $value).Nick "")}}
+    {{(index $embed.Fields 0).Set "Value" $value}}
+{{else if or (and (eq (lower .Cmd) "-etlog")) (eq $option "type") (and (eq (lower .Cmd) "-edlog") (eq $option "rank"))}}
+	{{if not (reFind `\b(riftling|scout|operative|seeker|lance|agent|relay)\b` (lower $value))}}
+		{{sendMessage nil (printf "Invalid `Value` argument provided.\n\n```%s <ID:Number> <Option> <Value>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`" .Cmd)}}
+		{{return}}
+	{{end}}
+	{{$rank := lower (index .CmdArgs 2)}}
+	{{range $k, $roleID := $rankRoles}}
+		{{if ne $k $rank}}
+			{{continue}}
+		{{end}}
+		{{$value = getRole $roleID}}
+		{{break}}
+	{{end}}
+{{else if and (eq (lower .Cmd) "-edlog") (eq $option "type")}}
+    {{if not (reFind `self|official` (lower $value))}}
+        {{sendMessage nil (printf "Invalid `Value` argument provided.\n\n```%s <ID:Number> <Option> <Value>```\nPlease use `Self`/`Official`" .Cmd)}}
+        {{return}}
+    {{end}}
+    {{(index $embed.Fields 2).Set "Value" $value}}
+{{else if eq $option "summary"}}
+    {{$value = joinStr " " (slice .CmdArgs 2)}}
+    {{if eq (lower .Cmd) "-etlog"}}
+		{{(index $embed.Fields 2).Set "Value" $value}}
+    {{else}}
+        {{(index $embed.Fields 3).Set "Value" $value}}
+    {{end}}
+{{else if and (eq (lower .Cmd) "-etlog") (eq $option "result")}}
+	{{$value = joinStr " " (slice .CmdArgs 2)}}
+	{{(index $embed.Fields 6).Set "Value" $value}}
+{{else if and (eq (lower .Cmd) "-edlog") (eq $option "sightings")}}
+    {{$value = joinStr " " (slice .CmdArgs 2)}}
+    {{(index $embed.Fields 5).Set "Value" $value}}
+{{else if eq $option "proof"}}
+    {{if not (reFind `(http(s)?)://.+\.(gif|png|jpeg|jpg|webp)` $value)}}
+        {{sendMessage nil (printf "Invalid `Value` argument provided.\n\n```editdlog <ID:Number> <Option> <Value>```\nPlease use a valid attachment **link**")}}
+        {{return}}
+    {{end}}
+    {{$embed.Set "image" (sdict "url" $value)}}
+{{end}}
+{{$dValue := ""}}
+{{$text := ""}}
+{{if eq (lower .Cmd) "-etlog"}}
+    {{$text = "Training type"}}
+{{else}}
+    {{$text = "Deployed as"}}
+{{end}}
+{{if eq (printf "%T" $value) "*discordgo.Role"}}
+	{{$dValue = $value.Mention}}
+	{{$value = $value.ID}}
+	{{$embed.Set "description" (reReplace `<@&\d{17,19}>` $embed.Description $dValue)}}
+{{else}}
+    {{$dValue = printf "`%s`" $value}}
+{{end}}
+{{editMessage $logData.Channel $logData.ID (complexMessageEdit "embed" $embed)}}
+{{sendMessage nil (printf "Updated Log #%s's `%s` value to %s" (humanizeThousands $log.ID) (title $option) $dValue)}}
+{{$log.Set (title $option) $value}}
+{{if eq (lower .Cmd) "-etlog"}}
+    {{dbSet 0 "trainingLogs" $logs}}
+{{else}}
+    {{dbSet 0 "deploymentLogs" $logs}}
+{{end}}

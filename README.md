@@ -8,17 +8,15 @@
 </p>
 
 <div align="center">
-<img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/RhykerWells/YAGPDB-CCs">
 <img alt="GitHub" src="https://img.shields.io/github/license/RhykerWells/YAGPDB-CCs">
 <img alt="GitHub issues" src="https://img.shields.io/github/issues/RhykerWells/YAGPDB-CCs">
 <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/RhykerWells/YAGPDB-CCs">
-<img alt="GitHub commits since latest release (by SemVer including pre-releases)" src="https://img.shields.io/github/commits-since/RhykerWells/YAGPDB-CCs/V8.9">
 </div>
 
 <hr />
 <div>
   <p align="center">
-    <a href="https://github.com/RhykerWells/YAGPDB-ccs/wiki"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/RhykerWells/YAGPDB-ccs/wiki"><strong>Explore the docs (economy only)»</strong></a>
     <br />
     <a href="#welcome-message">Welcome message</a>
     ·
@@ -32,21 +30,14 @@
   </p>
 </div>
 
-> # :warning: **Deprecation notice**
-As of 22/04/2025 (22nd of April, 2025), this repository and the commands found within have been deprecated in favour of the bot I am writing, [ASBWIG](https://github.com/RhykerWells/asbwig). These commands should be stable as of writing this, with little to no errors.  
-
-This repository will stay open in case there are any major bugs.
 
 ## Welcome message
 Welcome to my YAGPDB CC repository! <br />
-This repository hosts the largest made economy system for the YAGPDB.xyz custom command system.<br />
-The economy system has been worked on since mid 2021 and has taken a lot of work to get it to the current state.<br />
-As you can see, a lot of effort has gone into these, and regardless as to whether they are used or not; they are still incredibly fun to make.<br />
-I appreciate every fork and star and those who use my commands!
+This repository hosts the following:
+- The largest and most extensive economy system for the YAGPDB.xyz custom command system (being worked on since 2021!).<br />
+- A collection of helper tools for subfactions within SCP:Roleplay built **ONLY FOR USING** with [custom fork of YAGPDB](https://github.com/RhykerWells/yagpdb/tree/iota-4)
+> I appreciate every fork and star and those who use my commands!
 
-
-If you'd like to help test with commands and be the first to know when new releases will be coming, consider joining the server below:<br />
-https://discord.gg/bbvzRgQvB7
 
 ## License
 
@@ -64,12 +55,6 @@ https://discord.gg/bbvzRgQvB7
 </p>
 
 
-## Custom Command repositories
-<a href="https://yagpdb-cc.github.io">Official Repo</a> The custom command 
-repository maintained by the YAGPDB.xyz support server staff. 
-If you are searching for more custom commands you will find a lot of them there :).<br />
-<a href="https://github.com/BlackWolfWoof/yagpdb-cc">Wolf's Repo</a> A really advanced repository including database management.<br>
-
 ## Official YAGPDB.xyz links
 <a href="https://discord.gg/4uY54rw">Official YAGPDB support server</a><br> 
 <a href="https://docs.yagpdb.xyz/">Official YAGPDB documentation</a><br>
@@ -77,4 +62,4 @@ If you are searching for more custom commands you will find a lot of them there 
 
 
 ## Bugs and more
-<blockquote>If you find any bugs or issues, feel free to make a PR or raise an issue, alternatively contact me through my <a href="https://discord.gg/bbvzRgQvB7">Testing server</a> or VIA <a href="mailto:a.rhykerw@gmail.com">email</a></blockquote>
+<blockquote>If you find any bugs or issues, feel free to make a PR or raise an issue.

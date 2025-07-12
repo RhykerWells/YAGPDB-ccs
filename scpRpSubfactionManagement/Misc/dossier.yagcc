@@ -1,0 +1,88 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `dossier|personnel`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{$members := getMembers}}
+{{$membersInRoles := sdict "veilrunners" cslice "riftlings" cslice "scouts" cslice "operatives" cslice "seekers" cslice "lances" cslice "relays" cslice "threaders" cslice "controllers" cslice "overseers" cslice "marshals" cslice "wardens" cslice}}
+{{range $members}}
+    {{if in .Roles 1375381774204665917}}
+        {{$currentUsers := $membersInRoles.veilrunners}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "veilrunners" $currentUsers}}
+    {{end}}
+    {{if in .Roles 1375378503024902164}}
+        {{$currentUsers := $membersInRoles.riftlings}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "riftlings" $currentUsers}}
+    {{else if in .Roles 1375436671948165143}}
+        {{$currentUsers := $membersInRoles.scouts}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "scouts" $currentUsers}}
+    {{else if in .Roles 1375378464336773142}}
+        {{$currentUsers := $membersInRoles.operatives}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "operatives" $currentUsers}}
+    {{else if in .Roles 1375378431411228755}}
+        {{$currentUsers := $membersInRoles.seekers}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "seekers" $currentUsers}}
+    {{else if in .Roles 1375435912116437073}}
+        {{$currentUsers := $membersInRoles.lances}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "lances" $currentUsers}}
+    {{else if in .Roles 1375378281078984704}}
+        {{$currentUsers := $membersInRoles.relays}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "relays" $currentUsers}}
+    {{else if in .Roles 1375436353202032660}}
+        {{$currentUsers := $membersInRoles.threaders}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "threaders" $currentUsers}}
+    {{else if in .Roles 1375378044767834133}}
+        {{$currentUsers := $membersInRoles.controllers}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "controllers" $currentUsers}}
+    {{else if in .Roles 1375377969492787220}}
+        {{$currentUsers := $membersInRoles.overseers}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "overseers" $currentUsers}}
+    {{else if in .Roles 1375377873241772095}}
+        {{$currentUsers := $membersInRoles.marshals}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "marshals" $currentUsers}}
+    {{else if in .Roles 1375377194330755113}}
+        {{$currentUsers := $membersInRoles.wardens}}
+        {{$currentUsers = $currentUsers.Append .User.ID}}
+        {{$membersInRoles.Set "wardens" $currentUsers}}
+    {{end}}
+{{end}}
+
+{{$personnelEmbed := sdict "title" "Task Force Iota-4 | Personnel dossier" "color" 0x650678}}
+{{if .CmdArgs}}
+    {{$rankRoles := cslice "riftling" "scout" "operative" "seeker" "lance" "relay" "threader" "controller" "overseer" "marshal" "warden"}}
+    {{$rank := index .CmdArgs 0 | lower}}
+    {{if not (in $rankRoles $rank)}}
+        {{sendMessage nil "Available ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`, `Threader`, `Controller`, `Overseer`, `Marshal`, `Warden`"}}
+    {{end}}
+    {{$rank = printf "%ss" $rank}}
+    {{$membersInRole := cslice}}
+    {{range $membersInRoles.Get $rank}}
+        {{$membersInRole = $membersInRole.Append (printf "<@%d>" .)}}
+    {{end}}
+    {{$personnelEmbed.Set "description" (printf "%s\n\nCount: %d" (joinStr "\n" $membersInRole) (len $membersInRole))}}
+{{else}}
+    {{$personnelEmbed.Set "description" (printf "<@&1375377194330755113>\n%d\n<@&1375377873241772095>\n%d\n<@&1375377969492787220>\n%d\n<@&1375378044767834133>\n%d\n<@&1375436353202032660>\n%d\n<@&1375378281078984704>\n%d\n<@&1375435912116437073>\n%d\n<@&1375378431411228755>\n%d\n<@&1375378464336773142>\n%d\n<@&1375436671948165143>\n%d\n<@&1375378503024902164>\n%d\n\nTotal number of Veilrunners (cached): %d\nTotal number of server members (cached): %d" (len $membersInRoles.wardens) (len $membersInRoles.marshals) (len $membersInRoles.overseers) (len $membersInRoles.controllers) (len $membersInRoles.threaders) (len $membersInRoles.relays) (len $membersInRoles.lances) (len $membersInRoles.seekers) (len $membersInRoles.operatives) (len $membersInRoles.scouts) (len $membersInRoles.riftlings) (len $membersInRoles.veilrunners) (len $members))}}
+{{end}}
+{{sendMessage nil (cembed $personnelEmbed)}}
