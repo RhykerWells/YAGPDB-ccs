@@ -3,6 +3,11 @@ Fully functional and modular economy system for your server!<br />
 These commands work perfectly on base YAGPDB, so you don't have to worry about database limits.<br />
 These commands are thoroughly tested before release and are ensured to keep working
 
+# Maintenance notice
+> As of **12th July, 2025**, this section of my repository is currently on maintainance mode, as I do not have plans to implement any new more features due to my content in the current state of the system.
+
+> Bug fixes will still be when time contraints work or PRs are made.
+
 ## Features
 Customizable server shop<br />
 Configurable settings<br />
