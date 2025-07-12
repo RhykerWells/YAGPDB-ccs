@@ -1,0 +1,121 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Modal Submission`
+	Trigger: `\A(?i)updateRoles`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$discordRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+
+{{$x := sendMessageRetID nil "Compiling settings..."}}
+{{$mappedRoles := sdict "riftling" (sdict "Discord" 0 "Roblox" "") "scout" (sdict "Discord" 0 "Roblox" "") "operative" (sdict "Discord" 0 "Roblox" "") "seeker" (sdict "Discord" 0 "Roblox" "") "lance" (sdict "Discord" 0 "Roblox" "") "relay" (sdict "Discord" 0 "Roblox" "") "threader" (sdict "Discord" 0 "Roblox" "") "controller" (sdict "Discord" 0 "Roblox" "") "overseer" (sdict "Discord" 0 "Roblox" "") "marshal" (sdict "Discord" 0 "Roblox" "") "warden" (sdict "Discord" 0 "Roblox" "")}}
+{{$group := getRobloxGroupByID 36098297}}
+{{$robloxRoles := $group.GetRoles}}
+{{range $k, $roleConfig := $mappedRoles}}
+	{{$roleConfig.Set "Discord" ($discordRoles.Get $k)}}
+	{{range $robloxRoles}}
+		{{if not (in (lower .Name) $k)}}
+			{{continue}}
+		{{end}}
+		{{$roleConfig.Set "Roblox" (toString .ID)}}
+	{{end}}
+{{end}}
+{{$notSet := cslice}}
+{{range $k, $v := $mappedRoles}}
+    {{if eq $v.Discord 0}}
+        {{- $notSet = $notSet.Append (printf "%s's Discord role not set." $k) -}}
+    {{end}}
+    {{if eq $v.Roblox ""}}
+        {{- $notSet = $notSet.Append (printf "%s's Roblox role not set." $k) -}}
+    {{end}}
+{{end}}
+{{if $notSet}}
+    {{editMessage nil $x (printf "Failed retrieving the following role settings:\n%s" (joinStr "\n" $notSet))}}
+    {{return}}
+{{end}}
+
+{{editMessage nil $x "Settings retrieved. Now retrieving Discord role sets..."}}
+{{$members := getMembers}}
+{{$noRankSet := cslice}}
+{{$memberRankSets := sdict}}
+{{$notNicked := cslice}}
+{{range $member := $members}}
+	{{if not (in $member.Roles 1375381774204665917)}}
+		{{continue}}
+	{{end}}
+	{{$rankSet := sdict}}
+	{{range $mappedRoles}}
+		{{if not (in $member.Roles .Discord)}}
+			{{continue}}
+		{{end}}
+		{{$rankSet = .}}
+	{{end}}
+	{{if or (not $rankSet) (not $member.Nick)}}
+		{{if not $rankSet}}
+			{{$noRankSet = $noRankSet.Append $member.User.Mention}}
+		{{end}}
+		{{if not $member.Nick}}
+			{{$noRankSet = $noRankSet.Append $member.User.Mention}}
+		{{end}}
+		{{continue}}
+	{{end}}
+	{{$robloxUsername := reReplace ` \|.*` $member.Nick ""}}
+	{{$memberRankSets.Set $robloxUsername $rankSet}}
+{{end}}
+{{$errMessage := cslice}}
+{{if or $notSet $notNicked}}
+	{{if $notSet}}
+		{{$errMessage = $errMessage.Append (printf "Failed retriving the role sets for the following Discord users, and such will be skipped:\n%s" (joinStr "\n" $noRankSet))}}
+	{{end}}
+	{{if $notNicked}}
+		{{$errMessage = (printf "The following Discord members have not been verified, and such will be skipped:\n%s" (joinStr "\n" $notNicked))}}
+	{{end}}
+{{end}}
+
+{{editMessage nil $x "Retrieved the role set for every user. Now updating Roblox group ranks... "}}
+{{$noRobloxAccount := cslice}}
+{{$failedSettingRank := cslice}}
+{{range $member, $rankSet := $memberRankSets}}
+	{{$robloxMember := getRobloxUserByUsername $member}}
+	{{if not $robloxMember}}
+		{{$noRobloxAccount = $noRobloxAccount.Append $member}}
+		{{continue}}
+	{{end}}
+	{{$returnedRole := updateMemberRole (toString $group.ID) (toString $robloxMember.ID) $rankSet.Roblox}}
+	{{if not $returnedRole}}
+		{{$failedSettingRank = $failedSettingRank.Append $member}}
+		{{continue}}
+	{{end}}
+	{{template "logPromotion" (sdict "Member" $member "Role" $returnedRole.Name "MemberPFP" ($robloxMember.GetUserThumbnailURI nil))}}
+{{end}}
+{{if or $noRobloxAccount $failedSettingRank}}
+	{{if $noRobloxAccount}}
+		{{$errMessage = $errMessage.Append (print "Failed retriving the following Roblox users, as such they were skipped:\n%s" (joinStr "\n" $noRobloxAccount))}}
+	{{end}}
+	{{if $failedSettingRank}}
+		{{$errMessage = $errMessage.Append (printf "The following Roblox members were not updated for one of the following reasons: are they in the group or did they already have the correct role?\n%s" (joinStr "\n" $failedSettingRank))}}
+	{{end}}
+{{end}}
+
+{{$replyMessage := "Done."}}
+{{if $errMessage}}
+	{{$replyMessage = printf "%s\n\n%s" $replyMessage (joinStr "\n" $errMessage)}}
+{{end}}
+{{sendMessage nil $replyMessage}}
+
+{{define "logPromotion"}}
+	{{$logEmbed := sdict
+		"title" "Rank updated"
+		"author" (sdict
+			"name" .Member
+			"icon_url" .MemberPFP
+		)
+		"description" (printf "%s added to the role `%s`" .Member .Role)
+		"color" 0x650678
+	}}
+	{{sendMessage 1393462324920057886 (cembed $logEmbed)}}
+{{end}}
