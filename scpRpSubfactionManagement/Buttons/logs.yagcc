@@ -66,6 +66,33 @@
 
 {{/* Send deployment log form */}}
 {{if eq .StrippedID "SubmitDLog"}}
+    {{$rank := ""}}
+	{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+	{{range $_, $role := .Member.Roles}}
+		{{- range $_, $roleID := $rankRoles -}}
+			{{if ne $role $roleID}}
+				{{continue}}
+			{{end}}
+			{{$rank = getRole $roleID}}
+			{{break}}
+		{{end}}
+	{{end}}
+    {{$logs := (dbGet 0 "trainingLogs").Value}}
+	{{$userLogsAtRank := cslice}}
+	{{range $logs}}
+		{{if ne .User.ID $.User.ID}}
+			{{continue}}
+		{{end}}
+		{{if ne (toInt .Type) (toInt $rank.ID)}}
+			{{continue}}
+		{{end}}
+		{{$userLogsAtRank = $userLogsAtRank.Append .}}
+	{{end}}
+	{{if and (not (hasRoleID 1375378431411228755)) (not $userLogsAtRank)}}
+        {{$x := sendResponseRetID nil (complexMessage "content" (printf "You've not completed the training for this role, this deployment will not count towards your quota.") "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+		{{return}}
+	{{end}}
     {{$fields := cslice
         (sdict "label" "ROBLOX username of deployment host" "placeholder" "NONE if self-deployment" "required" true "max_length" 50 "style" 1)
         (sdict "label" "Deployment type" "placeholder" "Self/Official" "required" true "max_length" 15 "style" 1)
