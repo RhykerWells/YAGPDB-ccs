@@ -93,7 +93,7 @@
 	{{end}}
 	{{$value = (reReplace ` \|.*` (getMember $value).Nick "")}}
     {{(index $embed.Fields 0).Set "Value" $value}}
-{{else if or (and (eq (lower .Cmd) "-etlog")) (eq $option "type") (and (eq (lower .Cmd) "-edlog") (eq $option "rank"))}}
+{{else if or (and (eq (lower .Cmd) "-etlog") (eq $option "type")) (and (eq (lower .Cmd) "-edlog") (eq $option "rank"))}}
 	{{if not (reFind `\b(riftling|scout|operative|seeker|lance|agent|relay)\b` (lower $value))}}
 		{{sendMessage nil (printf "Invalid `Value` argument provided.\n\n```%s <ID:Number> <Option> <Value>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`" .Cmd)}}
 		{{return}}
