@@ -9,7 +9,7 @@
 	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
 */}}
 
-{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)` .CCTrigger}}
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
 {{if not (reFind $trigger .Message.Content)}}
 	{{return}}
 {{end}}

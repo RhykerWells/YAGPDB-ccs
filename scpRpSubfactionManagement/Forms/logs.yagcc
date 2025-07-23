@@ -223,5 +223,61 @@
         "description" (printf "%s automatically promoted based on rank requirements to <@&%d> by. Previous rank was <@&%d>" $targetMember.User.Mention ($rankRoles.Get $rank) .CurrentRank.ID)
         "color" (getRole ($rankRoles.Get $rank)).Color
     }}
+    {{template "updateRobloxRank" (sdict "Member" $targetMember)}}
     {{sendMessage 1384142646536048740 (cembed $logEmbed)}}
+{{end}}
+{{define "updateRobloxRank"}}
+    {{$discordRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
+    {{$mappedRoles := sdict "riftling" (sdict "Discord" 0 "Roblox" "") "scout" (sdict "Discord" 0 "Roblox" "") "operative" (sdict "Discord" 0 "Roblox" "") "seeker" (sdict "Discord" 0 "Roblox" "") "lance" (sdict "Discord" 0 "Roblox" "") "relay" (sdict "Discord" 0 "Roblox" "") "threader" (sdict "Discord" 0 "Roblox" "") "controller" (sdict "Discord" 0 "Roblox" "") "overseer" (sdict "Discord" 0 "Roblox" "") "marshal" (sdict "Discord" 0 "Roblox" "") "warden" (sdict "Discord" 0 "Roblox" "")}}
+    {{$group := getRobloxGroupByID 36098297}}
+    {{$robloxRoles := $group.GetRoles}}
+    {{range $k, $roleConfig := $mappedRoles}}
+        {{$roleConfig.Set "Discord" ($discordRoles.Get $k)}}
+        {{range $robloxRoles}}
+            {{if not (in (lower .Name) $k)}}
+                {{continue}}
+            {{end}}
+            {{$roleConfig.Set "Roblox" (toString .ID)}}
+        {{end}}
+    {{end}}
+    {{$rankSet := sdict}}
+    {{range $mappedRoles}}
+		{{if not (in .Member.Roles .Discord)}}
+			{{continue}}
+		{{end}}
+		{{$rankSet = .}}
+	{{end}}
+    {{$robloxMember := getRobloxUserByUsername (reReplace ` \|.*` .Member.Nick "")}}
+	{{$returnedRole := updateMemberRole (toString $group.ID) (toString $robloxMember.ID) $rankSet.Roblox}}
+	{{if not $returnedRole}}
+        {{template "logGroupRankChange" (sdict "Failed" true "Member" .robloxMember.Username "MemberPFP" ($robloxMember.GetUserThumbnailURI nil) "Role" nil)}}
+		{{return}}
+	{{end}}
+    {{template "logGroupRankChange" (sdict "Failed" false "Member" .robloxMember.Username "MemberPFP" ($robloxMember.GetUserThumbnailURI nil) "Role" $returnedRole.Name)}}
+{{end}}
+{{define "logGroupRankChange"}}
+    {{if .Failed}}
+        {{sendMessage 1393462324920057886 (printf "%v %v" .Member .MemberPFP)}}
+        {{$logEmbed := sdict
+            "title" "Rank failed to update"
+            "author" (sdict
+                "name" .Member
+                "icon_url" .MemberPFP
+            )
+            "description" (printf "%s was not updated" .Member)
+            "color" 0x650678
+        }}
+        {{sendMessage 1393462324920057886 (cembed $logEmbed)}}
+        {{return}}
+    {{end}}
+    {{$logEmbed := sdict
+        "title" "Rank updated"
+        "author" (sdict
+            "name" .Member
+            "icon_url" .MemberPFP
+        )
+        "description" (printf "%s was added to the role `%s`" .Member .Role)
+        "color" 0x650678
+    }}
+    {{sendMessage 1393462324920057886 (cembed $logEmbed)}}
 {{end}}
