@@ -1,0 +1,75 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `subdiv-?(add|remove|list|refresh)`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{/* Initiates variables */}}
+{{$settings := or (dbGet 0 "managementSettings").Value sdict}}
+{{$subDivs := or $settings.SubDivisions sdict}}
+{{$color := or $settings.Colour 0x231068}}
+{{$icon := print "https://cdn.discordapp.com/icons/" .Guild.ID "/" .Guild.Icon "." (or (and (reFind "a_" .Guild.Icon) "gif") "png") "?size=1024"}}
+
+{{$embed := sdict "author" (sdict "name" .Guild.Name "icon_url" $icon) "color" $color "footer" (sdict "text" "Maintained and written by ranger_4297/RhykerW (ID: 765316548516380732)" "icon_url" "https://rhykerw.com/assets/images/logo.png")}}
+{{if reFind `add` .Cmd}}
+    {{if not .CmdArgs}}
+        {{sendMessage nil (printf "Missing required arguments.\n\n```subdiv-add <Name:Text> <Role:Mention>```")}}
+        {{return}}
+    {{end}}
+    {{$name := (index .CmdArgs 0) | upper}}
+    {{if not (gt (len .CmdArgs) 1)}}
+        {{sendMessage nil (printf "Missing required arguments.\n\n```subdiv-add <Name:Text> <Role:Mention>```")}}
+        {{return}}
+    {{end}}
+    {{$roleID := (index .CmdArgs 1)}}
+    {{if (ne (len .Message.MentionRoles) 1)}}
+        {{sendMessage nil (printf "Invalid `Role` argument provided. Please ensure it is a role mention.\n\n```subdiv-add <Name:Text> <Role:Mention>```")}}
+        {{return}}
+    {{end}}
+    {{if eq (len .Message.MentionRoles) 1}}
+        {{$roleID = (index .Message.MentionRoles 0)}}
+    {{end}}
+    {{$subDivs.Set $name $roleID}}
+    {{$embed.Set "title" "Subdivision added"}}
+    {{$embed.Set "description" (printf "Successfully added %s (%s) to the list of subdivisions." $name (getRoleID $roleID).Mention)}}
+    {{sendMessage nil (cembed $embed)}}
+{{else if reFind `remove` .Cmd}}
+    {{if not .CmdArgs}}
+        {{sendMessage nil (printf "Missing required arguments.\n\n```subdiv-remove <Name:Text>```")}}
+        {{return}}
+    {{end}}
+    {{$name := (index .CmdArgs 0) | upper}}
+    {{if not ($subDivs.Get $name)}}
+        {{sendMessage nil (printf "This subdivision doesn't exist.")}}
+        {{return}}
+    {{end}}
+    {{$subDivs.Del $name}}
+    {{$embed.Set "title" "Subdivision removed"}}
+    {{$embed.Set "description" (printf "Successfully removed %s from the list of subdivisions." $name)}}
+    {{sendMessage nil (cembed $embed)}}
+{{else if reFind `list` .Cmd}}
+    {{if eq (len $subDivs) 0}}
+        {{sendMessage nil (printf "There are no sub divisions. Add some with `%ssubdiv-add <Name:Text> <Role:Mention>`." .ServerPrefix)}}
+        {{return}}
+    {{end}}
+    {{$fields := cslice}}
+    {{range $name, $role := $subDivs}}
+        {{$fields = $fields.Append (printf "**%s**\n<@&%d>" $name $role)}}
+    {{end}}
+    {{$embed.Set "title" "Subdivision list"}}
+    {{$embed.Set "description" (joinStr "\n\n" $fields)}}
+    {{sendMessage nil (cembed $embed)}}
+{{else}}
+{{end}}
+{{$settings.Set "SubDivisions" $subDivs}}
+{{dbSet 0 "managementSettings" $settings}}
