@@ -16,7 +16,7 @@
 
 {{/* Initiates variables */}}
 {{$settings := or (dbGet 0 "managementSettings").Value sdict}}
-{{$color := or $settings.Colour 0x231068}}
+{{$color := or $settings.Colour 0x3D1585}}
 {{$icon := print "https://cdn.discordapp.com/icons/" .Guild.ID "/" .Guild.Icon "." (or (and (reFind "a_" .Guild.Icon) "gif") "png") "?size=1024"}}
 
 {{if reFind `(view)?-?settings` .Cmd}}
