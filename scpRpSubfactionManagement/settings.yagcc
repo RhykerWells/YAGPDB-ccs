@@ -1,0 +1,149 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `(view)?-?settings|set`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{/* Initiates variables */}}
+{{$settings := or (dbGet 0 "managementSettings").Value sdict}}
+{{$color := or $settings.Colour 0x231068}}
+{{$discordRoles := (dbGet 0 "discordRoles").Value}}
+{{$icon := print "https://cdn.discordapp.com/icons/" .Guild.ID "/" .Guild.Icon "." (or (and (reFind "a_" .Guild.Icon) "gif") "png") "?size=1024"}}
+
+{{if reFind `(view)?-?settings` .Cmd}}
+    {{$hiddenAPIKey := "Not set"}}
+    {{if $settings.ApiKey}}
+        {{$hiddenAPIKey = printf "%s***" (slice $settings.ApiKey 0 7)}}
+    {{end}}
+    {{$group := "Not set"}}
+    {{if $settings.Group}}
+        {{$group = getRobloxGroupByID $settings.ApiKey $settings.Group}}
+    {{end}}
+    {{$nicknameFormat := or $settings.NicknameFormat "Not set"}}
+    {{$settingsEmbed := sdict
+        "title" "Settings"
+        "author" (sdict
+            "name" .Guild.Name
+            "icon_url" $icon
+        )
+        "description" (printf "**__API Key__**\n`%s`\n\n**__Roblox Group__**\n`%s`\n\n**__Nickname format__**\n`%s`\n> Please ensure nicknames follow this format in order for the bot to run Roblox group modifications effectively.\n\n**__Default embed colour__**\n`%v`\n\n> For the rank config, please run\n```go\n{{range (dbGet 0 \"discordRoles\").Value}}{{.}}{{end}}```\nTo edit these, run `%sset <Setting> <Value>`" $hiddenAPIKey $group.Groupname $nicknameFormat $color .ServerPrefix)
+        "color" $color
+        "footer" (sdict
+            "text" "Maintained and written by ranger_4297/RhykerW (ID: 765316548516380732)"
+            "icon_url" "https://rhykerw.com/assets/images/logo.png"
+        )
+    }}
+    {{sendMessage nil (cembed $settingsEmbed)}}
+{{else}}
+    {{$settingOptions := cslice "apiKey" "robloxGroup" "ranks" "nicknameFormat" "baseEmbedColour"}}
+    {{if not .CmdArgs}}
+        {{sendMessage nil (printf "Missing required arguments.\n\n```set <Setting> <Value>```\nAvailable settings: `%s`" (joinStr "`, `" $settingOptions))}}
+        {{return}}
+    {{end}}
+    {{$setting := (index .CmdArgs 0) | lower}}
+    {{if not (inFold $settingOptions $setting)}}
+        {{sendMessage nil (printf "Invalid `Setting` argument.\n\n```set <Setting> <Value>```\nAvailable settings: `%s`" (joinStr "`, `" $settingOptions))}}
+        {{return}}
+    {{end}}
+    {{if eq $setting "apikey"}}
+        {{if not (gt (len .CmdArgs) 1)}}
+            {{sendMessage nil (printf "No `Value` provided.\n\n```set apiKey <Value:Text>```\nPlease go [here](https://create.roblox.com/dashboard/credentials?activeTab=ApiKeysTab) and create an API key with the following permissions:\n`group:read`, `group:write`, `legacy-group:manage`, `legacy-user:manage`, `user.advanced:read`, `user.social:read`\nDo **not** restrict it to an IP.")}}
+            {{return}}
+        {{end}}
+        {{$apiKey := joinStr " " (slice .CmdArgs 1)}}
+        {{$devAccount := getRobloxUserByID $apiKey 369780411}}
+        {{if not $devAccount}}
+            {{sendMessage nil (printf "Failed getting developer account (www.roblox.com/users/369780411).\nIs the API key valid?")}}
+            {{return}}
+        {{end}}
+        {{$confirmationEmbed := sdict
+            "title" "Retrieved developer account"
+            "author" (sdict
+                "name" .Guild.Name
+                "icon_url" $icon
+            )
+            "description" (printf "Successfully retrieved the developer account `%s` and set the API key" $devAccount.Username)
+            "thumbnail" (sdict
+                "url" ($devAccount.GetUserThumbnailURI nil)
+            )
+            "color" $color
+        }}
+        {{$settings.Set "ApiKey" $apiKey}}
+        {{sendMessage nil (cembed $confirmationEmbed)}}
+    {{else if eq $setting "robloxgroup"}}
+        {{if not (gt (len .CmdArgs) 1)}}
+            {{sendMessage nil (printf "No `Value` provided.\n\n```set robloxGroup <Value:Int>```\nPlease use the ID of your Roblox group.\nFor example, www.roblox.com/communities/36098297/Task-Force-Iota-4-Veil-Runners would be `36098297`.")}}
+            {{return}}
+        {{end}}
+        {{$groupID := index .CmdArgs 1}}
+        {{if not (toInt $groupID)}}
+            {{sendMessage nil (printf "Invalid `Value` provided.\n\n```set robloxGroup <Value:Int>```\nPlease use the ID of your Roblox group.\nFor example, www.roblox.com/communities/36098297/Task-Force-Iota-4-Veil-Runners would be `36098297`.")}}
+            {{return}}
+        {{end}}
+        {{$devGroup := getRobloxGroupByID $settings.ApiKey 36098297}}
+        {{if not $devGroup}}
+            {{sendMessage nil (printf "Failed getting developers group (www.roblox.com/communities/36098297).\nIs the API key valid?")}}
+            {{return}}
+        {{end}}
+        {{$color := or $settings.Colour 0x231068}}
+        {{$confirmationEmbed := sdict
+            "title" "Retrieved developers group"
+            "author" (sdict
+                "name" .Guild.Name
+                "icon_url" $icon
+            )
+            "description" (printf "Successfully set the Roblox group to `%s`" $devGroup.Groupname)
+            "thumbnail" (sdict
+                "url" ($devGroup.GetGroupIcon false false)
+            )
+            "color" $color
+        }}
+        {{$settings.Set "Group" (toInt $groupID)}}
+        {{sendMessage nil (cembed $confirmationEmbed)}}
+    {{else if eq $setting "nicknameformat"}}
+        {{if not (gt (len .CmdArgs) 1)}}
+            {{sendMessage nil (printf "No `Value` provided.\n\n```set nicknameFormat <Value:String>```\nPlease use [regex101.com](https://regex101.com/) with the GoLang flavour and create a regex to trim anything but the Roblox username from your nickname.")}}
+            {{return}}
+        {{end}}
+        {{$regex := joinStr "" (slice  .CmdArgs 1)}}
+        {{$confirmationEmbed := sdict
+            "title" "Discord nickname format"
+            "description" (printf "Successfully set the Discord nickname format to `%s`" $regex)
+            "color" $color
+        }}
+        {{$settings.Set "NicknameFormat" $regex}}
+        {{sendMessage nil (cembed $confirmationEmbed)}}
+    {{else if eq $setting "baseembedcolour"}}
+        {{if not (gt (len .CmdArgs) 1)}}
+            {{sendMessage nil (printf "No `Value` provided.\n\n```set baseEmbedColour <Value:String>```\nPlease use a HEXACDECIMAL colour code.")}}
+            {{return}}
+        {{end}}
+        {{$hex := (printf "%06s" "3D1585") | upper}}
+        {{$dec := 0}}
+        {{range $k, $v := split $hex ""}}
+            {{- $multiplier := index (cslice 1048576 65536 4096 256 16 1 ) $k}}
+            {{- $num := or ((sdict "A" 10 "B" 11 "C" 12 "D" 13 "E" 14 "F" 15).Get $v) $v}}
+            {{- $dec = add $dec (mult $num $multiplier) -}}
+        {{end}}
+        {{$confirmationEmbed := sdict
+            "title" "Discord nickname format"
+            "description" (printf "Successfully set the base embed colour to `%v`" $dec)
+            "color" $dec
+        }}
+        {{$settings.Set "Colour" $dec}}
+        {{sendMessage nil (cembed $confirmationEmbed)}}
+    {{else if eq $setting "ranks"}}
+        {{sendMessage nil "Please ask ranger_4297 to set this up as he will need to ensure that each rank name correlates to the Roblox ranks "}}
+    {{end}}
+    {{dbSet 0 "managementSettings" $settings}}
+{{end}}
