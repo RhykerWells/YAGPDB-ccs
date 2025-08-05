@@ -21,7 +21,7 @@
 			{{return}}
 		{{end}}
 		{{$reason := joinStr " " (slice .CmdArgs 0)}}
-		{{$embed := sdict "title" (printf "Emergency deployment notice") "description" (printf "Host: %s\n\nAttention all units, Iota-4 is deploying to Site-416 immediately for the following reason:\n%s\n\nPlease join and STS within the MTF rally hall.\n\n> Please note if you attempt to deploy without the proper training for your rank, you will be dismissed." .User.Mention $reason) "color" 0x650678}}
+		{{$embed := sdict "title" (printf "Emergency deployment notice") "description" (printf "Host: %s\n\nAttention all units, Iota-4 is deploying to Site-416 immediately for the following reason:\n%s\n\nPlease join and STS within the MTF rally hall.\n\n> This will not count towards your promotion criteria and you will be unable to log this if you have not **PASSED** a training for your role." .User.Mention $reason) "color" 0x650678}}
 		{{sendMessageNoEscape 1391567579813908633 (complexMessage "content" (printf "<@&1375381774204665917>") "embed" (cembed $embed))}}
 		{{return}}
 	{{end}}
@@ -35,7 +35,7 @@
 		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes")}}
 		{{return}}
 	{{end}}
-	{{$embed := sdict "title" (printf "Deployment notice") "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You cannot attend if you have not PASSED a training for your role**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix) "color" 0x650678}}
+	{{$embed := sdict "title" (printf "Deployment notice") "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n> This will not count towards your promotion criteria and you will be unable to log this if you have not **PASSED** a training for your role.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix) "color" 0x650678}}
 	{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" "iota_joinDeployment" "style" "success") (cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedDeployment" "style" "secondary" "disabled" true)}}
 	{{$x := sendMessageNoEscapeRetID 1391567579813908633 (complexMessage "content" (printf "<@&1375381774204665917>") "embed" (cembed $embed) "components" $components)}}
 	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "DeploymentMsg" $x)}}
