@@ -51,8 +51,7 @@
 	{{end}}
 	{{$embed := sdict "title" (printf "%s training" $trainingRank.Name) "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You cannot attend if you have PASSED a %s training**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix $trainingRank.Mention) "color" $trainingRank.Color}}
 	{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" (printf "iota_joinTraining-%d" $trainingRank.ID) "style" "success") (cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)}}
-	{{$x := sendMessageNoEscapeRetID nil (complexMessage "content" (printf "%s" $trainingRank.Mention) "embed" (cembed $embed) "components" $components)}}
-	{{return}}
+	{{$x := sendMessageNoEscapeRetID 1391567531046863041 (complexMessage "content" (printf "%s" $trainingRank.Mention) "embed" (cembed $embed) "components" $components)}}
 	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "TrainingMsg" $x "TrainingRole" $trainingRank)}}
 	{{dbSetExpire $x "training" cslice (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
 	{{sendMessage nil (printf "You've successfully started a %s training for <t:%d:f>. View the message [here](https://discord.com/channels/1375370805575155782/1391567531046863041/%d)" $trainingRank.Name (currentTime.Add (toDuration $duration)).Unix $x)}}
