@@ -1,0 +1,84 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Message Component`
+	Trigger: `\A(?i)iota_subdivisionSelect`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{/* Initiates variables */}}
+{{$availableRanks := cslice "seeker"}}
+{{$settings := or (dbGet 0 "managementSettings").Value sdict}}
+{{$color := or $settings.Colour 0x3D1585}}
+{{$icon := print "https://cdn.discordapp.com/icons/" .Guild.ID "/" .Guild.Icon "." (or (and (reFind "a_" .Guild.Icon) "gif") "png") "?size=1024"}}
+
+{{/* Initial selection button */}}
+{{if dbGet 0 "disableDivisions"}}
+	{{$x := sendResponseRetID nil (complexMessage "content" (printf "This feature hasn't been enabled yet...") "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{return}}
+{{end}}
+{{if reFind `Start` .StrippedID}}
+	{{$roleCheck := 1}}
+	{{range $availableRanks}}
+		{{if (hasRoleID ($settings.Ranks.Get .))}}
+			{{$roleCheck = 0}}
+			{{break}}
+		{{end}}
+	{{end}}
+	{{$subDivs := or $settings.SubDivisions sdict}}
+	{{$inSubDivision := 0}}
+	{{$options := cslice}}
+	{{range $subdivName, $subdivData := $subDivs}}
+		{{if hasRoleID $subdivData.ID}}
+			{{$inSubDivision = 1}}
+			{{break}}
+		{{end}}
+		{{$options = $options.Append (sdict "label" $subdivName "value" $subdivName)}}
+	{{end}}
+	{{if or $roleCheck $inSubDivision}}
+		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You cannot join a subdivision any more.") "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+		{{return}}
+	{{end}}
+	{{$subdivisionMenu := cmenu
+		"type" "text"
+		"placeholder" "Select your subdivision"
+		"custom_id" "iota_subdivisionSelect-Menu"
+		"options" $options
+		"max_values" 1
+	}}
+	{{$x := sendResponseRetID nil (complexMessage "menus" $subdivisionMenu "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+{{end}}
+
+{{if reFind `Menu` .StrippedID}}
+	{{$subDivs := or $settings.SubDivisions sdict}}
+	{{$subDivName := (index .Values 0)}}
+	{{$selectedSubDiv := $subDivs.Get $subDivName}}
+	{{$confirmComponent := cslice
+		(cbutton 
+			"label" "Confirm"
+			"custom_id" (printf "iota_subdivisionSelect-Confirm-%s" $subDivName)
+			"style" "primary"
+		)
+	}}
+	{{$x := sendResponseRetID nil (complexMessage "content" (printf "Please confirm you want to join the %s sub division. You **cannot** go back." $subDivName) "components" $confirmComponent "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+{{end}}
+
+{{if reFind `Confirm` .StrippedID}}
+	{{$subDivName := reReplace `-[A-z]+-` .StrippedID ""}}
+	{{$subDivs := or $settings.SubDivisions sdict}}
+	{{$selectedSubDiv := $subDivs.Get $subDivName}}
+	{{$echelonRole := (index $selectedSubDiv.Roles 6)}}
+	{{$starterRole := (index $selectedSubDiv.Roles 8)}}
+	{{addRoleID $echelonRole}}
+	{{addRoleID $starterRole}}
+	{{addRoleID $selectedSubDiv.ID}}
+	{{$x := sendResponseRetID nil (complexMessage "content" (printf "You have joined %s." $subDivName) "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+{{end}}
