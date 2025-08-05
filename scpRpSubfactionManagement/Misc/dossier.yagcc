@@ -14,75 +14,57 @@
 	{{return}}
 {{end}}
 
+{{$settings := (dbGet 0 "managementSettings").Value}}
+{{$subfactionName := "veilrunners"}}
+
 {{$members := getMembers}}
-{{$membersInRoles := sdict "veilrunners" cslice "riftlings" cslice "scouts" cslice "operatives" cslice "seekers" cslice "lances" cslice "relays" cslice "threaders" cslice "controllers" cslice "overseers" cslice "marshals" cslice "wardens" cslice}}
+{{$membersInRoles := sdict $subfactionName cslice}}
+{{range $roleName, $_ := $settings.Ranks}}
+    {{$membersInRoles.Set $roleName cslice}}
+{{end}}
 {{range $members}}
+    {{$member := .}}
     {{if in .Roles 1375381774204665917}}
-        {{$currentUsers := $membersInRoles.veilrunners}}
+        {{$currentUsers := $membersInRoles.Get $subfactionName}}
         {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "veilrunners" $currentUsers}}
+        {{$membersInRoles.Set $subfactionName $currentUsers}}
     {{end}}
-    {{if in .Roles 1375378503024902164}}
-        {{$currentUsers := $membersInRoles.riftlings}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "riftlings" $currentUsers}}
-    {{else if in .Roles 1375436671948165143}}
-        {{$currentUsers := $membersInRoles.scouts}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "scouts" $currentUsers}}
-    {{else if in .Roles 1375378464336773142}}
-        {{$currentUsers := $membersInRoles.operatives}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "operatives" $currentUsers}}
-    {{else if in .Roles 1375378431411228755}}
-        {{$currentUsers := $membersInRoles.seekers}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "seekers" $currentUsers}}
-    {{else if in .Roles 1375435912116437073}}
-        {{$currentUsers := $membersInRoles.lances}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "lances" $currentUsers}}
-    {{else if in .Roles 1375378281078984704}}
-        {{$currentUsers := $membersInRoles.relays}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "relays" $currentUsers}}
-    {{else if in .Roles 1375436353202032660}}
-        {{$currentUsers := $membersInRoles.threaders}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "threaders" $currentUsers}}
-    {{else if in .Roles 1375378044767834133}}
-        {{$currentUsers := $membersInRoles.controllers}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "controllers" $currentUsers}}
-    {{else if in .Roles 1375377969492787220}}
-        {{$currentUsers := $membersInRoles.overseers}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "overseers" $currentUsers}}
-    {{else if in .Roles 1375377873241772095}}
-        {{$currentUsers := $membersInRoles.marshals}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "marshals" $currentUsers}}
-    {{else if in .Roles 1375377194330755113}}
-        {{$currentUsers := $membersInRoles.wardens}}
-        {{$currentUsers = $currentUsers.Append .User.ID}}
-        {{$membersInRoles.Set "wardens" $currentUsers}}
+    {{range $roleName, $roleID := $settings.Ranks}}
+        {{if in $member.Roles $roleID}}
+            {{$currentUsers := $membersInRoles.Get $roleName}}
+            {{$currentUsers = $currentUsers.Append $member.User.ID}}
+            {{$membersInRoles.Set $roleName $currentUsers}}
+        {{end}}
     {{end}}
 {{end}}
 
 {{$personnelEmbed := sdict "title" "Task Force Iota-4 | Personnel dossier" "color" 0x650678}}
 {{if .CmdArgs}}
-    {{$rankRoles := cslice "riftling" "scout" "operative" "seeker" "lance" "relay" "threader" "controller" "overseer" "marshal" "warden"}}
     {{$rank := index .CmdArgs 0 | lower}}
-    {{if not (in $rankRoles $rank)}}
-        {{sendMessage nil "Available ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`, `Threader`, `Controller`, `Overseer`, `Marshal`, `Warden`"}}
+    {{$ranks := cslice}}
+	{{range $settings.RankOrder}}
+		{{$ranks = $ranks.Append (title .)}}
+	{{end}}
+    {{if not (inFold $ranks $rank)}}
+        {{sendMessage nil (printf "Invalid rank given. Available ranks: `%s`" (joinStr "`, `" $ranks))}}
+        {{return}}
     {{end}}
-    {{$rank = printf "%ss" $rank}}
     {{$membersInRole := cslice}}
     {{range $membersInRoles.Get $rank}}
         {{$membersInRole = $membersInRole.Append (printf "<@%d>" .)}}
     {{end}}
     {{$personnelEmbed.Set "description" (printf "%s\n\nCount: %d" (joinStr "\n" $membersInRole) (len $membersInRole))}}
 {{else}}
-    {{$personnelEmbed.Set "description" (printf "<@&1375377194330755113>\n%d\n<@&1375377873241772095>\n%d\n<@&1375377969492787220>\n%d\n<@&1375378044767834133>\n%d\n<@&1375436353202032660>\n%d\n<@&1375378281078984704>\n%d\n<@&1375435912116437073>\n%d\n<@&1375378431411228755>\n%d\n<@&1375378464336773142>\n%d\n<@&1375436671948165143>\n%d\n<@&1375378503024902164>\n%d\n\nTotal number of Veilrunners (cached): %d\nTotal number of server members (cached): %d" (len $membersInRoles.wardens) (len $membersInRoles.marshals) (len $membersInRoles.overseers) (len $membersInRoles.controllers) (len $membersInRoles.threaders) (len $membersInRoles.relays) (len $membersInRoles.lances) (len $membersInRoles.seekers) (len $membersInRoles.operatives) (len $membersInRoles.scouts) (len $membersInRoles.riftlings) (len $membersInRoles.veilrunners) (len $members))}}
+    {{$description := cslice}}
+    {{$reversed := cslice}}
+    {{range $i, $_ := (seq 0 (len $settings.RankOrder))}}
+        {{$revIndex := sub (sub (len $settings.RankOrder) 1) $i}}
+        {{$reversed = $reversed.Append (index $settings.RankOrder $revIndex)}}
+    {{end}}
+	{{range $reversed}}
+        {{$description = $description.Append (printf "<@&%d>\n%d" ($settings.Ranks.Get .) (len ($membersInRoles.Get .)))}}
+    {{end}}
+    {{$description = $description.Append (printf "\nTotal number of %s (cached): %d\nTotal number of server members (cached): %d" (title $subfactionName) (len ($membersInRoles.Get $subfactionName)) (len $members))}}
+    {{$personnelEmbed.Set "description" (joinStr "\n" $description)}}
 {{end}}
 {{sendMessage nil (cembed $personnelEmbed)}}
