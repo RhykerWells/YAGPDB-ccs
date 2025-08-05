@@ -26,81 +26,112 @@
 {{end}}
 {{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
 
-{{$rankProfiles := sdict
-    "Riftling" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Riftling"
-        "loadout" "aug,m9"
+{{$morphProfiles := sdict
+    "FA" (sdict
+        "permmorph" "vest"
+        "permshirt" "9326560199"
+        "permpants" "4607034531"
+        "permhat" "0,qnvg 97 37 209, 13770147630,13517980810,12201396170,16269019420,12201396170,8087415055,109131663471317,18970779951,18970871297,12383357842,8087415055,holster"
+        "permcrtag" "61 21 133"
     )
-    "Rift Scout" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Rift Scout"
-        "loadout" "aug,m9,tracker"
+    "EU" (sdict
+        "permmorph" "vest"
+        "permshirt" "9326560199"
+        "permpants" "4607034531"
+        "permhat" "0,qnvg 97 37 209,13770147630,12201396170,13368999418,16269019420,14353960778,11515333598,109131663471317,18970779951,18970871297,12383357842,8087415055,holster,exoskeleton"
+        "permcrtag" "61 21 133"
     )
-    "Veil Operative" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Veil Operative"
-        "loadout" "fn,m9,shield"
+    "MC" (sdict
+        "permmorph" "vest"
+        "permshirt" "9326560199"
+        "permpants" "4607034531"
+        "permhat" "13770147630,4420280348,14807833998,13368999418,14353960778,11515333598,109131663471317,18970779951,18970871297,12383357842,holster,exoskeleton"
+        "permcrtag" "61 21 133"
     )
-    "Veil Seeker" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Seeker"
-        "loadout" "aug,m9,tablet"
-    )
-    "Veil Lance" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Lance"
-        "loadout" "arx,m9"
-    )
-    "Echo Relay" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Echo Relay"
-        "loadout" "arx,m9"
-    )
-    "Veil Threader" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Veil Threader"
-        "loadout" "fn,m9,spas"
-    )
-    "Drift Controller" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Controller"
-        "loadout" "fn,m9,spas"
-    )
-    "Drift Overseer" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Overseer"
-        "loadout" "fn,m9,spas"
-    )
-    "Echo Marshal" (sdict
-        "rtag" "[VC] Iota-4 | \"Veilrunners\" | Echo Marshal"
-        "loadout" "hellion,m9,spas"
-    )
-    "Warden of the Veil" (sdict
-        "rtag" "[VC] Iota-4 | \"Veilrunners\" | Warden of the Veil"
-        "loadout" "hellion,m9,spas"
+    "VC" (sdict
+        "permmorph" "vest"
+        "permshirt" "9326560199"
+        "permpants" "4607034531"
+        "permhat" "13770147630,4420280348,14807833998,13368999418,4507911797,11515333598,109131663471317,18970779951,18970871297,12383357842,holster,exoskeleton"
+        "permcrtag" "61 21 133"
     )
 }}
 
-{{$selectRankProfile := sdict}}
+{{$rankProfiles := sdict
+    "Riftling" (sdict
+        "permrtag" "[FA] Iota-4 | \"Veilrunners\" | Riftling"
+        "startergear" "aug,m9"
+        "morph" $morphProfiles.FA
+    )
+    "Rift Chaser" (sdict
+        "permrtag" "[FA] Iota-4 | \"Veilrunners\" | Rift Chaser"
+        "startergear" "aug,m9"
+        "morph" $morphProfiles.FA
+    )
+    "Rift Operative" (sdict
+        "permrtag" "[FA] Iota-4 | \"Veilrunners\" | Rift Operative"
+        "startergear" "aug,m9,shield"
+        "morph" $morphProfiles.FA
+    )
+    "Veil Seeker" (sdict
+        "permrtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Seeker"
+        "startergear" "aug,arx,m9"
+        "morph" $morphProfiles.EU
+    )
+    "Veil Lance" (sdict
+        "permrtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Lance"
+        "startergear" "aug,arx,m9"
+        "morph" $morphProfiles.EU
+    )
+    "Veil Piercer" (sdict
+        "permrtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Piercer"
+        "startergear" "aug,arx,m9"
+        "morph" $morphProfiles.EU
+    )
+    "Drift Threader" (sdict
+        "permrtag" "[MC] Iota-4 | \"Veilrunners\" | Drift Threader"
+        "startergear" "aug,fn,spas,m9"
+        "morph" $morphProfiles.MC
+    )
+    "Drift Controller" (sdict
+        "permrtag" "[MC] Iota-4 | \"Veilrunners\" | Drift Controller"
+        "startergear" "aug,fn,spas,m9"
+        "morph" $morphProfiles.MC
+    )
+    "Drift Overseer" (sdict
+        "permrtag" "[MC] Iota-4 | \"Veilrunners\" | Drift Overseer"
+        "startergear" "aug,fn,spas,m9"
+        "morph" $morphProfiles.MC
+    )
+    "Echo Marshal" (sdict
+        "permrtag" "[VC] Iota-4 | \"Veilrunners\" | Echo Marshal"
+        "startergear" "aug,hellion,spas,m9"
+        "morph" $morphProfiles.MC
+    )
+    "Warden of the Veil" (sdict
+        "permrtag" "[VC] Iota-4 | \"Veilrunners\" | Warden of the Veil"
+        "startergear" "aug,hellion,spas,m9"
+        "morph" $morphProfiles.MC
+    )
+}}
+
+{{$selectedRankProfile := sdict}}
 {{range $targetMember.Roles}}
     {{$role := getRole .}}
     {{range $k, $v := $rankProfiles}}
         {{if eq $role.Name $k}}
-            {{- $selectRankProfile = $v -}}
+            {{- $selectedRankProfile = $v -}}
         {{end}}
     {{end}}
 {{end}}
 
-{{$morph := sdict
-    "permmorph" "vest"
-    "permshirt" "9326560199"
-    "permpants" "4607034531"
-    "permhat" "0,qnvg 97 37 209,13770147630,13517980810,12201396170,16269019420,12201396170,8087415055,109131663471317,18970779951,18970871297,12383357842,holster"
-    "permrtag" $selectRankProfile.rtag
-    "permcrtag" "61 21 133"
-    "permcolornvg" "97 37 209"
-    "startergear" $selectRankProfile.loadout
-}}
-
 {{$morphParts := cslice}}
-{{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhat" "permrtag" "permcrtag" "permcolornvg" "startergear"}}
+{{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhat" "permrtag" "permcrtag" "startergear"}}
 {{range $_, $key := $orderedKeys}}
-    {{$morphParts = $morphParts.Append (printf "%s %s %s" $key $rblxName ($morph.Get $key))}}
+    {{$morphParts = $morphParts.Append (printf "%s %s %s" $key $rblxName (or ($selectedRankProfile.morph.Get $key) ($selectedRankProfile.Get $key)))}}
 {{end}}
 {{$fullMorphPretty := (joinStr "\n" $morphParts)}}
 {{$fullMorphViaRun := (print "run " (joinStr " & " $morphParts))}}
-{{$fullMorph416 := printf "run team %[1]s iota & morph %[1]s i4 & startergear %[1]s %[2]s & ref %[1]s" $rblxName $morph.startergear}}
+{{$fullMorph416 := printf "run team %[1]s iota & morph %[1]s i4 & startergear %[1]s %[2]s & ref %[1]s" $rblxName $selectedRankProfile.startergear}}
 
 {{sendMessage nil (printf "%s's morph\n**Pretty**\n```%s```\n**Run**\n`%s`\n\n**416**\n`%s`" $targetMember.User.Mention $fullMorphPretty $fullMorphViaRun $fullMorph416)}}
