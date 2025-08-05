@@ -2,7 +2,7 @@
 		Made by ranger_4297 (765316548516380732)
 
 	Trigger Type: `Regex`
-	Trigger: `subdiv-?(add|remove|list|refresh)`
+	Trigger: `subdiv-?(add|remove|list|roles|refresh)`
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
@@ -39,9 +39,37 @@
     {{if eq (len .Message.MentionRoles) 1}}
         {{$roleID = (index .Message.MentionRoles 0)}}
     {{end}}
-    {{$subDivs.Set $name $roleID}}
+    {{$subDivData := sdict "ID" $roleID "Roles" cslice}}
+    {{$subDivs.Set $name $subDivData}}
     {{$embed.Set "title" "Subdivision added"}}
     {{$embed.Set "description" (printf "Successfully added %s (%s) to the list of subdivisions." $name (getRoleID $roleID).Mention)}}
+    {{sendMessage nil (cembed $embed)}}
+{{else if reFind `roles` .Cmd}}
+    {{if not .CmdArgs}}
+        {{sendMessage nil (printf "Missing required arguments.\n\n```subdiv-roles <Name:Text> <Roles:Mentions>```")}}
+        {{return}}
+    {{end}}
+    {{$name := (index .CmdArgs 0) | upper}}
+    {{if not ($subDivs.Get $name)}}
+        {{sendMessage nil (printf "This subdivision doesn't exist.")}}
+        {{return}}
+    {{end}}
+    {{if not (gt (len .CmdArgs) 1)}}
+        {{sendMessage nil (printf "Missing required arguments.\n\n```subdiv-roles <Name:Text> <Roles:Mentions>```")}}
+        {{return}}
+    {{end}}
+    {{if and (lt (len .Message.MentionRoles) 1) (gt (len .Message.MentionRoles) 6)}}
+        {{sendMessage nil (printf "Invalid `Roles` argument provided. Please ensure there are 6 role mentions.\n\n```subdiv-roles <Name:Text> <Roles:Mentions>```")}}
+        {{return}}
+    {{end}}
+    {{$subDivData := $subDivs.Get $name}}
+    {{$subDivData.Set "Roles" .Message.MentionRoles}}
+    {{$displayMentions := cslice}}
+    {{range .Message.MentionRoles}}
+        {{$displayMentions = $displayMentions.Append (printf "<@&%v>" .)}}
+    {{end}}
+    {{$embed.Set "title" "Subdivision edited"}}
+    {{$embed.Set "description" (printf "Successfully set the subdivisions roles to the following:\n- %s" (joinStr "\n- " $displayMentions))}}
     {{sendMessage nil (cembed $embed)}}
 {{else if reFind `remove` .Cmd}}
     {{if not .CmdArgs}}
