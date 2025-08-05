@@ -14,15 +14,24 @@
 	{{return}}
 {{end}}
 
+{{$settings := (dbGet 0 "managementSettings").Value}}
+{{$ranksToDissallowInTraining := cslice "threader" "controller" "overseer" "marshal" "warden"}}
+
 {{if not .ExecData}}
+	{{$ranks := cslice}}
+	{{range $settings.RankOrder}}
+		{{if not (inFold $ranksToDissallowInTraining .)}}
+			{{$ranks = $ranks.Append (title .)}}
+		{{end}}
+	{{end}}
 	{{/* Original announcement */}}
 	{{if not .CmdArgs}}
-		{{sendMessage nil (printf "Missing required arguments.\n\n```training <Rank> <In:Duration>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Agent`, `Relay`")}}
+		{{sendMessage nil (printf "Missing required arguments.\n\n```training <Rank> <In:Duration>```\nAvailable ranks: `%s`" (joinStr "`, `" $ranks))}}
 		{{return}}
 	{{end}}
 	{{$trainingRank := index .CmdArgs 0 | lower}}
-	{{if not (reFind `\b(riftling|scout|operative|seeker|lance|agent|relay)\b` $trainingRank)}}
-		{{sendMessage nil (printf "Invalid `rank` argument.\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance,`, `Agent`, `Relay`")}}
+	{{if not (inFold $ranks $trainingRank)}}
+		{{sendMessage nil (printf "Invalid `rank` argument.\nAvailable ranks: `%s`" (joinStr "`, `" $ranks))}}
 		{{return}}
 	{{end}}
 	{{if not (gt (len .CmdArgs) 1)}}
@@ -34,8 +43,7 @@
 		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes")}}
 		{{return}}
 	{{end}}
-	{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "observer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
-	{{range $rankName, $rankID := $rankRoles}}
+	{{range $rankName, $rankID := $settings.Ranks}}
 		{{if eq $trainingRank $rankName}}
 			{{$trainingRank = (getRole $rankID)}}
 			{{break}}
@@ -43,7 +51,8 @@
 	{{end}}
 	{{$embed := sdict "title" (printf "%s training" $trainingRank.Name) "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You cannot attend if you have PASSED a %s training**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix $trainingRank.Mention) "color" $trainingRank.Color}}
 	{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" (printf "iota_joinTraining-%d" $trainingRank.ID) "style" "success") (cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)}}
-	{{$x := sendMessageNoEscapeRetID 1391567531046863041 (complexMessage "content" (printf "%s" $trainingRank.Mention) "embed" (cembed $embed) "components" $components)}}
+	{{$x := sendMessageNoEscapeRetID nil (complexMessage "content" (printf "%s" $trainingRank.Mention) "embed" (cembed $embed) "components" $components)}}
+	{{return}}
 	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "TrainingMsg" $x "TrainingRole" $trainingRank)}}
 	{{dbSetExpire $x "training" cslice (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
 	{{sendMessage nil (printf "You've successfully started a %s training for <t:%d:f>. View the message [here](https://discord.com/channels/1375370805575155782/1391567531046863041/%d)" $trainingRank.Name (currentTime.Add (toDuration $duration)).Unix $x)}}
