@@ -90,13 +90,15 @@
 	{{return}}
 {{end}}
 {{dbSetExpire $userID "coinflipCooldown" "cooldown" $incomeCooldown}}
-{{if and ($int := randInt 1 3) (eq $int 1)}}
+{{$flip := (randInt 1 3)}}
+{{$coin := "heads"}}{{if eq $flip 2}}{{$coin = "tails"}}{{end}}
+{{if eq $side $coin}}
 	{{$bal = add $bal $bet}}
-	{{$embed.Set "description" (print "You flipped " $side " and won " $symbol (humanizeThousands $bet))}}
+	{{$embed.Set "description" (print "You chose " $side " and the coin landed on " $coin ". You won " $symbol (humanizeThousands $bet) "!")}}
 	{{$embed.Set "color" $successColor}}
 {{else}}
 	{{$bal = sub $bal $bet}}
-	{{$embed.Set "description" (print "You flipped " $side " and lost.")}}
+	{{$embed.Set "description" (print "You chose " $side " but the coin landed on " $coin ". You lost.")}}
 	{{$embed.Set "color" $errorColor}}
 {{end}}
 {{dbSet $userID "cash" $bal}}
