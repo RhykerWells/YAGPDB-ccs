@@ -17,12 +17,12 @@
 {{/* Checks for a user argument */}}
 {{$targetMember := .Member}}
 {{if .CmdArgs}}
-    {{$target := index .CmdArgs 0}}
-    {{if not (getMember $target)}}
-        {{sendMessage nil (print "Invalid `User` argument provided.\n\n```getMorph [User:Mention/ID]```\nDefault to your own morph.")}}
-        {{return}}
-    {{end}}
-    {{$targetMember = getMember $target}}
+	{{$target := index .CmdArgs 0}}
+	{{if not (getMember $target)}}
+		{{sendMessage nil (print "Invalid `User` argument provided.\n\n```getMorph [User:Mention/ID]```\nDefault to your own morph.")}}
+		{{return}}
+	{{end}}
+	{{$targetMember = getMember $target}}
 {{end}}
 {{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
 
@@ -32,37 +32,37 @@ The top-level KEY represents the echelon, and must be in PACAL CASE (i.e: ONE st
 The VALUE of each of these is another Key/Value map of their echelon specific morph data
 
 Available key/values:
-    RankTagShorthand (string) - Refers to the text INSIDE the brackets of the in-game Rtag (e.g: [FA])
-    Morph (string) - The base morph of the echelon
-    Hats (strings) - Refers to any hats for the given echelon
-    StarterGear (cslice of strings) - Refers to any echelon-specific starter gear provided to via the echelon | OPTIONAL
+	RankTagShorthand (string) - Refers to the text INSIDE the brackets of the in-game Rtag (e.g: [FA])
+	Morph (string) - The base morph of the echelon
+	Hats (strings) - Refers to any hats for the given echelon
+	StarterGear (cslice of strings) - Refers to any echelon-specific starter gear provided to via the echelon | OPTIONAL
 
-    Note: I did not want to use cslice(s) for the StarterGear or Hats but it allows me to ensure that they are displayed correctly
+	Note: I did not want to use cslice(s) for the StarterGear or Hats but it allows me to ensure that they are displayed correctly
 */}}
 {{$echelonProfiles := sdict 
-    "FieldAssets" (sdict
-        "RankTagShorthand" "FA"
-        "Morph" "Vest"
-        "Hats" (cslice "0" "qnvg 97 37 209" "13770147630" "13517980810" "12201396170" "16269019420" "12201396170" "8087415055" "109131663471317" "18970779951" "18970871297" "12383357842" "8087415055" "holster")
-    )
-    "ExecutionUnits" (sdict
-        "RankTagShorthand" "EU"
-        "Morph" "Vest"
-        "Hats" (cslice "0" "qnvg 97 37 209" "11989323584" "12201396170" "13368999418" "16269019420" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "12348970347" "holster" "exoskeleton")
-        "StarterGear" (cslice "arx")
-    )
-    "MissionControl" (sdict
-        "RankTagShorthand" "MC"
-        "Morph" "TV"
-        "Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "15330922823" "holster" "exoskeleton")
-        "StarterGear" (cslice "spas")
-    )
-    "VeilCommand" (sdict
-        "RankTagShorthand" "VC"
-        "Morph" "TV"
-        "Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4507911797" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "holster" "exoskeleton")
-        "StarterGear" (cslice "hellion" "spas")
-    )
+	"FieldAssets" (sdict
+		"RankTagShorthand" "FA"
+		"Morph" "Vest"
+		"Hats" (cslice "0" "qnvg 97 37 209" "13770147630" "13517980810" "12201396170" "16269019420" "12201396170" "8087415055" "109131663471317" "18970779951" "18970871297" "12383357842" "8087415055" "holster")
+	)
+	"ExecutionUnits" (sdict
+		"RankTagShorthand" "EU"
+		"Morph" "Vest"
+		"Hats" (cslice "0" "qnvg 97 37 209" "11989323584" "12201396170" "13368999418" "16269019420" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "12348970347" "holster" "exoskeleton")
+		"StarterGear" (cslice "arx")
+	)
+	"MissionControl" (sdict
+		"RankTagShorthand" "MC"
+		"Morph" "TV"
+		"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "15330922823" "holster" "exoskeleton")
+		"StarterGear" (cslice "spas")
+	)
+	"VeilCommand" (sdict
+		"RankTagShorthand" "VC"
+		"Morph" "TV"
+		"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4507911797" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "holster" "exoskeleton")
+		"StarterGear" (cslice "hellion" "spas")
+	)
 
 
 }}
@@ -75,74 +75,74 @@ The VALUE of each of these is another Key/Value map of their rank specific morph
 You MUST use a blank sdict for any ranks without special attributes
 
 Available key/values:
-    Echelon (sdict) - Pointer of $echelonProfiles (e.g $echelonProfiles.FieldAssets)
-    StarterGear (cslice of strings) - Refers to any rank-specific starter gear | OPTIONAL
-    Health (integer) - Refers to the max health to the rank | OPTIONAL
+	Echelon (sdict) - Pointer of $echelonProfiles (e.g $echelonProfiles.FieldAssets)
+	StarterGear (cslice of strings) - Refers to any rank-specific starter gear | OPTIONAL
+	Health (integer) - Refers to the max health to the rank | OPTIONAL
 
-    Note: I did not want to use cslice(s) for the StarterGear but it allows me to ensure that they are displayed correctly
+	Note: I did not want to use cslice(s) for the StarterGear but it allows me to ensure that they are displayed correctly
 */}}
 {{$rankProfiles := sdict
-    "Riftling" (sdict
-        "Echelon" $echelonProfiles.FieldAssets
-    )
-    "Rift Chaser" (sdict
-        "Echelon" $echelonProfiles.FieldAssets
-        "Health" 110
-    )
-    "Rift Operative" (sdict
-        "Echelon" $echelonProfiles.FieldAssets
-        "StarterGear" (cslice "shield")
-        "Health" 125
-    )
-    "Veil Seeker" (sdict
-        "Echelon" $echelonProfiles.ExecutionUnits
-        "Health" 130
-    )
-    "Veil Lance" (sdict
-        "Echelon" $echelonProfiles.ExecutionUnits
-        "Health" 130
-    )
-    "Veil Piercer" (sdict
-        "Echelon" $echelonProfiles.ExecutionUnits
-        "Health" 150
-    )
-    "Drift Threader" (sdict
-        "Echelon" $echelonProfiles.MissionControl
-        "Health" 160
-    )
-    "Drift Controller" (sdict
-        "Echelon" $echelonProfiles.MissionControl
-        "Health" 170
-    )
-    "Drift Overseer" (sdict
-        "Echelon" $echelonProfiles.MissionControl
-        "Health" 180
-    )
-    "Echo Marshal" (sdict
-        "Echelon" $echelonProfiles.VeilCommand
-        "Health" 200
-    )
-    "Warden Of The Veil" (sdict
-        "Echelon" $echelonProfiles.VeilCommand
-        "Health" 200
-    )
+	"Riftling" (sdict
+		"Echelon" $echelonProfiles.FieldAssets
+	)
+	"Rift Chaser" (sdict
+		"Echelon" $echelonProfiles.FieldAssets
+		"Health" 110
+	)
+	"Rift Operative" (sdict
+		"Echelon" $echelonProfiles.FieldAssets
+		"StarterGear" (cslice "shield")
+		"Health" 125
+	)
+	"Veil Seeker" (sdict
+		"Echelon" $echelonProfiles.ExecutionUnits
+		"Health" 130
+	)
+	"Veil Lance" (sdict
+		"Echelon" $echelonProfiles.ExecutionUnits
+		"Health" 130
+	)
+	"Veil Piercer" (sdict
+		"Echelon" $echelonProfiles.ExecutionUnits
+		"Health" 150
+	)
+	"Drift Threader" (sdict
+		"Echelon" $echelonProfiles.MissionControl
+		"Health" 160
+	)
+	"Drift Controller" (sdict
+		"Echelon" $echelonProfiles.MissionControl
+		"Health" 170
+	)
+	"Drift Overseer" (sdict
+		"Echelon" $echelonProfiles.MissionControl
+		"Health" 180
+	)
+	"Echo Marshal" (sdict
+		"Echelon" $echelonProfiles.VeilCommand
+		"Health" 200
+	)
+	"Warden Of The Veil" (sdict
+		"Echelon" $echelonProfiles.VeilCommand
+		"Health" 200
+	)
 }}
 
 {{/* This is where the rank profile is set */}}
 {{$selectedRank := sdict}}
 {{range $targetMember.Roles}}
-    {{$role := getRole .}}
-    {{range $rankName, $rankData := $rankProfiles}}
-        {{if eq $role.Name $rankName}}
-            {{- $selectedRank = sdict "Name" $rankName "Data" $rankData -}}
-            {{break}}
-        {{end}}
-    {{end}}
+	{{$role := getRole .}}
+	{{range $rankName, $rankData := $rankProfiles}}
+		{{if eq $role.Name $rankName}}
+			{{- $selectedRank = sdict "Name" $rankName "Data" $rankData -}}
+			{{break}}
+		{{end}}
+	{{end}}
 {{end}}
 
 {{if not $selectedRank}}
-    {{sendMessage nil "This users rank was not found, has it been added to the morph system?"}}
-    {{return}}
+	{{sendMessage nil "This users rank was not found, has it been added to the morph system?"}}
+	{{return}}
 {{end}}
 
 {{$echelonStarterGear := or $selectedRank.Data.Echelon.StarterGear cslice}}
@@ -152,20 +152,20 @@ Available key/values:
 {{$starterGear := $echelonStarterGear.AppendSlice $rankStarterGear}}
 
 {{$morph := sdict
-    "permmorph" $selectedRank.Data.Echelon.Morph
-    "permshirt" "9326560199"
-    "permpants" "4607034531"
-    "permhat" (joinStr "," $selectedRank.Data.Echelon.Hats)
-    "permrtag" $rtag
-    "permcrtag" "61 21 133"
-    "permcolornvg" "97 37 209"
-    "startergear" (joinStr "," $starterGear)
+	"permmorph" $selectedRank.Data.Echelon.Morph
+	"permshirt" "9326560199"
+	"permpants" "4607034531"
+	"permhat" (joinStr "," $selectedRank.Data.Echelon.Hats)
+	"permrtag" $rtag
+	"permcrtag" "61 21 133"
+	"permcolornvg" "97 37 209"
+	"startergear" (joinStr "," $starterGear)
 }}
 
 {{$morphParts := cslice}}
 {{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhat" "permrtag" "permcrtag" "permcolornvg" "startergear"}}
 {{range $_, $key := $orderedKeys}}
-    {{$morphParts = $morphParts.Append (printf "%s %s %s" $key $rblxName ($morph.Get $key))}}
+	{{$morphParts = $morphParts.Append (printf "%s %s %s" $key $rblxName ($morph.Get $key))}}
 {{end}}
 {{$fullMorphPretty := (joinStr "\n" $morphParts)}}
 {{$fullMorphViaRun := (print "run " (joinStr " & " $morphParts))}}
