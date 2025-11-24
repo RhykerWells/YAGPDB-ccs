@@ -14,8 +14,8 @@
 	{{return}}
 {{end}}
 
+{{/* Checks for a user argument */}}
 {{$targetMember := .Member}}
-
 {{if .CmdArgs}}
     {{$target := index .CmdArgs 0}}
     {{if not (getMember $target)}}
@@ -26,72 +26,140 @@
 {{end}}
 {{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
 
+{{/* 
+A CASE-SENTIVE Key/Value map of echelon data
+The top-level KEY represents the echelon, and must be in PACAL CASE (i.e: ONE string, the first letter of each word is capitalised).
+The VALUE of each of these is another Key/Value map of their echelon specific morph data
+
+Available key/values:
+    RankTagShorthand (string) - Refers to the text INSIDE the brackets of the in-game Rtag (e.g: [FA])
+    Morph (string) - The base morph of the echelon
+    Hats (strings) - Refers to any hats for the given echelon
+    StarterGear (cslice of strings) - Refers to any echelon-specific starter gear provided to via the echelon | OPTIONAL
+
+    Note: I did not want to use cslice(s) for the StarterGear or Hats but it allows me to ensure that they are displayed correctly
+*/}}
+{{$echelonProfiles := sdict 
+    "FieldAssets" (sdict
+        "RankTagShorthand" "FA"
+        "Morph" "Vest"
+        "Hats" (cslice "0" "qnvg 97 37 209" "13770147630" "13517980810" "12201396170" "16269019420" "12201396170" "8087415055" "109131663471317" "18970779951" "18970871297" "12383357842" "8087415055" "holster")
+    )
+    "ExecutionUnits" (sdict
+        "RankTagShorthand" "EU"
+        "Morph" "Vest"
+        "Hats" (cslice "0" "qnvg 97 37 209" "11989323584" "12201396170" "13368999418" "16269019420" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "12348970347" "holster" "exoskeleton")
+        "StarterGear" (cslice "arx")
+    )
+    "MissionControl" (sdict
+        "RankTagShorthand" "MC"
+        "Morph" "TV"
+        "Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "15330922823" "holster" "exoskeleton")
+        "StarterGear" (cslice "spas")
+    )
+    "VeilCommand" (sdict
+        "RankTagShorthand" "VC"
+        "Morph" "TV"
+        "Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4507911797" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "holster" "exoskeleton")
+        "StarterGear" (cslice "hellion" "spas")
+    )
+
+
+}}
+
+{{/* 
+A CASE-SENSITIVE Key/Value map of rank data
+The top-level KEY represents the rank and must be the EXACT name of the DISCORD role.
+The VALUE of each of these is another Key/Value map of their rank specific morph data
+
+You MUST use a blank sdict for any ranks without special attributes
+
+Available key/values:
+    Echelon (sdict) - Pointer of $echelonProfiles (e.g $echelonProfiles.FieldAssets)
+    StarterGear (cslice of strings) - Refers to any rank-specific starter gear | OPTIONAL
+    Health (integer) - Refers to the max health to the rank | OPTIONAL
+
+    Note: I did not want to use cslice(s) for the StarterGear but it allows me to ensure that they are displayed correctly
+*/}}
 {{$rankProfiles := sdict
     "Riftling" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Riftling"
-        "loadout" "aug,m9"
+        "Echelon" $echelonProfiles.FieldAssets
     )
-    "Rift Scout" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Rift Scout"
-        "loadout" "aug,m9,tracker"
+    "Rift Chaser" (sdict
+        "Echelon" $echelonProfiles.FieldAssets
+        "Health" 110
     )
-    "Veil Operative" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Veil Operative"
-        "loadout" "fn,m9,shield"
+    "Rift Operative" (sdict
+        "Echelon" $echelonProfiles.FieldAssets
+        "StarterGear" (cslice "shield")
+        "Health" 125
     )
     "Veil Seeker" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Seeker"
-        "loadout" "aug,m9,tablet"
+        "Echelon" $echelonProfiles.ExecutionUnits
+        "Health" 130
     )
     "Veil Lance" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Lance"
-        "loadout" "arx,m9"
+        "Echelon" $echelonProfiles.ExecutionUnits
+        "Health" 130
     )
-    "Echo Relay" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Echo Relay"
-        "loadout" "arx,m9"
+    "Veil Piercer" (sdict
+        "Echelon" $echelonProfiles.ExecutionUnits
+        "Health" 150
     )
-    "Veil Threader" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Veil Threader"
-        "loadout" "fn,m9,spas"
+    "Drift Threader" (sdict
+        "Echelon" $echelonProfiles.MissionControl
+        "Health" 160
     )
     "Drift Controller" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Controller"
-        "loadout" "fn,m9,spas"
+        "Echelon" $echelonProfiles.MissionControl
+        "Health" 170
     )
     "Drift Overseer" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Overseer"
-        "loadout" "fn,m9,spas"
+        "Echelon" $echelonProfiles.MissionControl
+        "Health" 180
     )
     "Echo Marshal" (sdict
-        "rtag" "[VC] Iota-4 | \"Veilrunners\" | Echo Marshal"
-        "loadout" "hellion,m9,spas"
+        "Echelon" $echelonProfiles.VeilCommand
+        "Health" 200
     )
-    "Warden of the Veil" (sdict
-        "rtag" "[VC] Iota-4 | \"Veilrunners\" | Warden of the Veil"
-        "loadout" "hellion,m9,spas"
+    "Warden Of The Veil" (sdict
+        "Echelon" $echelonProfiles.VeilCommand
+        "Health" 200
     )
 }}
 
-{{$selectRankProfile := sdict}}
+{{/* This is where the rank profile is set */}}
+{{$selectedRank := sdict}}
 {{range $targetMember.Roles}}
     {{$role := getRole .}}
-    {{range $k, $v := $rankProfiles}}
-        {{if eq $role.Name $k}}
-            {{- $selectRankProfile = $v -}}
+    {{range $rankName, $rankData := $rankProfiles}}
+        {{if eq $role.Name $rankName}}
+            {{- $selectedRank = sdict "Name" $rankName "Data" $rankData -}}
+            {{break}}
         {{end}}
     {{end}}
 {{end}}
 
+{{if not $selectedRank}}
+    {{sendMessage nil "This users rank was not found, has it been added to the morph system?"}}
+    {{return}}
+{{end}}
+
+{{$echelonStarterGear := or $selectedRank.Data.Echelon.StarterGear cslice}}
+{{$rankStarterGear := or $selectedRank.Data.StarterGear cslice}}
+
+{{$rtag := printf "[%s] Iota-4 | \"Veilrunners\" | %s" $selectedRank.Data.Echelon.RankTagShorthand $selectedRank.Name}}
+{{$starterGear := $echelonStarterGear.AppendSlice $rankStarterGear}}
+
 {{$morph := sdict
-    "permmorph" "vest"
+    "permmorph" $selectedRank.Data.Echelon.Morph
     "permshirt" "9326560199"
     "permpants" "4607034531"
-    "permhat" "0,qnvg 97 37 209,13770147630,13517980810,12201396170,16269019420,12201396170,8087415055,109131663471317,18970779951,18970871297,12383357842,holster"
-    "permrtag" $selectRankProfile.rtag
+    "permhat" (joinStr "," $selectedRank.Data.Echelon.Hats)
+    "permrtag" $rtag
     "permcrtag" "61 21 133"
     "permcolornvg" "97 37 209"
-    "startergear" $selectRankProfile.loadout
+    "startergear" (joinStr "," $starterGear)
 }}
 
 {{$morphParts := cslice}}
