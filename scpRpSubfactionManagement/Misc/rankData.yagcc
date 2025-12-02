@@ -27,6 +27,8 @@ Changes here will not take affect until the command is re-run.
 {{$baseMorphData := sdict
 	"Shirt" 9326560199
 	"Pants" 4607034531
+	"RTagColour" "61 21 133"
+	"NVGColour" "97 37 209"
 	"StarterGear" (cslice "bp-77" "pistol")
 }}
 
@@ -408,7 +410,7 @@ Because cslices are ordered, list ranks in descending order with lower ranks hig
 		"EchelonShortName" "VG-C"
 		"RoleName" "Guardian Of The Veil"
 		"RankShortName" "Guardian"
-		"RoleID" 1375378281078984704
+		"RoleID" 1426604049138192395
 	)
 }}
 
