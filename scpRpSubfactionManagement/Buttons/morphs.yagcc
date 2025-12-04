@@ -13,89 +13,74 @@
 {{$member := getMember .User.ID}}
 {{$rblxName := reReplace ` \|.*` $member.Nick ""}}
 
-{{$rankProfiles := sdict
-    "Riftling" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Riftling"
-        "loadout" "aug,m9"
-        "health" "105"
-    )
-    "Rift Scout" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Rift Scout"
-        "loadout" "aug,m9,tracker"
-        "health" "115"
-        )
-    "Veil Operative" (sdict
-        "rtag" "[FA] Iota-4 | \"Veilrunners\" | Veil Operative"
-        "loadout" "aug,m9,shield"
-        "health" "120"
-        )
-    "Veil Seeker" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Seeker"
-        "loadout" "arx,m9,tablet"
-        "health" "130"
-        )
-    "Veil Lance" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Veil Lance"
-        "loadout" "arx,m9"
-        "health" "140"
-        )
-    "Echo Relay" (sdict
-        "rtag" "[EU] Iota-4 | \"Veilrunners\" | Echo Relay"
-        "loadout" "arx,m9"
-        "health" "150"
-    )
-    "Veil Threader" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Veil Threader"
-        "loadout" "fn,m9,spas"
-        "health" "175"
-    )
-    "Drift Controller" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Controller"
-        "loadout" "fn,m9,spas"
-        "health" "175"
-    )
-    "Drift Overseer" (sdict
-        "rtag" "[MCD] Iota-4 | \"Veilrunners\" | Drift Overseer"
-        "loadout" "fn,m9,spas"
-        "health" "175"
-    )
-    "Echo Marshal" (sdict
-        "rtag" "[VC] Iota-4 | \"Veilrunners\" | Echo Marshal"
-        "loadout" "hellion,m9,spas"
-        "health" "200"
-    )
-    "Warden of the Veil" (sdict
-        "rtag" "[VC] Iota-4 | \"Veilrunners\" | Warden of the Veil"
-        "loadout" "hellion,m9,spas"
-        "health" "200"
-    )
-}}
+{{$data := dbGet 0 "FactionDataNew"}}
+{{if not $data}}
+	{{sendResponse nil "This factions data has not set up, please ask the faction management to do so."}}
+	{{return}}
+{{end}}
+
+{{$divisions := $data.Value.Get "Data"}}
+{{$baseMorphData := $data.Value.Get "MorphData"}}
+
+{{$selectedRankProfile := sdict}}
+{{$selectedEchelonProfile := sdict}}
 
 {{if .ExecData}}
     {{deleteInteractionResponse .ExecData.Token .ExecData.ID}}
     {{return}}
 {{end}}
 
-{{$selectedRankProfile := sdict}}
-{{range .Member.Roles}}
-    {{$role := getRole .}}
-    {{range $k, $v := $rankProfiles}}
-        {{if eq $role.Name $k}}
-            {{- $selectedRankProfile = $v -}}
-        {{end}}
-    {{end}}
+{{/*
+	We loop through each subdivision, and for each iteration, we assign $subdivision to the
+	current in-loop subdivision.
+
+	For each subdivision, we then loop through each echelon, assign the current in-loop echelon to $echelon
+
+	For each echelon, we loop through the ranks.
+
+	We use the same loop system throughought the new rank data system to maintain consistency
+*/}}
+{{range $_, $divisionData := $divisions}}
+	{{$division := .}}
+	{{range $divisionData.Echelons}}
+		{{$echelon := .}}
+		{{range $echelon.Ranks}}
+			{{$rank := .}}
+			{{if in $.Member.Roles $rank.RoleID}}
+				{{$selectedRankProfile = .}}
+				{{$selectedEchelonProfile = $echelon}}
+				{{break}}
+			{{end}}
+		{{end}}
+	{{end}}
 {{end}}
 
+{{if not $selectedRankProfile}}
+	{{sendResponse nil "Your rank profile was not found, please ask faction management to ensure it is in the system."}}
+	{{return}}
+{{end}}
+{{if not $selectedEchelonProfile}}
+	{{sendResponse nil "Your echelon profile was not found, please ask faction management to ensure it is in the system."}}
+	{{return}}
+{{end}}
+
+{{$echelonMorphData := $selectedEchelonProfile.MorphData}}
+{{$rankMorphData := or $selectedRankProfile.MorphData sdict}}
+
+{{$rtag := printf "[%s] Iota-4 | \"Veilrunners\" | %s" $selectedEchelonProfile.EchelonShortName $selectedRankProfile.RoleName}}
+{{$starterGear := $baseMorphData.StarterGear.AppendSlice ((or $echelonMorphData.StarterGear cslice).AppendSlice (or $rankMorphData.StarterGear cslice))}}
+{{$maxHealth := or ($rankMorphData.Health) 100}}
+
 {{$morph := sdict
-    "permmorph" "vest"
-    "permshirt" "9326560199"
-    "permpants" "4607034531"
-    "permhat" "0,qnvg 97 37 209,13770147630,13517980810,12201396170,16269019420,12201396170,8087415055,109131663471317,18970779951,18970871297,12383357842,holster"
-    "permrtag" $selectedRankProfile.rtag
-    "permcrtag" "61 21 133"
-    "permcolornvg" "97 37 209"
-    "startergear" $selectedRankProfile.loadout
-    "permmaxhealth" $selectedRankProfile.health
+	"permmorph" $echelonMorphData.Morph
+	"permshirt" (printf "%d" $baseMorphData.Shirt)
+	"permpants" (printf "%d" $baseMorphData.Pants)
+	"permhat" (joinStr ", " $echelonMorphData.Hats)
+	"permrtag" $rtag
+	"permcrtag" $baseMorphData.RTagColour
+	"permcolornvg" $baseMorphData.NVGColour
+	"startergear" (joinStr ", " $starterGear)
+    "permmaxhealth" (str $maxHealth)
 }}
 
 {{$components := cslice 
@@ -104,10 +89,10 @@
     (cbutton "label" "SHORT" "custom_id" "iota_morphShort" "style" "primary")
 }}
 
+{{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhat" "permrtag" "permcrtag" "permcolornvg" "startergear" "permmaxhealth"}}
 {{$morphParts := cslice}}
-{{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhat" "permrtag" "permcrtag" "permcolornvg" "startergear"}}
 {{range $_, $key := $orderedKeys}}
-    {{$morphParts = $morphParts.Append (printf "%s %s %s" $key $rblxName ($morph.Get $key))}}
+	{{$morphParts = $morphParts.Append (printf "%s %s %s" $key $rblxName ($morph.Get $key))}}
 {{end}}
 {{$fullMorphPretty := (joinStr "\n" $morphParts)}}
 {{$fullMorphViaRun := (print "run " (joinStr " & " $morphParts))}}
@@ -118,6 +103,7 @@
     {{$x := sendResponseRetID nil (complexMessage "content" "What version of the morph would you like?\n\n- Click **\"416\"** to be request the team & full morph from OUR HR.\n> **DO NOT CLICK THIS UNLESS ASKED**.\n- Click **\"LONG\"** to be given the long-version of your morph.\n> This is our full morph split line-by-line.\n- Click **\"SHORT\"** to be given the short-version of your morph\n> This is the full version of our morph using the in-built SCP:RP `run` command." "ephemeral" true "components" $components)}}
     {{scheduleUniqueCC .CCID nil 20 (print $x "-start") (sdict "Token" .Interaction.Token "ID" $x)}}
 {{end}}
+
 {{/* Send 416 team & morph request to #morph-requests */}}
 {{if eq .StrippedID "416"}}
     {{$x := sendResponseRetID nil (complexMessage "content" "Your morph has been sent to our <@&1376982883603845311>. Repeated use of this command within a short period may get you blacklisted from Iota-4." "ephemeral" true)}}

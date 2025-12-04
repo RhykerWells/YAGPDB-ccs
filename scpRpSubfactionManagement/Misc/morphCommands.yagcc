@@ -26,32 +26,59 @@
 {{end}}
 {{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
 
-{{$data := dbGet 0 "FactionData"}}
+{{$targetMember := .Member}}
+{{$data := dbGet 0 "FactionDataNew"}}
 {{if not $data}}
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
 	{{return}}
 {{end}}
-{{$rankProfiles := $data.Value.Get "RankData"}}
+{{$divisions := $data.Value.Get "Data"}}
 {{$baseMorphData := $data.Value.Get "MorphData"}}
 
 {{$selectedRankProfile := sdict}}
-{{range $rankProfiles}}
-	{{if in $targetMember.Roles .Rank.RoleID}}
-		{{$selectedRankProfile = .}}
-		{{break}}
+{{$selectedEchelonProfile := sdict}}
+
+{{/*
+	We loop through each subdivision, and for each iteration, we assign $subdivision to the
+	current in-loop subdivision.
+
+	For each subdivision, we then loop through each echelon, assign the current in-loop echelon to $echelon
+
+	For each echelon, we loop through the ranks.
+
+	We use the same loop system throughought the new rank data system to maintain consistency
+*/}}
+{{range $_, $divisionData := $divisions}}
+	{{$division := .}}
+	{{range $divisionData.Echelons}}
+		{{$echelon := .}}
+		{{range $echelon.Ranks}}
+			{{$rank := .}}
+			{{if in $targetMember.Roles $rank.RoleID}}
+				{{$selectedRankProfile = .}}
+				{{$selectedEchelonProfile = $echelon}}
+				{{break}}
+			{{end}}
+		{{end}}
 	{{end}}
 {{end}}
 
 {{if not $selectedRankProfile}}
-	{{sendMessage nil "This users rank profile was not found, has it been added to the faction data?"}}
+	{{sendResponse nil "Rank profile was not found, please ask faction management to ensure it is in the system."}}
+	{{return}}
+{{end}}
+{{if not $selectedEchelonProfile}}
+	{{sendResponse nil "Echelon profile was not found, please ask faction management to ensure it is in the system."}}
 	{{return}}
 {{end}}
 
-{{$echelonMorphData := $selectedRankProfile.Echelon.MorphData}}
-{{$rankMorphData := or $selectedRankProfile.Rank.MorphData sdict}}
+{{$echelonMorphData := $selectedEchelonProfile.MorphData}}
+{{$rankMorphData := or $selectedRankProfile.MorphData sdict}}
 
-{{$rtag := printf "[%s] Iota-4 | \"Veilrunners\" | %s" $selectedRankProfile.Echelon.EchelonShortName $selectedRankProfile.Rank.RoleName}}
+{{$rtag := printf "[%s] Iota-4 | \"Veilrunners\" | %s" $selectedEchelonProfile.EchelonShortName $selectedRankProfile.RoleName}}
 {{$starterGear := $baseMorphData.StarterGear.AppendSlice ((or $echelonMorphData.StarterGear cslice).AppendSlice (or $rankMorphData.StarterGear cslice))}}
+{{$maxHealth := or ($rankMorphData.Health) 100}}
+
 
 {{$morph := sdict
 	"permmorph" $echelonMorphData.Morph
@@ -62,6 +89,7 @@
 	"permcrtag" $baseMorphData.RTagColour
 	"permcolornvg" $baseMorphData.NVGColour
 	"startergear" (joinStr ", " $starterGear)
+    "permmaxhealth" $maxHealth
 }}
 
 {{$orderedKeys := cslice "permmorph" "permshirt" "permpants" "permhat" "permrtag" "permcrtag" "permcolornvg" "startergear"}}
