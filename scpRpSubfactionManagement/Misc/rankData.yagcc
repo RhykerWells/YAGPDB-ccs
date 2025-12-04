@@ -92,26 +92,17 @@ Each echelon must be represented as an sdict with the following fields:
 	- "StarterGear" (cslice, optional): A list of echelon-specific gear provided to the user when spawning 
 										under this echelon. Can be omitted if no gear is assigned.
 
-Because cslices are ordered, list echelons in descending order with lower echelons higher.
+Because cslices are ordered, list echelons in descending order with higher echelons higher.
 */}}
 {{$echelonRoles := cslice
 	(sdict
-		"EchelonLongName" "Field Assets"
-		"EchelonShortName" "FA"
-		"RoleID" 1375379122926260264
+		"EchelonLongName" "Veil Command"
+		"EchelonShortName" "VC"
+		"RoleID" 1375379736297078864
 		"MorphData" (sdict
-			"Morph" "Vest"
-			"Hats" (cslice "0" "qnvg 97 37 209" "13770147630" "13517980810" "12201396170" "16269019420" "12201396170" "8087415055" "109131663471317" "18970779951" "18970871297" "12383357842" "8087415055" "holster")
-		)
-	)
-	(sdict
-		"EchelonLongName" "Execution Units"
-		"EchelonShortName" "EU"
-		"RoleID" 1375379240165576764
-		"MorphData" (sdict
-			"Morph" "Vest"
-			"Hats" (cslice "0" "qnvg 97 37 209" "11989323584" "12201396170" "13368999418" "16269019420" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "12348970347" "holster" "exoskeleton")
-			"StarterGear" (cslice "arx")
+			"Morph" "TV"
+			"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4507911797" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "holster" "exoskeleton")
+			"StarterGear" (cslice "hellion" "spas")
 		)
 	)
 	(sdict
@@ -125,24 +116,33 @@ Because cslices are ordered, list echelons in descending order with lower echelo
 		)
 	)
 	(sdict
-		"EchelonLongName" "Veil Command"
-		"EchelonShortName" "VC"
-		"RoleID" 1375379736297078864
+		"EchelonLongName" "Execution Units"
+		"EchelonShortName" "EU"
+		"RoleID" 1375379240165576764
 		"MorphData" (sdict
-			"Morph" "TV"
-			"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4507911797" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "holster" "exoskeleton")
-			"StarterGear" (cslice "hellion" "spas")
+			"Morph" "Vest"
+			"Hats" (cslice "0" "qnvg 97 37 209" "11989323584" "12201396170" "13368999418" "16269019420" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "12348970347" "holster" "exoskeleton")
+			"StarterGear" (cslice "arx")
+		)
+	)
+	(sdict
+		"EchelonLongName" "Field Assets"
+		"EchelonShortName" "FA"
+		"RoleID" 1375379122926260264
+		"MorphData" (sdict
+			"Morph" "Vest"
+			"Hats" (cslice "0" "qnvg 97 37 209" "13770147630" "13517980810" "12201396170" "16269019420" "12201396170" "8087415055" "109131663471317" "18970779951" "18970871297" "12383357842" "8087415055" "holster")
 		)
 	)
 
 	(sdict
 		"SubdivisionShortName" "ICAD"
-		"EchelonLongName" "ICAD Watch"
-		"EchelonShortName" "ICAD-W"
-		"RoleID" 1400673205764493315
+		"EchelonLongName" "ICAD Control"
+		"EchelonShortName" "ICAD-C"
+		"RoleID" 1400672626824843304
 		"MorphData" (sdict
 			"Morph" "TV"
-			"Hats" (cslice "109131663471317" "13770147630" "14807833998" "92087558218023" "17537885732")
+			"Hats" (cslice "kneepads" "holster" "109131663471317" "81987169273408" "88160133461933" "14985673822" "13770147630" "131684923715899" "134181909620120")
 			"StarterGear" (cslice "tracker")
 		)
 	)
@@ -159,24 +159,24 @@ Because cslices are ordered, list echelons in descending order with lower echelo
 	)
 	(sdict
 		"SubdivisionShortName" "ICAD"
-		"EchelonLongName" "ICAD Control"
-		"EchelonShortName" "ICAD-C"
-		"RoleID" 1400672626824843304
+		"EchelonLongName" "ICAD Watch"
+		"EchelonShortName" "ICAD-W"
+		"RoleID" 1400673205764493315
 		"MorphData" (sdict
 			"Morph" "TV"
-			"Hats" (cslice "kneepads" "holster" "109131663471317" "81987169273408" "88160133461933" "14985673822" "13770147630" "131684923715899" "134181909620120")
+			"Hats" (cslice "109131663471317" "13770147630" "14807833998" "92087558218023" "17537885732")
 			"StarterGear" (cslice "tracker")
 		)
 	)
 
 	(sdict
 		"SubdivisionShortName" "VG"
-		"EchelonLongName" "Veil Guard Foundation"
-		"EchelonShortName" "VG-F"
-		"RoleID" 1443214825957363743
+		"EchelonLongName" "Veil Guard Control"
+		"EchelonShortName" "VG-C"
+		"RoleID" 1442973122260111401
 		"MorphData" (sdict
 			"Morph" "TV"
-			"Hats" (cslice "qnvg 98 13 245" "exoskeleton" "holster" "109131663471317" "12006155039" "12984538842" "4507911797" "138216827008185" "16603997868" "12383357842" "17679533203")
+			"Hats" (cslice "98455916415842" "Exoskeleton" "18966406922" "kneepads" "holster" "114748314264125" "111362407800772" "105253938039686" "130262311055923" "qnvg 98 13 245" "109131663471317" "98125108280860" "8263401404" "12586895741" "16603997868" "110569243574806")
 			"StarterGear" (cslice "xm-250" "shield" "medkit")
 		)
 	)
@@ -193,12 +193,12 @@ Because cslices are ordered, list echelons in descending order with lower echelo
 	)
 	(sdict
 		"SubdivisionShortName" "VG"
-		"EchelonLongName" "Veil Guard Control"
-		"EchelonShortName" "VG-C"
-		"RoleID" 1442973122260111401
+		"EchelonLongName" "Veil Guard Foundation"
+		"EchelonShortName" "VG-F"
+		"RoleID" 1443214825957363743
 		"MorphData" (sdict
 			"Morph" "TV"
-			"Hats" (cslice "98455916415842" "Exoskeleton" "18966406922" "kneepads" "holster" "114748314264125" "111362407800772" "105253938039686" "130262311055923" "qnvg 98 13 245" "109131663471317" "98125108280860" "8263401404" "12586895741" "16603997868" "110569243574806")
+			"Hats" (cslice "qnvg 98 13 245" "exoskeleton" "holster" "109131663471317" "12006155039" "12984538842" "4507911797" "138216827008185" "16603997868" "12383357842" "17679533203")
 			"StarterGear" (cslice "xm-250" "shield" "medkit")
 		)
 	)
@@ -213,9 +213,8 @@ Each role must be represented as an sdict with the following fields:
 
 - "RankLongName" 	 (string):		  	The name of the rank. -- May differ from Discord rank role name.
 
-- "RankShortShort"	 (string, optional): A shorthand label for the role, such as "Chaser" for "Rift Chaser".
-										 Used for the the rank argument to commands section of rank tags.
-										 This field MUST be omitted or left empty ("") when no short form exists.
+- "RankShortName"	 (string): A shorthand label for the role, such as "Chaser" for "Rift Chaser".
+										 Used for the the rank argument & rank portion of rank tags.
 
 - "RoleID"   		 (int):				The Discord role ID. This is required.
 
@@ -230,69 +229,35 @@ Each role must be represented as an sdict with the following fields:
 	- "StarterGear" (cslice, optional): A list of rank-specific gear provided to the user when spawning under this rank.
 										Can be omitted if no gear is assigned.
 
-Because cslices are ordered, list ranks in descending order with lower ranks higher.
+Because cslices are ordered, list ranks in ascending order with higher ranks higher.
 */}}
 {{$rankRoles := cslice
 	(sdict
-		"EchelonShortName" "FA"
-		"RoleName" "Riftling"
-		"RoleID" 1375378503024902164
-	)
-	(sdict
-		"EchelonShortName" "FA"
-		"RoleName" "Rift Chaser"
-		"RankShortName" "Chaser"
-		"RoleID" 1375436671948165143 
+		"EchelonShortName" "VC"
+		"RoleName" "Warden Of The Veil"
+		"RankShortName" "Warden"
+		"RoleID" 1375377194330755113
 		"MorphData" (sdict
-			"Health" 110
+			"Health" 200
 		)
 	)
 	(sdict
-		"EchelonShortName" "FA"
-		"RoleName" "Rift Operative"
-		"RankShortName" "Operative"
-		"RoleID" 1375378464336773142 
+		"EchelonShortName" "VC"
+		"RoleName" "Echo Marshal"
+		"RankShortName" "Marshal"
+		"RoleID" 1375377873241772095
 		"MorphData" (sdict
-			"Health" 125
-			"StarterGear" (cslice "shield")
-		)
-	)
-
-	(sdict
-		"EchelonShortName" "EU"
-		"RoleName" "Veil Seeker"
-		"RankShortName" "Seeker"
-		"RoleID" 1375378431411228755 
-		"MorphData" (sdict
-			"Health" 130
-		)
-	)
-	(sdict
-		"EchelonShortName" "EU"
-		"RoleName" "Veil Lance"
-		"RankShortName" "Lance"
-		"RoleID" 1375435912116437073
-		"MorphData" (sdict
-			"Health" 130
-		)
-	)
-	(sdict
-		"EchelonShortName" "EU"
-		"RoleName" "Veil Piercer"
-		"RankShortName" "Piercer"
-		"RoleID" 1375378281078984704
-		"MorphData" (sdict
-			"Health" 150
+			"Health" 200
 		)
 	)
 
 	(sdict
 		"EchelonShortName" "MC"
-		"RoleName" "Drift Threader"
-		"RankShortName" "Threader"
-		"RoleID" 1375436353202032660
+		"RoleName" "Drift Overseer"
+		"RankShortName" "Overseer"
+		"RoleID" 1375377969492787220
 		"MorphData" (sdict
-			"Health" 160
+			"Health" 180
 		)
 	)
 	(sdict
@@ -306,82 +271,70 @@ Because cslices are ordered, list ranks in descending order with lower ranks hig
 	)
 	(sdict
 		"EchelonShortName" "MC"
-		"RoleName" "Drift Overseer"
-		"RankShortName" "Overseer"
-		"RoleID" 1375377969492787220
+		"RoleName" "Drift Threader"
+		"RankShortName" "Threader"
+		"RoleID" 1375436353202032660
 		"MorphData" (sdict
-			"Health" 180
+			"Health" 160
 		)
 	)
 
 	(sdict
-		"EchelonShortName" "VC"
-		"RoleName" "Echo Marshal"
-		"RankShortName" "Marshal"
-		"RoleID" 1375377873241772095
+		"EchelonShortName" "EU"
+		"RoleName" "Veil Piercer"
+		"RankShortName" "Piercer"
+		"RoleID" 0
 		"MorphData" (sdict
-			"Health" 200
+			"Health" 150
 		)
 	)
 	(sdict
-		"EchelonShortName" "VC"
-		"RoleName" "Warden Of The Veil"
-		"RankShortName" "Warden"
-		"RoleID" 1375377194330755113
+		"EchelonShortName" "EU"
+		"RoleName" "Veil Lance"
+		"RankShortName" "Lance"
+		"RoleID" 1375435912116437073
 		"MorphData" (sdict
-			"Health" 200
+			"Health" 130
+		)
+	)
+	(sdict
+		"EchelonShortName" "EU"
+		"RoleName" "Veil Seeker"
+		"RankShortName" "Seeker"
+		"RoleID" 1375378431411228755 
+		"MorphData" (sdict
+			"Health" 130
 		)
 	)
 
-
-
 	(sdict
-		"EchelonShortName" "ICAD-W"
-		"RoleName" "Rift Scout"
-		"RankShortName" "Scout"
-		"RoleID" 1401411478610903080
+		"EchelonShortName" "FA"
+		"RoleName" "Rift Operative"
+		"RankShortName" "Operative"
+		"RoleID" 1375378464336773142 
+		"MorphData" (sdict
+			"Health" 125
+			"StarterGear" (cslice "shield")
+		)
+	)
+	(sdict
+		"EchelonShortName" "FA"
+		"RoleName" "Rift Chaser"
+		"RankShortName" "Chaser"
+		"RoleID" 1375436671948165143 
 		"MorphData" (sdict
 			"Health" 110
 		)
 	)
 	(sdict
-		"EchelonShortName" "ICAD-W"
-		"RoleName" "Rift Tracer"
-		"RankShortName" "Tracer"
-		"RoleID" 1400673095626260540
-		"MorphData" (sdict
-			"Health" 110
-		)
+		"EchelonShortName" "FA"
+		"RoleName" "Riftling"
+		"RankShortName" "Riftling"
+		"RoleID" 1375378503024902164
 	)
 
-	(sdict
-		"EchelonShortName" "ICAD-H"
-		"RoleName" "Glyph Analyst"
-		"RankShortName" "Analyst"
-		"RoleID" 1400672036845781107
-		"MorphData" (sdict
-			"Health" 140
-		)
-	)
-	(sdict
-		"EchelonShortName" "ICAD-H"
-		"RoleName" "Glyph Agent"
-		"RankShortName" "Agent"
-		"RoleID" 1396293360737845349
-		"MorphData" (sdict
-			"Health" 140
-		)
-	)
 
-	(sdict
-		"EchelonShortName" "ICAD-C"
-		"RoleName" "Echo Adjutant"
-		"RankShortName" "Adjutant"
-		"RoleID" 1400672809469870120
-		"MorphData" (sdict
-			"Health" 180
-		)
-	)
+
 	(sdict
 		"EchelonShortName" "ICAD-C"
 		"RoleName" "Echo Relay"
@@ -391,26 +344,75 @@ Because cslices are ordered, list ranks in descending order with lower ranks hig
 			"Health" 180
 		)
 	)
-
-
-
 	(sdict
-		"EchelonShortName" "VG-F"
-		"RoleName" "Veil Guard"
-		"RankShortName" "Guard"
-		"RoleID" 1396293360737845349
-	)
-	(sdict
-		"EchelonShortName" "VG-L"
-		"RoleName" "Veil Sentinel"
-		"RankShortName" "Sentinel"
+		"EchelonShortName" "ICAD-C"
+		"RoleName" "Echo Adjutant"
+		"RankShortName" "Adjutant"
 		"RoleID" 1400672809469870120
+		"MorphData" (sdict
+			"Health" 180
+		)
 	)
+
+	(sdict
+		"EchelonShortName" "ICAD-H"
+		"RoleName" "Glyph Agent"
+		"RankShortName" "Agent"
+		"RoleID" 1396293360737845349
+		"MorphData" (sdict
+			"Health" 140
+		)
+	)
+	(sdict
+		"EchelonShortName" "ICAD-H"
+		"RoleName" "Glyph Analyst"
+		"RankShortName" "Analyst"
+		"RoleID" 1400672036845781107
+		"MorphData" (sdict
+			"Health" 140
+		)
+	)
+
+	(sdict
+		"EchelonShortName" "ICAD-W"
+		"RoleName" "Rift Tracer"
+		"RankShortName" "Tracer"
+		"RoleID" 1400673095626260540
+		"MorphData" (sdict
+			"Health" 110
+		)
+	)
+	(sdict
+		"EchelonShortName" "ICAD-W"
+		"RoleName" "Rift Scout"
+		"RankShortName" "Scout"
+		"RoleID" 1401411478610903080
+		"MorphData" (sdict
+			"Health" 110
+		)
+	)
+
+
+
 	(sdict
 		"EchelonShortName" "VG-C"
 		"RoleName" "Guardian Of The Veil"
 		"RankShortName" "Guardian"
 		"RoleID" 1426604049138192395
+	)
+
+	(sdict
+		"EchelonShortName" "VG-L"
+		"RoleName" "Veil Guard Sentinel"
+		"RankShortName" "Sentinel"
+		"RoleID" 1429564916561346641
+	)
+
+	(sdict
+		"EchelonShortName" "VG-F"
+		"RoleName" "Veil Guard"
+		"RankShortName" "Guard"
+		"RoleID" 1426603936680513739
 	)
 }}
 
@@ -420,76 +422,33 @@ DO NOT EDIT ANYTHING BELOW THIS.
 The following parts of the code builds database entries
 */}}
 
-{{/* 
-
-*/}}
-{{$fullRankData := sdict}}
-{{range $rankRoles}}
-	{{$rankRoleData := .}}
-	{{$echelonRoleData := sdict}}
-	{{$subdivisionRoleData := sdict}}
-	{{range $echelonRoles}}
-		{{if eq .EchelonShortName $rankRoleData.EchelonShortName}}
-			{{$echelonRoleData = .}}
-			{{break}}
-		{{end}}
+{{$fullData := cslice}}
+{{range $subdivisionRoles}}
+	{{- $subdivision := . -}}
+	{{if not ($subdivision.HasKey "Public")}}
+		{{- $subdivision.Set "Public" false -}}
 	{{end}}
-	{{range $subdivisionRoles}}
-		{{if ($echelonRoleData.HasKey "SubdivisionShortName")}}
-			{{if eq .SubdivisionShortName $echelonRoleData.SubdivisionShortName}}
-				{{$subdivisionRoleData = .}}
-				{{break}}
+	{{$echelonsInSubdivision := cslice}}
+	{{range $echelonRoles}}
+		{{- $echelon := . -}}
+		{{if not ($echelon.HasKey "SubdivisionShortName")}}
+			{{- $echelon.Set "SubdivisionShortName" "Core" -}}
+		{{end}}
+		{{if eq $echelon.SubdivisionShortName $subdivision.SubdivisionShortName}}
+			{{$echelonsInSubdivision = $echelonsInSubdivision.Append $echelon}}
+		{{end}}
+		{{$ranksInEchelon := cslice}}
+		{{- range $rankRoles -}}
+			{{- $rank := . -}}
+			{{if eq $rank.EchelonShortName $echelon.EchelonShortName}}
+				{{$ranksInEchelon = $ranksInEchelon.Append $rank}}
 			{{end}}
 		{{end}}
+		{{$echelon.Set "Ranks" $ranksInEchelon}}
 	{{end}}
-
-	{{/* Assign blank subdivision to core system */}}
-	{{if not $subdivisionRoleData}}
-		{{$subdivisionRoleData = sdict
-			"SubdivisionLongName" "Core"
-			"SubdivisionShortName" "Core"
-			"SubdivisionRoleID" 1375381774204665917
-			"Public" false
-		}}
-	{{end}}
-
-	{{/* Delete internal indentifiers from final map */}}
-	{{$echelonRoleDataNoSubDivKey := sdict}}
-	{{range $k, $v := $echelonRoleData}}
-		{{if eq $k "SubdivisionShortName"}}
-			{{continue}}
-		{{end}}
-		{{$echelonRoleDataNoSubDivKey.Set $k $v}}
-	{{end}}
-	{{$rankRoleDataNoEchelonKey := sdict}}
-	{{range $k, $v := $rankRoleData}}
-		{{if eq $k "EchelonShortName"}}
-			{{continue}}
-		{{end}}
-		{{$rankRoleDataNoEchelonKey.Set $k $v}}
-	{{end}}
-
-	{{/* Create full rank data map */}}
-	{{$rankData := sdict
-		"Subdivision" $subdivisionRoleData
-		"Echelon" $echelonRoleDataNoSubDivKey
-		"Rank" $rankRoleDataNoEchelonKey
-	}}
-
-	{{$fullRankData.Set (toString $rankRoleData.RoleID) $rankData}}
+	{{$subdivision.Set "Echelons" $echelonsInSubdivision}}
+	{{- $fullData = $fullData.Append $subdivision -}}
 {{end}}
 
-{{$fullEchelonHierarchy := sdict}}
-{{range $echelonRoles}}
-	{{$echelonHierarchy := or ($fullEchelonHierarchy.Get .EchelonShortName) cslice}}
-	{{$echelonRole := .}}
-	{{range $rankRoles}}
-		{{if eq .EchelonShortName $echelonRole.EchelonShortName}}
-			{{$echelonHierarchy = $echelonHierarchy.Append .}}
-		{{end}}
-	{{end}}
-	{{$fullEchelonHierarchy.Set .EchelonShortName $echelonHierarchy}}
-{{end}}
-
-{{dbSet 0 "FactionData" (sdict "RankData" $fullRankData "Hierarchy" $fullEchelonHierarchy "MorphData" $baseMorphData)}}
+{{dbSet 0 "FactionDataNew" (sdict "Data" $fullData "MorphData" $baseMorphData)}}
 {{sendMessage nil "Done!"}}
