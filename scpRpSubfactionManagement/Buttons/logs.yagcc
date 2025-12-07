@@ -9,97 +9,179 @@
 	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
 */}}
 
-{{/* Send scout report form */}}
-{{if eq .StrippedID "SubmitReport"}}
-    {{if not (hasRoleID 1375436671948165143)}}
-        {{sendResponse nil (complexMessage "content" "You must be a <@&1375436671948165143> to submit a scout report" "ephemeral" true)}}
-		{{return}}
-    {{end}}
-    {{$fields := cslice
-        (sdict "label" "Deployment reason?" "placeholder" "Reason that you deployed..." "required" true "max_length" 500 "style" 2)
-        (sdict "label" "Notable findings" "placeholder" "What notable sigils, marks or information did you find out?" "required" true "max_length" 500 "style" 2)
-        (sdict "label" "Threat indicator" "placeholder" "How dangerous is this to Iota-4s operation (0-10)" "max_length" 10 "required" true "style" 1)
-        (sdict "label" "Any other information?" "placeholder" "Leave blank for none." "style" 2)
-    }}
-    {{$modal := sdict "title" "Iota-4 | Scout report form" "custom_id" "iota_formsScoutReport" "fields" $fields}}
-    {{sendModal $modal}}
+{{/* A cslice of all RankShortName that can host training & deployments */}}
+{{$allowedRanks := cslice "Warden" "Marshal" "Overseer" "Controller" "Threader" "Relay" "Adjutant" "Guardian"}}
+
+{{$targetMember := .Member}}
+{{$data := dbGet 0 "FactionDataNew"}}
+{{if not $data}}
+	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
+	{{return}}
 {{end}}
+{{$divisions := $data.Value.Get "Data"}}
+
+{{$selectedRankProfile := sdict}}
+{{$selectedEchelonProfile := sdict}}
+{{$selectedDivisionProfile := sdict}}
+
+{{/*
+	We loop through each subdivision, and for each iteration, we assign $subdivision to the
+	current in-loop subdivision.
+
+	For each subdivision, we then loop through each echelon, assign the current in-loop echelon to $echelon
+
+	For each echelon, we loop through the ranks.
+
+	We use the same loop system throughought the new rank data system to maintain consistency
+*/}}
+{{range $_, $divisionData := $divisions}}
+	{{$division := .}}
+	{{range $divisionData.Echelons}}
+		{{$echelon := .}}
+		{{range $echelon.Ranks}}
+			{{$rank := .}}
+			{{if in $targetMember.Roles $rank.RoleID}}
+				{{$selectedRankProfile = .}}
+				{{$selectedEchelonProfile = $echelon}}
+				{{$selectedDivisionProfile = $division}}
+				{{break}}
+			{{end}}
+		{{end}}
+	{{end}}
+{{end}}
+
+
+{{$members := getMembers}}
+{{$allowedMembers := cslice}}
+{{range $members}}
+	{{$member := .}}
+	{{$mRankProfile := sdict}}
+	{{$mEchelonProfile := sdict}}
+	{{$mDivisionProfile := sdict}}
+	{{range $_, $divisionData := $divisions}}
+		{{$division := .}}
+		{{range $divisionData.Echelons}}
+			{{$echelon := .}}
+			{{range $echelon.Ranks}}
+				{{$rank := .}}
+				{{if in $member.Roles $rank.RoleID}}
+					{{$mRankProfile = .}}
+					{{$mEchelonProfile = $echelon}}
+					{{$mDivisionProfile = $division}}
+					{{break}}
+				{{end}}
+			{{end}}
+		{{end}}
+	{{end}}
+	{{if not $mRankProfile}}
+		{{continue}}
+	{{end}}
+	{{if ne $mDivisionProfile.SubdivisionShortName $selectedDivisionProfile.SubdivisionShortName}}
+		{{continue}}
+	{{end}}
+	{{if not (in $allowedRanks $mRankProfile.RankShortName)}}
+		{{continue}}
+	{{end}}
+	{{$allowedMembers = $allowedMembers.Append $member}}
+{{end}}
+
+
+{{$hostSlice := cslice}}
+{{range $allowedMembers}}
+	{{$rblxName := reReplace ` \|.*` .Nick ""}}
+	{{$hostSlice = $hostSlice.Append (sdict "label" $rblxName "value" (str .User.ID))}}
+{{end}}
+{{$hostDropdown := cmenu
+	"custom_id" "hostDropdown"
+	"type" "text"
+	"options" $hostSlice
+	"required" true
+}}
+
+{{$hostLabel := clabel "label" "Event host" "description" "Select the user who hosted the event" "component" $hostDropdown}}
+{{$proofLabel := clabel "label" "Proof" "description" "Screenshot of training" "component" (cfileUpload "custom_id" "uploadForm" "required" true)}}
 
 {{/* Send training log form */}}
 {{if eq .StrippedID "SubmitTLog"}}
 	{{$logs := (dbGet 0 "trainingLogs").Value}}
-    {{$userLogs := cslice}}
+	{{$userLogs := cslice}}
 	{{range $logs}}
-		{{if ne .User.ID $.User.ID}}
+		{{if ne .User.ID $targetMember.User.ID}}
 			{{continue}}
 		{{end}}
 		{{$userLogs = $userLogs.Append .}}
 	{{end}}
-    {{$trainingType := ""}}
-    {{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
-    {{range $_, $role := .Member.Roles}}
-        {{- range $_, $roleID := $rankRoles -}}
-            {{if ne $role $roleID}}
-                {{continue}}
-            {{end}}
-            {{$trainingType = getRole $roleID}}
-            {{break}}
-        {{end}}
-    {{end}}
-    {{range $userLogs}}
-        {{if ne .Type $trainingType.ID}}
-            {{continue}}
-        {{end}}
-        {{$x := sendResponseRetID nil (complexMessage "content" "You have already submit a training for this rank." "ephemeral" true)}}
+	{{range $userLogs}}
+		{{if ne .Type $selectedRankProfile.RoleID}}
+			{{continue}}
+		{{end}}
+		{{$x := sendResponseRetID nil (complexMessage "content" "You have already submit a training for this rank." "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
-        {{return}}
-    {{end}}
-	{{$fields := cslice 
-        (sdict "label" "ROBLOX username of host" "required" true "max_length" 50 "style" 1)
-        (sdict "label" "Training summary" "placeholder" "What did you accomplish during your training? What did you learn?" "required" true "max_length" 200 "style" 2)
-        (sdict "label" "Training result" "placeholder" "What was the result you were given for your training?" "placeholder" "PASS/FAIL" "required" true "max_length" 4 "style" 1)
-        (sdict "label" "PROOF" "placeholder" "1 attachment link" "required" true "style" 1)
-    }}
-    {{$modal := sdict "title" "Iota-4 | Training log form" "custom_id" "iota_formsTrainingLog" "fields" $fields}}
-    {{sendModal $modal}}
+		{{return}}
+	{{end}}
+	{{$trainingResultSlice := cslice (sdict "label" "Pass" "value" "Pass") (sdict "label" "Fail" "value" "Fail")}}
+	{{$trainingResultDropdown := cmenu
+		"custom_id" "trainingResultDropdown"
+		"type" "text"
+		"options" $trainingResultSlice
+		"required" true
+	}}
+	{{$trainingResultLabel := clabel "label" "Training result" "description" "Select your training result" "component" $trainingResultDropdown}}
+	{{$trainingSummaryInput := ctextInput
+		"custom_id" "trainingSummaryInput"
+		"min_length" 10
+		"max_length" 200
+		"style" 2
+		"required" true
+	}}
+	{{$trainingSummaryLabel := clabel "label" "Training summary" "description" "What did you accomplish during your training? What did you learn?" "component" $trainingSummaryInput}}
+	{{$modal := modalBuilder "iota_formsTrainingLog" "Iota-4 | Training log form" $hostLabel $trainingSummaryLabel $trainingResultLabel $proofLabel}}
+	{{sendModal $modal}}
 {{end}}
 
 {{/* Send deployment log form */}}
 {{if eq .StrippedID "SubmitDLog"}}
-    {{$rank := ""}}
-	{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
-	{{range $_, $role := .Member.Roles}}
-		{{- range $_, $roleID := $rankRoles -}}
-			{{if ne $role $roleID}}
-				{{continue}}
-			{{end}}
-			{{$rank = getRole $roleID}}
-			{{break}}
-		{{end}}
-	{{end}}
-    {{$logs := (dbGet 0 "trainingLogs").Value}}
+	{{$logs := (dbGet 0 "trainingLogs").Value}}
 	{{$userLogsAtRank := cslice}}
 	{{range $logs}}
-		{{if ne .User.ID $.User.ID}}
+		{{if ne .User.ID $targetMember.User.ID}}
 			{{continue}}
 		{{end}}
-		{{if ne (toInt .Type) (toInt $rank.ID)}}
+		{{if ne (toInt .Type) (toInt $selectedRankProfile.RoleID)}}
 			{{continue}}
 		{{end}}
 		{{$userLogsAtRank = $userLogsAtRank.Append .}}
 	{{end}}
-	{{if and (not (hasRoleID 1375378431411228755)) (not $userLogsAtRank)}}
-        {{$x := sendResponseRetID nil (complexMessage "content" (printf "You've not completed the training for this role, this deployment will not count towards your quota.") "ephemeral" true)}}
+	{{if and (not (eq $selectedRankProfile.RankShortName "Seeker")) (not $userLogsAtRank)}}
+		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've not completed the training for this role, this deployment will not count towards your quota.") "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
-    {{$fields := cslice
-        (sdict "label" "ROBLOX username of deployment host" "placeholder" "NONE if self-deployment" "required" true "max_length" 50 "style" 1)
-        (sdict "label" "Deployment type" "placeholder" "Self/Official" "required" true "max_length" 15 "style" 1)
-        (sdict "label" "Deployment summary" "placeholder" "What happened, what did you do?" "required" true "max_length" 200 "style" 2)
-        (sdict "label" "Sightings" "placeholder" "What sort of anomalous sightings occured (if any)" "required" true "max_length" 200 "style" 1)
-        (sdict "label" "PROOF" "placeholder" "1 attachment link" "required" true "style" 1)
-    }}
-    {{$modal := sdict "title" "Iota-4 | Deployment log form" "custom_id" "iota_formsDeploymentLog" "fields" $fields}}
-    {{sendModal $modal}}
+	{{$deploymentTypeSlice := cslice (sdict "label" "Self-deployment" "value" "Self") (sdict "label" "Official deployment" "value" "Official")}}
+	{{$deploymentTypeDropdown := cmenu
+		"custom_id" "deploymentTypeDropdown"
+		"type" "text"
+		"placeholder" "Select your deployment type"
+		"options" $deploymentTypeSlice
+		"required" true
+	}}
+	{{$deploymentTypeLabel := clabel "label" "Deployment type" "description" "Select your deployment type" "component" $deploymentTypeDropdown}}
+	{{$deploymentSummaryInput := ctextInput
+		"custom_id" "deploymentSummaryInput"
+		"min_length" 10
+		"max_length" 200
+		"style" 2
+		"required" true
+	}}
+	{{$deploymentSummaryLabel := clabel "label" "Deployment summary" "description" "What happend during the deployment?" "component" $deploymentSummaryInput}}
+	{{$deploymentSightingsInput := ctextInput
+		"custom_id" "deploymentSightingsInput"
+		"min_length" 10
+		"max_length" 200
+		"style" 1
+		"required" true
+	}}
+	{{$deploymentSightingsLabel := clabel "label" "Deployment sightings" "description" "What anomalous sightings occured?" "component" $deploymentSightingsInput}}
+	{{$modal := modalBuilder "iota_formsDeploymentLog" "Iota-4 | Deployment log form" $hostLabel $deploymentTypeLabel $deploymentSummaryLabel $deploymentSightingsLabel $proofLabel}}
+	{{sendModal $modal}}
 {{end}}
