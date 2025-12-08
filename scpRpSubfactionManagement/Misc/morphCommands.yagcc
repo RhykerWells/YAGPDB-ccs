@@ -26,7 +26,6 @@
 {{end}}
 {{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
 
-{{$targetMember := .Member}}
 {{$data := dbGet 0 "FactionDataNew"}}
 {{if not $data}}
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
