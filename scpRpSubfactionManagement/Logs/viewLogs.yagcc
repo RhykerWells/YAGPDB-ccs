@@ -32,19 +32,14 @@
 	{{if eq (lower .Cmd) "-tlog"}}
 		{{$logs = (dbGet 0 "trainingLogs").Value}}
 	{{else}}
-		{{$logs = (dbGet 0 "deploymentLogs").Value}}
+		{{$logs = (dbGet 0 "deploymentLogTest").Value}}
 	{{end}}
-	{{range $logs}}
-		{{if eq (toInt .ID) (toInt $log)}}
-			{{$log = .}}
-			{{break}}
-		{{end}}
-	{{end}}
-	{{if not (reFind `templates.SDict` (printf "%T" $log))}}
+	{{if not ($logs.Get (toInt $log))}}
 		{{sendMessage nil (printf "This log doesn't exist.")}}
 		{{return}}
 	{{end}}
-	{{$fields := ""}}{{$embed := ""}}
+	{{$log = $logs.Get (toInt $log)}}
+	{{$fields := ""}}{{$embed := sdict "title" (printf "Log #%s - %s" (humanizeThousands $log.ID) $log.Roblox) "url" $log.Link "image" (sdict "url" $log.Proof) "color" 0x4b9a4e}}
 	{{if eq (lower .Cmd) "-tlog"}}
 		{{$fields = cslice 
 			(sdict "name" "__Training host__" "value" (print $log.Host) "inline" true)
@@ -55,7 +50,7 @@
 			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
 			(sdict "name" "__Result__" "value" (print $log.Result) "inline" true)
 		}}
-		{{$embed = sdict "title" (printf "Log #%s - %s" (humanizeThousands $log.ID) $log.Roblox) "url" $log.Link "description" (printf "Time: %s\nTraining type: <@&%d>" $log.Time $log.Type) "fields" $fields "image" (sdict "url" $log.Proof) "color" 0x4b9a4e}}
+		{{$embed.Set "description" (printf "Time: %s\nTraining type: <@&%d>" $log.Time $log.Type)}}
 	{{else}}
         {{$fields = cslice
 			(sdict "name" "__Deployment host__" "value" (print $log.Host) "inline" true)
@@ -65,26 +60,15 @@
 			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
 			(sdict "name" "__Deployment Sightings__" "value" (print $log.Sightings) "inline" true)
         }}
-        {{$embed = sdict "title" (printf "Log #%s - %s" (humanizeThousands $log.ID) $log.Roblox) "url" $log.Link "description" (printf "Time: %s\nDeployed as: <@&%d>" $log.Time $log.Rank) "fields" $fields "image" (sdict "url" $log.Proof) "color" 0x4b9a4e}}
+        {{$embed.Set "description" (printf "Time: %s\nDeployed as: <@&%d>" $log.Time $log.Rank)}}
 	{{end}}
+	{{$embed.Set "fields" $fields}}
     {{sendMessage nil (complexMessage "reply" .Message.ID "embed" $embed)}}
 {{end}}
 
 {{/* Retrieving all or specific users logs */}}
 {{if reFind `s` .Cmd}}
-	{{$cmds := printf "```%[1]s <User:ID/Mention>\n%[1]s all```" .Cmd}}
-	{{if eq (lower .Cmd) "-tlogs"}}
-		{{$cmds = reReplace "(```)$" $cmds (printf "\n%[1]s all -Type <RANK>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`" .Cmd)}}
-	{{end}}
-	{{if not .CmdArgs}}
-        {{sendMessage nil (printf "Not enough arguments passed.\n%s" $cmds)}}
-        {{return}}
-    {{end}}
-	{{$option := index .CmdArgs 0}}
-    {{if not (or (eq (lower $option) "all") (userArg $option))}}
-		{{sendMessage nil (printf "Invalid arguments passed.\n%s" $cmds)}}
-		{{return}}
-	{{end}}
+	{{$cmds := printf "```%[s]s [User:Mention/ID] [Page:Int]```" .Cmd}}
 	{{$logs := ""}}
 	{{if eq (lower .Cmd) "-tlogs"}}
 		{{$logs = (dbGet 0 "trainingLogs").Value}}
@@ -93,70 +77,27 @@
 	{{end}}
 	{{$page := 1}}
 	{{$logHeader := "All"}}
-	{{if getMember $option}}
-		{{$member := getMember $option}}
-        {{if gt (len .CmdArgs) 1}}
-            {{$page = (index .CmdArgs 1) | toInt}}
-            {{if lt $page 1}}
-                {{$page = 1}}
-            {{end}}
-        {{end}}
-        {{$userLogs := cslice}}
-        {{range $logs}}
-            {{if ne .User.ID $member.User.ID}}
-                {{continue}}
-            {{end}}
-            {{$userLogs = $userLogs.Append .}}
-        {{end}}
-        {{$logs = $userLogs}}
-		{{$logHeader = (printf "%s's" (reReplace ` \|.*` $member.Nick ""))}}
-	{{else}}
-		{{if and (eq (lower .Cmd) "-tlogs")}}
-			{{if gt (len .CmdArgs) 1}}
-				{{if eq (index .CmdArgs 1 | lower) "-type"}}
-					{{$rank := ""}}
-						{{if not (gt (len .CmdArgs) 2)}}
-						{{sendMessage nil (printf "Not enough arguments passed.\n```tlogs all\ntlogs all -Type <RANK>\ntlogs <ID:Number>\ntlogs <User:ID/Mention>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`")}}
-						{{return}}
-					{{end}}
-					{{if not (reFind `\b(riftling|scout|operative|seeker|lance|agent|relay)\b` (index .CmdArgs 2 | lower))}}
-						{{sendMessage nil (printf "Invalid `RANK` argument passed.\n```tlogs all\ntlogs all -Type <RANK>\ntlogs <ID:Number>\ntlogs <User:ID/Mention>```\nAvailable ranks: `Riftling`, `Scout`, `Operative`, `Seeker`, `Lance`, `Relay`")}}
-						{{return}}
-					{{end}}
-					{{range $role, $roleID := $rankRoles}}
-						{{if eq $role (index $.CmdArgs 2 | lower)}}
-							{{$rank = $roleID}}
-							{{$logHeader = title $role}}
-							{{break}}
-						{{end}}
-					{{end}}
-					{{$rankLogs := cslice}}
-					{{range $logs}}
-						{{if ne .Type $rank}}
-							{{continue}}
-						{{end}}
-						{{$rankLogs = $rankLogs.Append .}}
-					{{end}}
-					{{$logs = $rankLogs}}
-					{{if gt (len .CmdArgs) 3}}
-						{{$page = (index .CmdArgs 3) | toInt}}
-						{{if lt $page 1}}
-							{{$page = 1}}
-						{{end}}
-					{{end}}
-				{{else if toInt (index .CmdArgs 1)}}
-					{{$page = (index .CmdArgs 1) | toInt}}
-					{{if lt $page 1}}
-						{{$page = 1}}
-					{{end}}
+	{{if (gt (len .CmdArgs) 0)}}
+		{{if getMember (index .CmdArgs 0)}}
+			{{$targetMember := getMember (index .CmdArgs 0)}}
+			{{$logHeader := reReplace ` \|.*` $targetMember.Nick ""}}
+			{{$userLogs := sdict}}
+			{{range $ID, $Data := $logs}}
+				{{if eq $ID $targetMember.User.ID}}
+					{{$userLogs.Set $ID $Data}}
 				{{end}}
 			{{end}}
-		{{else}}
-			{{if gt (len .CmdArgs) 1}}
+			{{$logs := $userLogs}}
+			{{if (gt (len .CmdArgs) 1)}}
 				{{$page = (index .CmdArgs 1) | toInt}}
 				{{if lt $page 1}}
 					{{$page = 1}}
 				{{end}}
+			{{end}}
+		{{else}}
+			{{$page = (index .CmdArgs 0) | toInt}}
+			{{if lt $page 1}}
+				{{$page = 1}}
 			{{end}}
 		{{end}}
 	{{end}}
@@ -164,31 +105,28 @@
 {{end}}
 
 {{define "sendLogs"}}
-	{{$start := mult 10 (sub .Page 1)}}
-	{{$stop := mult .Page 10}}
-	{{if ge $stop (len .Logs)}}
-		{{$stop = (len .Logs)}}
-	{{end}}
+	{{$data := dbGet 0 "FactionDataNew"}}
+	{{$divisions := $data.Value.Get "Data"}}
+	{{$lowest := mult 10 (sub .Page 1) | add 1}}
+	{{$highest := mult .Page 10}}
 	{{$fields := cslice}}
-	{{$embed := sdict "title" (printf "%s %s logs" .LogHeader ((sdict "-dlogs" "deployment" "-tlogs" "training").Get .LogType)) "color" 0xFF0000}}
-	{{if or (eq (len .Logs ) 0) (gt $start $stop)}}
-		{{$embed.Set "description" "There are no logs on this page"}}
-	{{else}}
-		{{range (seq $start $stop)}}
-			{{$log := (index $.Logs .)}}
-			{{$logType := ""}}
-			{{range $role, $roleID := $.RankRoles}}
-				{{if eq $roleID (or $log.Rank $log.Type)}}
-					{{$logType = title $role}}
-					{{break}}
-				{{end}}
-			{{end}}
-			{{$fields = $fields.Append (sdict "name" (printf "#%d" (toInt $log.ID)) "value" (printf "**%s** | <@%d> (`%d`) | [link](%s)" $logType $log.User.ID $log.User.ID $log.Link))}}
+	{{range (seq 1 (len $.Logs | add 1))}}
+		{{if or (lt . $lowest) (gt . $highest)}}
+			{{continue}}
 		{{end}}
-		{{$embed.Set "fields" $fields}}
-		{{$embed.Set "timestamp" currentTime}}
-		{{$embed.Set "color" 0x00ff7b}}
+		{{if not ($.Logs.Get .)}}
+			{{continue}}
+		{{end}}
+		{{$log := $.Logs.Get .}}
+		{{$fields = $fields.Append (sdict "name" (printf "#%d" (toInt $log.ID)) "value" (printf "<@&%d> | **%s** (<@!%d>)\n[Link](%s)" (or $log.Rank $log.Type) $log.Roblox $log.User.ID $log.Link))}}
 	{{end}}
-	{{$embed.Set "footer" (sdict "text" (print "Page: " .Page))}}
+	{{$embed := sdict "title" (printf "%s %s logs" .LogHeader ((sdict "-dlogs" "deployment" "-tlogs" "training").Get .LogType)) "footer" (sdict "text" (print "Page: " .Page)) "timestamp" currentTime "color" 0xFF0000}}
+	{{if eq (len $fields) 0}}
+		{{$embed.Set "description" "There are no logs on this page"}}
+		{{sendMessage nil (complexMessage "reply" .ReplyID "embed" $embed)}}
+		{{return}}
+	{{end}}
+	{{$embed.Set "fields" $fields}}
+	{{$embed.Set "color" 0x00ff7b }}
 	{{sendMessage nil (complexMessage "reply" .ReplyID "embed" $embed)}}
 {{end}}
