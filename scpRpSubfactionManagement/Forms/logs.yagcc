@@ -73,8 +73,10 @@
         {{$logData.Set "Proof" $url}}
         {{break}}
     {{end}}
+    {{$hostMember := getMember $logData.Host}}
+	{{$hostRobloxName := reReplace ` \|.*` $hostMember.Nick ""}}
     {{$fields := cslice 
-        (sdict "name" "__Training host__" "value" (printf "<@!%s>" $logData.Host) "inline" true)
+        (sdict "name" "__Training host__" "value" (printf "<@!%s> `(%s)`" $logData.Host $hostRobloxName) "inline" true)
         (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
         (sdict "name" "__Training summary__" "value" $logData.Summary "inline" true)
         (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
@@ -104,7 +106,7 @@
         "User" .User
         "Roblox" $robloxName
         "Time" $timeOfLog
-        "Host" $logData.Host
+        "Host" (sdict "ID" $logData.Host "Roblox" $hostRobloxName)
         "Type" $selectedRankProfile.RoleID
         "Summary" $logData.Summary
         "Result" $logData.Result
@@ -129,7 +131,7 @@
         {{$logData.Set "Host" (index .hostDropdown.value 0)}}
         {{$logData.Set "Type" (index .deploymentTypeDropdown.value 0)}}
         {{$logData.Set "Summary" .deploymentSummaryInput.value}}
-        {{$logData.Set "Sightings" .deploymentSightingsInput.value}}
+        {{$logData.Set "Sightings" (or (.deploymentSightingsInput.value) "None")}}
         {{$logData.Set "Proof" (index .uploadForm.value 0)}}
     {{end}}
     {{range $k, $v := .InteractionData.Resolved.Attachments}}
@@ -140,8 +142,10 @@
         {{$logData.Set "Proof" $url}}
         {{break}}
     {{end}}
+    {{$hostMember := getMember $logData.Host}}
+	{{$hostRobloxName := reReplace ` \|.*` $hostMember.Nick ""}}
     {{$fields := cslice 
-        (sdict "name" "__Deployment host__" "value" $logData.Host "inline" true)
+        (sdict "name" "__Deployment host__" "value" (printf "<@!%s> `(%s)`" $logData.Host $hostRobloxName) "inline" true)
         (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
         (sdict "name" "__Deployment type__" "value" $logData.Type "inline" true)
         (sdict "name" "__Deployment summary__" "value" $logData.Summary "inline" true)
@@ -169,7 +173,7 @@
         "User" .User
         "Roblox" $robloxName
         "Time" $timeOfLog
-        "Host" $logData.Host
+        "Host" (sdict "ID" $logData.Host "Roblox" $hostRobloxName)
         "Type" $logData.Type
         "Rank" $selectedRankProfile.RoleID
         "Summary" $logData.Summary

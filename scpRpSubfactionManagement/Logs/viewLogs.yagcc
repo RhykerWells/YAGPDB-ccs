@@ -32,7 +32,7 @@
 	{{if eq (lower .Cmd) "-tlog"}}
 		{{$logs = (dbGet 0 "trainingLogs").Value}}
 	{{else}}
-		{{$logs = (dbGet 0 "deploymentLogTest").Value}}
+		{{$logs = (dbGet 0 "deploymentLogs").Value}}
 	{{end}}
 	{{if not ($logs.Get (toInt $log))}}
 		{{sendMessage nil (printf "This log doesn't exist.")}}
@@ -40,20 +40,26 @@
 	{{end}}
 	{{$log = $logs.Get (toInt $log)}}
 	{{$fields := ""}}{{$embed := sdict "title" (printf "Log #%s - %s" (humanizeThousands $log.ID) $log.Roblox) "url" $log.Link "image" (sdict "url" $log.Proof) "color" 0x4b9a4e}}
+	{{$host := $log.Host}}
+	{{if eq (printf "%T" $host) "templates.SDict" "*templates.SDict"}}
+		{{$hostMember := getMember $host.ID}}
+		{{$hostRobloxName := reReplace ` \|.*` $hostMember.Nick ""}}
+		{{$host = printf "<@!%s> `(%s)`" $host.ID $hostRobloxName}}
+	{{end}}
 	{{if eq (lower .Cmd) "-tlog"}}
 		{{$fields = cslice 
-			(sdict "name" "__Training host__" "value" (print $log.Host) "inline" true)
+			(sdict "name" "__Training host__" "value" (print $host) "inline" true)
 			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
 			(sdict "name" "__Training summary__" "value" (print $log.Summary) "inline" true)
 			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
 			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
 			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "__Result__" "value" (print $log.Result) "inline" true)
+			(sdict "name" "__Result__" "value" (printf "`%s`" $log.Result) "inline" true)
 		}}
 		{{$embed.Set "description" (printf "Time: %s\nTraining type: <@&%d>" $log.Time $log.Type)}}
 	{{else}}
         {{$fields = cslice
-			(sdict "name" "__Deployment host__" "value" (print $log.Host) "inline" true)
+			(sdict "name" "__Deployment host__" "value" (print $host) "inline" true)
 			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
 			(sdict "name" "__Deployment type__" "value" (printf "`%s`" $log.Type) "inline" true)
 			(sdict "name" "__Deployment summary__" "value" (print $log.Summary) "inline" true)
