@@ -104,15 +104,18 @@
 {{/* Send training log form */}}
 {{if eq .StrippedID "SubmitTLog"}}
 	{{$logs := (dbGet 0 "trainingLogs").Value}}
-	{{$userLogs := cslice}}
-	{{range $logs}}
-		{{if ne .User.ID $targetMember.User.ID}}
+	{{$userLogs := dict}}
+	{{range $ID, $log := $logs}}
+		{{if not $log}}
 			{{continue}}
 		{{end}}
-		{{$userLogs = $userLogs.Append .}}
+		{{if ne $log.User.ID $targetMember.User.ID}}
+			{{continue}}
+		{{end}}
+		{{$userLogs.Set $ID $log}}
 	{{end}}
-	{{range $userLogs}}
-		{{if ne .Type $selectedRankProfile.RoleID}}
+	{{range $ID, $log := $userLogs}}
+		{{if ne $log.Type $selectedRankProfile.RoleID}}
 			{{continue}}
 		{{end}}
 		{{$x := sendResponseRetID nil (complexMessage "content" "You have already submit a training for this rank." "ephemeral" true)}}
@@ -143,11 +146,11 @@
 {{if eq .StrippedID "SubmitDLog"}}
 	{{$logs := (dbGet 0 "trainingLogs").Value}}
 	{{$userLogsAtRank := cslice}}
-	{{range $logs}}
-		{{if ne .User.ID $targetMember.User.ID}}
+	{{range $ID, $log := $logs}}
+		{{if not $log}}
 			{{continue}}
 		{{end}}
-		{{if ne (toInt .Type) (toInt $selectedRankProfile.RoleID)}}
+		{{if ne $log.User.ID $targetMember.User.ID}}
 			{{continue}}
 		{{end}}
 		{{$userLogsAtRank = $userLogsAtRank.Append .}}

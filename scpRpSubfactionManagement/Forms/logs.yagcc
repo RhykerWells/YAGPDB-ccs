@@ -50,6 +50,10 @@
 
 {{/* Training log submission */}}
 {{if eq .StrippedID "TrainingLog"}}
+	{{$logs := (dbGet 0 "trainingLogs").Value}}
+    {{dbSet 0 "trainingLogBackup" $logs}}
+	{{$ID := (dbGet 0 "Tlog").Value}}
+    {{dbSet 0 "TlogBackup" $ID}}
     {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
     {{deleteInteractionResponse .Interaction.Token $x}}
     {{$logID := dbIncr 0 "Tlog" 1}}
@@ -106,12 +110,16 @@
         "Result" $logData.Result
         "Proof" $logData.Proof
     }}
-    {{$logs := (dbGet 0 "trainingLogs").Value.Append $trainingLog}}
+    {{$logs.Set (toInt $logID) $trainingLog}}
     {{dbSet 0 "trainingLogs" $logs}}
 {{end}}
 
 {{/* Deployment log submission */}}
 {{if eq .StrippedID "DeploymentLog"}}
+    {{$logs := (dbGet 0 "deploymentLogs").Value}}
+    {{dbSet 0 "deploymentLogBackup" $logs}}
+	{{$ID := (dbGet 0 "Dlog").Value}}
+    {{dbSet 0 "DlogBackup" $ID}}
     {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
     {{deleteInteractionResponse .Interaction.Token $x}}
     {{$logID := dbIncr 0 "Dlog" 1}}
@@ -168,24 +176,14 @@
         "Sightings" $logData.Sightings
         "Proof" $logData.Proof
     }}
-    {{$logs := (dbGet 0 "deploymentLogs").Value.Append $deploymentLog}}
+    {{$logs.Set (toInt $logID) $deploymentLog}}
     {{dbSet 0 "deploymentLogs" $logs}}
     {{template "checkPromotion" (sdict "User" .User "DeployedAs" $selectedRankProfile.RoleID "Logs" (dbGet 0 "deploymentLogs").Value)}}
 {{end}}
 
 {{define "checkPromotion"}}
+    Check: {{sendMessage 1384154677951856730 .}}
     {{$member := getMember .User.ID}}
-    {{$currentRank := ""}}
-    {{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
-    {{range $k, $role := $member.Roles}}
-        {{- range $_, $roleID := $rankRoles -}}
-            {{if ne $role $roleID}}
-                {{continue}}
-            {{end}}
-            {{$currentRank = getRole $roleID}}
-            {{break}}
-        {{end}}
-    {{end}}
     {{$logs := .Logs}}
     {{$userLogs := cslice}}
     {{range $logs}}
@@ -199,7 +197,7 @@
     {{$logs = $userLogs}}
     {{$logsAtCurrentRank := cslice}}
     {{range $logs}}
-        {{if ne .Rank $currentRank.ID}}
+        {{if ne .Rank $.DeployedAs}}
             {{continue}}
         {{end}}
         {{$logsAtCurrentRank = $logsAtCurrentRank.Append .}}
@@ -207,21 +205,22 @@
     {{if hasRoleID 1375378503024902164}}
         {{/* Riftling > Scout */}}
         {{if ge (len $logsAtCurrentRank) 1}}
-            {{template "promoteUser" (sdict "User" .User "CurrentRank" $currentRank "NewRank" 1375436671948165143)}}
+            {{template "promoteUser" (sdict "User" .User "CurrentRank" .DeployedAs "NewRank" 1375436671948165143)}}
         {{end}}
     {{else if (hasRoleID 1375436671948165143)}}
         {{/* Scout > Operative */}}
         {{if ge (len $logsAtCurrentRank) 3}}
-            {{template "promoteUser" (sdict "User" .User "CurrentRank" $currentRank "NewRank" 1375378464336773142)}}
+            {{template "promoteUser" (sdict "User" .User "CurrentRank" .DeployedAs "NewRank" 1375378464336773142)}}
         {{end}}
     {{else if (hasRoleID 1375378464336773142)}}
         {{/* Operative > Seeker */}}
         {{if ge (len $logsAtCurrentRank) 4}}
-            {{template "promoteUser" (sdict "User" .User "CurrentRank" $currentRank "NewRank" 1375378431411228755)}}
+            {{template "promoteUser" (sdict "User" .User "CurrentRank" .DeployedAs "NewRank" 1375378431411228755)}}
         {{end}}
     {{end}}
 {{end}}
 {{define "promoteUser"}}
+    Promote: {{sendMessage 1384154677951856730 .}}
     {{$targetMember := getMember .User.ID}}
     {{$verifiedRole := 1375403523788898379}}
     {{$removeRoles := sdict "unverified" 1375381637646258186 "visitor" 1375381740117430302}}
@@ -271,6 +270,7 @@
     {{sendMessage 1384142646536048740 (cembed $logEmbed)}}
 {{end}}
 {{define "updateRobloxRank"}}
+    Roblox: {{sendMessage 1384154677951856730 .}}
     {{$discordRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
     {{$mappedRoles := sdict "riftling" (sdict "Discord" 0 "Roblox" "") "scout" (sdict "Discord" 0 "Roblox" "") "operative" (sdict "Discord" 0 "Roblox" "") "seeker" (sdict "Discord" 0 "Roblox" "") "lance" (sdict "Discord" 0 "Roblox" "") "relay" (sdict "Discord" 0 "Roblox" "") "threader" (sdict "Discord" 0 "Roblox" "") "controller" (sdict "Discord" 0 "Roblox" "") "overseer" (sdict "Discord" 0 "Roblox" "") "marshal" (sdict "Discord" 0 "Roblox" "") "warden" (sdict "Discord" 0 "Roblox" "")}}
     {{$group := getRobloxGroupByID 36098297}}
