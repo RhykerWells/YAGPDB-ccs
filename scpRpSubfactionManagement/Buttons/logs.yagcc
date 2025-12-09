@@ -182,7 +182,6 @@
 		"min_length" 10
 		"max_length" 200
 		"style" 1
-		"required" true
 	}}
 	{{$deploymentSightingsLabel := clabel "label" "Deployment sightings" "description" "What anomalous sightings occured?" "component" $deploymentSightingsInput}}
 	{{$modal := modalBuilder "iota_formsDeploymentLog" "Iota-4 | Deployment log form" $hostLabel $deploymentTypeLabel $deploymentSummaryLabel $deploymentSightingsLabel $proofLabel}}
