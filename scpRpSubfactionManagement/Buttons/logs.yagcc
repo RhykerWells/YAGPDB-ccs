@@ -147,13 +147,13 @@
 	{{$logs := (dbGet 0 "trainingLogs").Value}}
 	{{$userLogsAtRank := cslice}}
 	{{range $ID, $log := $logs}}
-		{{if not $log}}
-			{{continue}}
-		{{end}}
-		{{if ne $log.User.ID $targetMember.User.ID}}
-			{{continue}}
-		{{end}}
-		{{$userLogsAtRank = $userLogsAtRank.Append .}}
+		{{- if not $log -}}
+			{{- continue -}}
+		{{- end -}}
+		{{- if ne $log.User.ID $targetMember.User.ID -}}
+			{{- continue -}}
+		{{- end -}}
+		{{- $userLogsAtRank = $userLogsAtRank.Append . -}}
 	{{end}}
 	{{if and (not (eq $selectedRankProfile.RankShortName "Seeker")) (not $userLogsAtRank)}}
 		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've not completed the training for this role, this deployment will not count towards your quota.") "ephemeral" true)}}
