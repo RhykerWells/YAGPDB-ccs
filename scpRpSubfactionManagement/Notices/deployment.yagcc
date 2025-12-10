@@ -39,11 +39,11 @@
 	{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" "iota_joinDeployment" "style" "success") (cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedDeployment" "style" "secondary" "disabled" true)}}
 	{{$x := sendMessageNoEscapeRetID 1391567579813908633 (complexMessage "content" (printf "<@&1375381774204665917>") "embed" (cembed $embed) "components" $components)}}
 	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "DeploymentMsg" $x)}}
-	{{dbSetExpire $x "deployment" cslice (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
+	{{dbSetExpire $x "deploymentConfirmations" cslice (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
 	{{sendMessage nil (printf "You've successfully started a deployment notice. View the message [here](https://discord.com/channels/1375370805575155782/1391567579813908633/%d)" $x)}}
 {{else}}
 	{{with .ExecData}}
-		{{$confirmed := (dbGet .DeploymentMsg "deployment").Value}}
+		{{$confirmed := (dbGet .DeploymentMsg "deploymentConfirmations").Value}}
 		{{$strConfirmed := cslice}}
 		{{range $confirmed}}
 			{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
@@ -53,7 +53,11 @@
 		{{if lt (len $confirmed) 3}}
 			{{$embed := sdict "title" "Deployment notice" "description" (printf "Insufficient confirmations within time frame.\n\nDeployment cancelled.") "color" 0xFF0000}}
 			{{editMessage 1391567579813908633 .DeploymentMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
-			{{sendMessageNoEscape nil (complexMessage "content" (printf "%s confirmed" (joinStr "\n" $strConfirmed)))}}
+			{{$confirmedUsers := ""}}
+			{{if gt (len $strConfirmed) 0}}
+				{{$confirmedUsers = printf "\n\nConfirmed Users:\n%s" (joinStr "\n" $strConfirmed)}}
+			{{end}}
+			{{sendMessageNoEscape nil (complexMessage "content" (printf "Insufficient confirmations within the time frame.%s" $confirmedUsers))}}
 			{{return}}
 		{{end}}
 		{{$embed := sdict "title" "Deployment notice" "description" (printf "Attending: %s" (joinStr "\n" $strConfirmed)) "color" 0x4b9a4e}}
