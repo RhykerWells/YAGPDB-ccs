@@ -234,7 +234,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 {{$rankRoles := cslice
 	(sdict
 		"EchelonShortName" "VC"
-		"RoleName" "Warden Of The Veil"
+		"RankLongName" "Warden Of The Veil"
 		"RankShortName" "Warden"
 		"RoleID" 1375377194330755113
 		"MorphData" (sdict
@@ -243,7 +243,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "VC"
-		"RoleName" "Echo Marshal"
+		"RankLongName" "Echo Marshal"
 		"RankShortName" "Marshal"
 		"RoleID" 1375377873241772095
 		"MorphData" (sdict
@@ -253,7 +253,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "MC"
-		"RoleName" "Drift Overseer"
+		"RankLongName" "Drift Overseer"
 		"RankShortName" "Overseer"
 		"RoleID" 1375377969492787220
 		"MorphData" (sdict
@@ -262,7 +262,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "MC"
-		"RoleName" "Drift Controller"
+		"RankLongName" "Drift Controller"
 		"RankShortName" "Controller"
 		"RoleID" 1375378044767834133
 		"MorphData" (sdict
@@ -271,7 +271,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "MC"
-		"RoleName" "Drift Threader"
+		"RankLongName" "Drift Threader"
 		"RankShortName" "Threader"
 		"RoleID" 1375436353202032660
 		"MorphData" (sdict
@@ -281,7 +281,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "EU"
-		"RoleName" "Veil Piercer"
+		"RankLongName" "Veil Piercer"
 		"RankShortName" "Piercer"
 		"RoleID" 0
 		"MorphData" (sdict
@@ -290,7 +290,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "EU"
-		"RoleName" "Veil Lance"
+		"RankLongName" "Veil Lance"
 		"RankShortName" "Lance"
 		"RoleID" 1375435912116437073
 		"MorphData" (sdict
@@ -299,7 +299,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "EU"
-		"RoleName" "Veil Seeker"
+		"RankLongName" "Veil Seeker"
 		"RankShortName" "Seeker"
 		"RoleID" 1375378431411228755 
 		"MorphData" (sdict
@@ -309,7 +309,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "FA"
-		"RoleName" "Rift Operative"
+		"RankLongName" "Rift Operative"
 		"RankShortName" "Operative"
 		"RoleID" 1375378464336773142 
 		"MorphData" (sdict
@@ -319,7 +319,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "FA"
-		"RoleName" "Rift Chaser"
+		"RankLongName" "Rift Chaser"
 		"RankShortName" "Chaser"
 		"RoleID" 1375436671948165143 
 		"MorphData" (sdict
@@ -328,7 +328,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "FA"
-		"RoleName" "Riftling"
+		"RankLongName" "Riftling"
 		"RankShortName" "Riftling"
 		"RoleID" 1375378503024902164
 	)
@@ -337,7 +337,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "ICAD-C"
-		"RoleName" "Echo Relay"
+		"RankLongName" "Echo Relay"
 		"RankShortName" "Relay"
 		"RoleID" 1375378281078984704
 		"MorphData" (sdict
@@ -346,7 +346,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "ICAD-C"
-		"RoleName" "Echo Adjutant"
+		"RankLongName" "Echo Adjutant"
 		"RankShortName" "Adjutant"
 		"RoleID" 1400672809469870120
 		"MorphData" (sdict
@@ -356,7 +356,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "ICAD-H"
-		"RoleName" "Glyph Agent"
+		"RankLongName" "Glyph Agent"
 		"RankShortName" "Agent"
 		"RoleID" 1396293360737845349
 		"MorphData" (sdict
@@ -365,7 +365,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "ICAD-H"
-		"RoleName" "Glyph Analyst"
+		"RankLongName" "Glyph Analyst"
 		"RankShortName" "Analyst"
 		"RoleID" 1400672036845781107
 		"MorphData" (sdict
@@ -375,7 +375,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "ICAD-W"
-		"RoleName" "Rift Tracer"
+		"RankLongName" "Rift Tracer"
 		"RankShortName" "Tracer"
 		"RoleID" 1400673095626260540
 		"MorphData" (sdict
@@ -384,7 +384,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "ICAD-W"
-		"RoleName" "Rift Scout"
+		"RankLongName" "Rift Scout"
 		"RankShortName" "Scout"
 		"RoleID" 1401411478610903080
 		"MorphData" (sdict
@@ -396,21 +396,21 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "VG-C"
-		"RoleName" "Guardian Of The Veil"
+		"RankLongName" "Guardian Of The Veil"
 		"RankShortName" "Guardian"
 		"RoleID" 1426604049138192395
 	)
 
 	(sdict
 		"EchelonShortName" "VG-L"
-		"RoleName" "Veil Guard Sentinel"
+		"RankLongName" "Veil Guard Sentinel"
 		"RankShortName" "Sentinel"
 		"RoleID" 1429564916561346641
 	)
 
 	(sdict
 		"EchelonShortName" "VG-F"
-		"RoleName" "Veil Guard"
+		"RankLongName" "Veil Guard"
 		"RankShortName" "Guard"
 		"RoleID" 1426603936680513739
 	)
