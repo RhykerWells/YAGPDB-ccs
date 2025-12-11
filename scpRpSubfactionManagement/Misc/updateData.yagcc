@@ -21,6 +21,14 @@ This includes but is not limited to morph data, discord ranks, roblox ranks
 Changes here will not take affect until the command is re-run.
 */}}
 
+{{/* Main subfaction data */}}
+{{$baseData := sdict
+	"ApiKey" "XX"
+	"EmbedColor" 4003205
+	"RobloxGroupID" 36098297
+	"NicknameRegex" "\\s\\|.*"
+}}
+
 {{/* Echelon, subdivision & rank role data */}}
 
 {{/* Base morph data */}}
@@ -450,5 +458,5 @@ The following parts of the code builds database entries
 	{{- $fullData = $fullData.Append $subdivision -}}
 {{end}}
 
-{{dbSet 0 "FactionDataNew" (sdict "Data" $fullData "MorphData" $baseMorphData)}}
+{{dbSet 0 "FactionData" (sdict "Settings" $baseData "Divisions" $fullData "BaseMorphData" $baseMorphData)}}
 {{sendMessage nil "Done!"}}
