@@ -10,12 +10,12 @@
 */}}
 
 {{$targetMember := .Member}}
-{{$data := dbGet 0 "FactionDataNew"}}
-{{if not $data}}
+{{$factionData := dbGet 0 "FactionData"}}
+{{if not $factionData}}
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
 	{{return}}
 {{end}}
-{{$divisions := $data.Value.Get "Data"}}
+{{$divisions := $data.Value.Get "Divisions"}}
 
 {{$selectedRankProfile := sdict}}
 {{$selectedEchelonProfile := sdict}}

@@ -61,8 +61,8 @@
 
 {{/* Deployment button */}}
 {{if eq `Deployment` .StrippedID}}
-	{{$data := dbGet 0 "FactionDataNew"}}
-	{{$divisions := $data.Value.Get "Data"}}
+	{{$factionData := dbGet 0 "FactionData"}}
+	{{$divisions := $data.Value.Get "Divisions"}}
 	{{$selectedRankProfile := sdict}}
 	{{$selectedEchelonProfile := sdict}}
 	{{range $_, $divisionData := $divisions}}

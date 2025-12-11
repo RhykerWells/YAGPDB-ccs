@@ -111,8 +111,8 @@
 {{end}}
 
 {{define "sendLogs"}}
-	{{$data := dbGet 0 "FactionDataNew"}}
-	{{$divisions := $data.Value.Get "Data"}}
+	{{$factionData := dbGet 0 "FactionData"}}
+	{{$divisions := $data.Value.Get "Divisions"}}
 	{{$lowest := mult 10 (sub .Page 1) | add 1}}
 	{{$highest := mult .Page 10}}
 	{{$fields := cslice}}

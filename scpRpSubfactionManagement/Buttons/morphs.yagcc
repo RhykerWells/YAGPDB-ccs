@@ -13,13 +13,13 @@
 {{$member := getMember .User.ID}}
 {{$rblxName := reReplace ` \|.*` $member.Nick ""}}
 
-{{$data := dbGet 0 "FactionDataNew"}}
-{{if not $data}}
+{{$factionData := dbGet 0 "FactionData"}}
+{{if not $factionData}}
 	{{sendResponse nil "This factions data has not set up, please ask the faction management to do so."}}
 	{{return}}
 {{end}}
 
-{{$divisions := $data.Value.Get "Data"}}
+{{$divisions := $data.Value.Get "Divisions"}}
 {{$baseMorphData := $data.Value.Get "MorphData"}}
 
 {{$selectedRankProfile := sdict}}

@@ -17,14 +17,14 @@
 {{/* Initiates variables */}}
 {{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
 
-{{$data := dbGet 0 "FactionDataNew"}}
-{{if not $data}}
+{{$factionData := dbGet 0 "FactionData"}}
+{{if not $factionData}}
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
 	{{return}}
 {{end}}
 
-{{$data := dbGet 0 "FactionDataNew"}}
-{{$divisions := $data.Value.Get "Data"}}
+{{$factionData := dbGet 0 "FactionData"}}
+{{$divisions := $data.Value.Get "Divisions"}}
 
 {{$targetSubdivision := "Core"}}
 {{$allRanks := cslice}}
