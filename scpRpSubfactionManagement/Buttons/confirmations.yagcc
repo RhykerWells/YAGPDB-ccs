@@ -33,7 +33,7 @@
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{else}}
 		{{$logs := (dbGet 0 "trainingLogs").Value}}
-		{{$userLogs := sdict}}
+		{{$userLogs := dict}}
 		{{range $ID, $log := $logs}}
 			{{if not $log}}
 				{{continue}}

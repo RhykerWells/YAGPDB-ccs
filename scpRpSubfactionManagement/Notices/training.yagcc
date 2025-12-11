@@ -31,7 +31,7 @@
 	{{end}}
 	{{$rankShorts := cslice}}
 	{{range $allRanks}}
-		{{if in (cslice "Warden" "Overseer" "Controller" "Threader") .RankShortName}}
+		{{if in (cslice "Warden" "Marshal" "Overseer" "Controller" "Threader") .RankShortName}}
 			{{continue}}
 		{{end}}
 		{{$rankShorts = $rankShorts.Append (lower .RankShortName)}}
