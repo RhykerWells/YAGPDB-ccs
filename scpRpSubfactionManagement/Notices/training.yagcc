@@ -16,7 +16,7 @@
 
 {{if not .ExecData}}
 	{{$factionData := dbGet 0 "FactionData"}}
-	{{$divisions := $data.Value.Get "Divisions"}}
+	{{$divisions := $factionData.Value.Get "Divisions"}}
 	{{$targetSubdivision := "Core"}}
 	{{$allRanks := cslice}}
 	{{range $divisions}}

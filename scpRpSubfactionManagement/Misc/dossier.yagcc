@@ -19,7 +19,7 @@
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
 	{{return}}
 {{end}}
-{{$divisions := $data.Value.Get "Divisions"}}
+{{$divisions := $factionData.Value.Get "Divisions"}}
 
 {{$members := getMembers}}
 

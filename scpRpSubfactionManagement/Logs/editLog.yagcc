@@ -22,9 +22,7 @@
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
 	{{return}}
 {{end}}
-
-{{$factionData := dbGet 0 "FactionData"}}
-{{$divisions := $data.Value.Get "Divisions"}}
+{{$divisions := $factionData.Value.Get "Divisions"}}
 
 {{$targetSubdivision := "Core"}}
 {{$allRanks := cslice}}

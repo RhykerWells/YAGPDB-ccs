@@ -31,8 +31,8 @@
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
 	{{return}}
 {{end}}
-{{$divisions := $data.Value.Get "Divisions"}}
-{{$baseMorphData := $data.Value.Get "MorphData"}}
+{{$divisions := $factionData.Value.Get "Divisions"}}
+{{$baseMorphData := $factionData.Value.Get "MorphData"}}
 
 {{$selectedRankProfile := sdict}}
 {{$selectedEchelonProfile := sdict}}

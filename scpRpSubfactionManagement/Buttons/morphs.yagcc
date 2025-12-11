@@ -18,9 +18,8 @@
 	{{sendResponse nil "This factions data has not set up, please ask the faction management to do so."}}
 	{{return}}
 {{end}}
-
-{{$divisions := $data.Value.Get "Divisions"}}
-{{$baseMorphData := $data.Value.Get "MorphData"}}
+{{$divisions := $factionData.Value.Get "Divisions"}}
+{{$baseMorphData := $factionData.Value.Get "MorphData"}}
 
 {{$selectedRankProfile := sdict}}
 {{$selectedEchelonProfile := sdict}}
@@ -46,7 +45,7 @@
 		{{$echelon := .}}
 		{{range $echelon.Ranks}}
 			{{$rank := .}}
-			{{if in $.Member.Roles $rank.RoleID}}
+			{{if in $member.Roles $rank.RoleID}}
 				{{$selectedRankProfile = .}}
 				{{$selectedEchelonProfile = $echelon}}
 				{{break}}
