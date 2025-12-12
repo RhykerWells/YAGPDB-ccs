@@ -14,9 +14,6 @@
 	{{return}}
 {{end}}
 
-{{/* Initiates variables */}}
-{{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "observer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
-
 {{/* Per-log viewing */}}
 {{if not (reFind `s` .Cmd)}}
 	{{if not .CmdArgs}}
@@ -87,13 +84,13 @@
 		{{if getMember (index .CmdArgs 0)}}
 			{{$targetMember := getMember (index .CmdArgs 0)}}
 			{{$logHeader := reReplace ` \|.*` $targetMember.Nick ""}}
-			{{$userLogs := sdict}}
-			{{range $ID, $Data := $logs}}
-				{{if eq $ID $targetMember.User.ID}}
-					{{$userLogs.Set $ID $Data}}
+			{{$userLogs := dict}}
+			{{range $ID, $log := $logs}}
+				{{if eq (toInt $log.User.ID) $targetMember.User.ID}}
+					{{$userLogs.Set $ID $log}}
 				{{end}}
 			{{end}}
-			{{$logs := $userLogs}}
+			{{$logs = $userLogs}}
 			{{if (gt (len .CmdArgs) 1)}}
 				{{$page = (index .CmdArgs 1) | toInt}}
 				{{if lt $page 1}}
@@ -107,7 +104,7 @@
 			{{end}}
 		{{end}}
 	{{end}}
-    {{template "sendLogs" (sdict "Page" $page "Logs" $logs "LogType" (lower .Cmd) "LogHeader" $logHeader "ReplyID" .Message.ID "RankRoles" $rankRoles)}}
+    {{template "sendLogs" (sdict "Page" $page "Logs" $logs "LogType" (lower .Cmd) "LogHeader" $logHeader "ReplyID" .Message.ID)}}
 {{end}}
 
 {{define "sendLogs"}}
