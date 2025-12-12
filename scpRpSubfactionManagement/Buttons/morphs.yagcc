@@ -19,7 +19,7 @@
 	{{return}}
 {{end}}
 {{$divisions := $factionData.Value.Get "Divisions"}}
-{{$baseMorphData := $factionData.Value.Get "MorphData"}}
+{{$baseMorphData := $factionData.Value.Get "BaseMorphData"}}
 
 {{$selectedRankProfile := sdict}}
 {{$selectedEchelonProfile := sdict}}
@@ -66,7 +66,7 @@
 {{$echelonMorphData := $selectedEchelonProfile.MorphData}}
 {{$rankMorphData := or $selectedRankProfile.MorphData sdict}}
 
-{{$rtag := printf "[%s] Iota-4 | \"Veilrunners\" | %s" $selectedEchelonProfile.EchelonShortName $selectedRankProfile.RoleName}}
+{{$rtag := printf "[%s] Iota-4 | \"Veilrunners\" | %s" $selectedEchelonProfile.EchelonShortName $selectedRankProfile.RankLongName}}
 {{$starterGear := $baseMorphData.StarterGear.AppendSlice ((or $echelonMorphData.StarterGear cslice).AppendSlice (or $rankMorphData.StarterGear cslice))}}
 {{$maxHealth := or ($rankMorphData.Health) 100}}
 
