@@ -37,7 +37,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
 {{$group := getRobloxGroupByID 36098297}}
 {{$members := getMembers}}
 
-{{if reFind `updateranks` .Cmd}}
+{{if reFind `(?i)updateRanks` .Cmd}}
 	{{sendMessage nil "```Working... [1/6]```"}}
 	{{sendMessage nil "Setting whitelisted divisions"}}
 	{{$targetSubdivision := "Core"}}
@@ -303,12 +303,12 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
 
 {{define "logPromotion"}}
 	{{$logEmbed := sdict
-	"title" "Rank updated"
+	"title"  "Rank updated"
 	"author" (sdict
-	"name" .Member.RankSet.Name
-	"icon_url" .MemberPFP
+	"name"	   .RobloxMember.Username
+	"icon_url" (.RobloxMember.GetUserThumbnailURI nil)
 	)
-	"description" (printf "%s added to the role `%s`" .Member.RankSet.Name .Role)
+	"description" (printf "%s added to the role `%s`" .Member.RobloxMember.Username .Role)
 	"color" 0x650678
 }}
 {{sendMessage 1393462324920057886 (cembed $logEmbed)}}
