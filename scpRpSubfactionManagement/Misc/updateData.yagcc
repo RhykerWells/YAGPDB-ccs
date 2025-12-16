@@ -221,7 +221,7 @@ Each role must be represented as an sdict with the following fields:
 
 - "RankLongName" 	 (string):		  	The name of the rank. -- May differ from Discord rank role name.
 
-- "RankShortName"	 (string): A shorthand label for the role, such as "Chaser" for "Rift Chaser".
+- "RankShortName"	 (string): 			 A shorthand label for the role, such as "Chaser" for "Rift Chaser".
 										 Used for the the rank argument & rank portion of rank tags.
 
 - "RoleID"   		 (int):				The Discord role ID. This is required.
@@ -236,6 +236,15 @@ Each role must be represented as an sdict with the following fields:
 
 	- "StarterGear" (cslice, optional): A list of rank-specific gear provided to the user when spawning under this rank.
 										Can be omitted if no gear is assigned.
+
+- "PromotionData"   (sdict, optional):  Defines the promotion data if users can automatically progress from the current rank.
+										If omitted, no promotion data is applied.
+										PromotionData must be represented as an sdict with the following fields:
+
+- "DeploymentsRequired" (int):			Denotes how many trainings are required at the current rank to be promoted to whichever ranks
+										RankShortName matches the NextRankShortName key.
+
+	- "NextRankShortName"   (string):	This value MUST exactly match the "RankShortName" of the rank you want to automatically promote to.
 
 Because cslices are ordered, list ranks in ascending order with higher ranks higher.
 */}}
@@ -324,6 +333,10 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 			"Health" 125
 			"StarterGear" (cslice "shield")
 		)
+		"PromotionData" (sdict
+			"DeploymentsRequired" 3
+			"NextRankShortName" "Seeker"
+		)
 	)
 	(sdict
 		"EchelonShortName" "FA"
@@ -333,12 +346,20 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"MorphData" (sdict
 			"Health" 110
 		)
+		"PromotionData" (sdict
+			"DeploymentsRequired" 2
+			"NextRankShortName" "Operative"
+		)
 	)
 	(sdict
 		"EchelonShortName" "FA"
 		"RankLongName" "Riftling"
 		"RankShortName" "Riftling"
 		"RoleID" 1375378503024902164
+		"PromotionData" (sdict
+			"DeploymentsRequired" 1
+			"NextRankShortName" "Chaser"
+		)
 	)
 
 
