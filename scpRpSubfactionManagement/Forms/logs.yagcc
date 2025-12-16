@@ -157,6 +157,7 @@
 	{{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
 	{{$logChannel := false}}
 	{{range $logID, $data := $logs}}
+		{{if not $data}}{{continue}}{{end}}
 		{{if eq $data.Roblox $robloxName}}
 			{{$logChannel = (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1)}}
 			{{break}}
@@ -197,32 +198,33 @@
 
 {{define "checkPromotion"}}
 	{{$targetMember := getMember .User.ID}}
+	{{$currentRank := .DeployedAs}}
 	{{$logs := .Logs}}
-	{{$userLogs := cslice}}
-	{{range $logs}}
-		{{if ne (toInt .User.ID) (toInt $targetMember.User.ID)}}
+	{{$userLogs := dict}}
+	{{range $logID, $data := $logs}}
+		{{if ne (toInt $data.User.ID) (toInt $targetMember.User.ID)}}
 			{{continue}}
 		{{end}}
-		{{$userLogs = $userLogs.Append .}}
+		{{$userLogs.Set $logID $data}}
 	{{end}}
 	{{$logs = $userLogs}}
-	{{$logsAtCurrentRank := cslice}}
-	{{range $logs}}
-		{{if ne .Rank $.DeployedAs.RoleID}}
+	{{$logsAtCurrentRank := dict}}
+	{{range $logID, $data := $logs}}
+		{{if ne $data.Rank $currentRank.RoleID}}
 			{{continue}}
 		{{end}}
-		{{$logsAtCurrentRank = $logsAtCurrentRank.Append .}}
+		{{$logsAtCurrentRank.Set $logID $data}}
 	{{end}}
-	{{if not .DeployedAs.PromotionData}}
+	{{$logs = $logsAtCurrentRank}}
+	{{if not $currentRank.PromotionData}}
 		{{return}}
 	{{end}}
-	{{$currentRank := .DeployedAs}}
-	{{$currentEchelon := sdict}}
 	{{$nextRankShortName := $currentRank.PromotionData.NextRankShortName}}
 	{{$nextRankDeploymentRequirements := $currentRank.PromotionData.DeploymentsRequired}}
 	{{if lt (len $logsAtCurrentRank) $nextRankDeploymentRequirements}}
 		{{return}}
 	{{end}}
+	{{$currentEchelon := sdict}}
 	{{range .Divisions}}
 		{{range .Echelons}}
 			{{$echelon := .}}
@@ -249,100 +251,23 @@
 			{{end}}
 		{{end}}
 	{{end}}
-	{{template "promoteDiscordMember" (sdict "TargetMember" $targetMember "CurrentRank" $currentRank "CurrentEchelon" $currentEchelon "NextRank" $nextRank "NextEchelon" $nextEchelon)}}
-	{{template "updateRobloxGroupRank" (sdict "Divisions" .Divisisons "TargetMember" $targetMember "NewRank" $nextRank)}}
-{{end}}
-
-{{define "promoteDiscordMember"}}
-	{{takeRoleID .TargetMember.User.ID .CurrentRank.RoleID}}
-	{{takeRoleID .TargetMember.User.ID .CurrentEchelon.RoleID}}
-	{{giveRoleID .TargetMember.User.ID .NextRank.RoleID}}
-	{{giveRoleID .TargetMember.User.ID .NextEchelon.RoleID}}
-	{{$rblxName := reReplace ` \|.*` .TargetMember.Nick ""}}
+	{{$logLinks := cslice}}
+	{{range $logID, $data := $logsAtCurrentRank}}
+		{{$logLinks = $logLinks.Append (printf "[%d](%s)" $logID $data.Link)}}
+	{{end}}
+	{{$promotionRole := getRole $nextRank.RoleID}}
 	{{$logEmbed := sdict
-		"title" "Rank updated"
+		"title" "Promotion request"
 		"author" (sdict
-			"name" $rblxName
-			"icon_url" (.TargetMember.User.AvatarURL "1024")
+			"name" (printf "%s (ID %d)" $targetMember.User.Username $targetMember.User.ID)
+			"icon_url" ($targetMember.User.AvatarURL "1024")
 		)
-		"description" (printf "%s automatically promoted based on rank requirements to <@&%d>. Previous rank was <@&%d>" .TargetMember.User.Mention .NextRank.RoleID .CurrentRank.RoleID)
-		"color" (getRole .NextRank.RoleID).Color
+		"description" (printf "%s has met the promotion requirements for <@&%d> and their promotion needs reviewing\n### Deployment logs for promotion:\n- %s" $targetMember.User.Mention $nextRank.RoleID (joinStr "\n- " $logLinks))
+		"color" $promotionRole.Color
 	}}
-	{{sendMessage 1384142646536048740 (cembed $logEmbed)}}
-{{end}}
-
-{{define "updateRobloxGroupRank"}}
-	{{$targetSubdivision := "Core"}}
-	{{$allTargetRanks := cslice}}
-	{{range .Divisions}}
-		{{if ne $targetSubdivision .SubdivisionShortName}}
-			{{continue}}
-		{{end}}
-		{{range .Echelons}}
-			{{range .Ranks}}
-				{{$allTargetRanks = $allTargetRanks.Append .}}
-			{{end}}
-		{{end}}
-	{{end}}
-	{{$robloxGroup := getRobloxGroupByID 36098297}}
-	{{$robloxGroupRoles := $robloxGroup.GetRoles}}
-	{{range $rank := $allTargetRanks}}
-		{{range $robloxGroupRoles}}
-			{{if not (in .Name $rank.RankLongName)}}
-				{{continue}}
-			{{end}}
-			{{$robloxData := sdict
-				"RoleID" (toInt .ID)
-				"RoleName" .Name
-				"Rank" (toInt .Rank)
-			}}
-			{{$rank.Set "RobloxData" $robloxData}}
-		{{end}}
-	{{end}}
-	{{$selectedRankSet := sdict}}
-	{{range $allTargetRanks}}
-		{{if in $.TargetMember.Roles .RoleID}}
-			{{$selectedRankSet = .}}
-			{{break}}
-		{{end}}
-	{{end}}
-	{{$memberData := structToSdict .TargetMember}}
-	{{range $k, $v := $memberData}}
-		{{- if eq (kindOf $v true) "struct" }}
-			{{- $memberData.Set $k (structToSdict $v) }}
-		{{- end -}}
-	{{end}}
-	{{$memberData.Set "RankSet" $selectedRankSet}}
-	{{$robloxUsernameFromNickname := reReplace ` \|.*` .TargetMember.Nick ""}}
-	{{$robloxMember := getRobloxUserByUsername $robloxUsernameFromNickname}}
-	{{$memberData.Set "RobloxMember" $robloxMember}}
-	{{$roleUpdate := updateMemberRole (str $robloxGroup.ID) (str $memberData.RobloxMember.ID) (str $memberData.RankSet.RobloxData.RoleID)}}
-	{{if not $roleUpdate}}
-		{{template "logRobloxGroupRankChange" (sdict "Failed" true "RobloxMember" $robloxMember)}}
-		{{return}}
-	{{end}}
-	{{template "logRobloxGroupRankChange" (sdict "RobloxMember" $robloxMember "Role" $roleUpdate.Name)}}
-{{end}}
-
-
-{{define "logRobloxGroupRankChange"}}
-	{{$errorColor := 0xFF0000}}
-	{{$successColor := 0x00ff7b}}
-	{{$logEmbed := sdict
-		"author" (sdict
-			"name" .RobloxMember.Username
-			"icon_url" (print .RobloxMember.GetUserThumbnailURI nil)
-		)
-		"color" $errorColor
+	{{$components := cslice
+		(cbutton "label" "Confirm promotion" "custom_id" (printf "iota_PromotionConfirm-%v" $targetMember.User.ID) "style" "success")
+		(cbutton "label" "Deny promotion" "custom_id" (printf "iota_PromotionDeny-%v" $targetMember.User.ID) "style" "danger")
 	}}
-	{{if .Failed}}
-		{{$logEmbed.Set "title" "Failed to update rank"}}
-		{{$logEmbed.Set "description" (printf "%s was not updated in the group automatically." .RobloxMember.Username)}}
-		{{sendMessage 1393462324920057886 (cembed $logEmbed)}}
-		{{return}}
-	{{end}}
-	{{$logEmbed.Set "title" "Rank updated"}}
-	{{$logEmbed.Set "description" (printf "%s was added to the role `%s`" )}}
-	{{$logEmbed.Set "color" $successColor}}
-	{{sendMessage 1393462324920057886 (cembed $logEmbed)}}
+	{{sendMessage nil (complexMessage "embed" $logEmbed "components" $components)}}
 {{end}}
