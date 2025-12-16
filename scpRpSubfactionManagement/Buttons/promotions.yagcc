@@ -1,0 +1,165 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Message Component`
+	Trigger: `\A(?i)iota_Promotion`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs
+*/}}
+
+{{/* Only edit below if you know what you're doing (: rawr */}}
+
+{{/* Initiates variables */}}
+{{$factionData := dbGet 0 "FactionData"}}
+{{$divisions := $factionData.Value.Get "Divisions"}}
+{{$discordMembers := getMembers}}
+{{$robloxGroup := getRobloxGroupByID 36098297}}
+{{$successColor := 0x00ff7b}}
+{{$errorColor := 0xFF0000}}
+
+{{$x := sendResponseRetID nil (complexMessage "content" (printf "Working..") "ephemeral" true)}}
+{{deleteInteractionResponse .Interaction.Token $x}}
+
+{{$targetMember := getMember (reFind `\d+` .StrippedID)}}
+
+{{$selectedRankProfile := sdict}}
+{{$selectedEchelonProfile := sdict}}
+{{range $divisions}}
+	{{$division := .}}
+	{{range .Echelons}}
+		{{$echelon := .}}
+		{{range .Ranks}}
+			{{$rank := .}}
+			{{if in $targetMember.Roles $rank.RoleID}}
+				{{$selectedRankProfile = .}}
+				{{$selectedEchelonProfile = $echelon}}
+				{{break}}
+			{{end}}
+		{{end}}
+	{{end}}
+{{end}}
+{{$nextRankShortName := $selectedRankProfile.PromotionData.NextRankShortName}}
+{{$nextRank := sdict}}
+{{$nextEchelon := sdict}}
+{{range $divisions}}
+	{{range .Echelons}}
+		{{$echelon := .}}
+		{{range .Ranks}}
+			{{$rank := .}}
+			{{if eq $rank.RankShortName $nextRankShortName}}
+				{{$nextRank = .}}
+				{{$nextEchelon = $echelon}}
+				{{break}}
+			{{end}}
+		{{end}}
+	{{end}}
+{{end}}
+
+{{$logs := (dbGet 0 "deploymentLogs").Value}}
+{{$userLogs := dict}}
+{{range $logID, $data := $logs}}
+	{{if ne (toInt $data.User.ID) (toInt $targetMember.User.ID)}}
+		{{continue}}
+	{{end}}
+	{{$userLogs.Set $logID $data}}
+{{end}}
+{{$logs = $userLogs}}
+{{$logsAtCurrentRank := dict}}
+{{range $logID, $data := $logs}}
+	{{if ne $data.Rank $selectedRankProfile.RoleID}}
+		{{continue}}
+	{{end}}
+	{{$logsAtCurrentRank.Set $logID $data}}
+{{end}}
+{{$logs = $logsAtCurrentRank}}
+{{$logLinks := cslice}}
+{{range $logID, $data := $logs}}
+	{{$logLinks = $logLinks.Append (printf "[%d](%s)" $logID $data.Link)}}
+{{end}}
+
+{{if reFind `Confirm` .StrippedID}}
+	{{$logEmbed := sdict
+		"title" "Promotion request confirmed"
+		"author" (sdict
+			"name" (printf "%s (ID %d)" $targetMember.User.Username $targetMember.User.ID)
+			"icon_url" ($targetMember.User.AvatarURL "1024")
+		)
+		"description" (printf "%s has been promoted to <@&%d>\n### Deployment logs for promotion:\n- %s" $targetMember.User.Mention $nextRank.RoleID (joinStr "\n- " $logLinks))
+		"footer" (sdict
+			"text" (printf "Confirmed by %s (%s)" .User.Username (reReplace ` \|.*` .Member.Nick ""))
+		)
+		"color" $successColor
+	}}
+	{{$components := cslice
+		(cbutton "label" "Confirm promotion" "custom_id" (printf "iota_PromotionConfirm-%v" $targetMember.User.ID) "style" "success" "disabled" true)
+		(cbutton "label" "Deny promotion" "custom_id" (printf "iota_PromotionDeny-%v" $targetMember.User.ID) "style" "danger" "disabled" true)
+	}}
+	{{editMessage nil .Interaction.Message.ID (complexMessageEdit "embed" $logEmbed "components" $components)}}
+	{{takeRoleID .TargetMember.User.ID $selectedRankProfile.RoleID}}
+	{{takeRoleID .TargetMember.User.ID $selectedEchelonProfile.RoleID}}
+	{{giveRoleID .TargetMember.User.ID $nextRank.RoleID}}
+	{{giveRoleID .TargetMember.User.ID $nextEchelon.RoleID}}
+	{{$nextRankRoblox := sdict}}
+	{{range $robloxGroup.GetRoles}}
+		{{if in .Name $nextRank.RankShortName}}
+			{{$nextRankRoblox = sdict
+				"ID" (str .ID)
+				"Name" (str .Name)
+				"Rank" (str .Rank)
+            }}
+			{{break}}
+		{{end}}
+	{{end}}
+	{{$robloxUsernameFromNickname := reReplace ` \|.*` $targetMember.Nick ""}}
+	{{$robloxMember := getRobloxUserByUsername $robloxUsernameFromNickname}}
+	{{$roleUpdate := updateMemberRole (str $robloxGroup.ID) (str $robloxMember.ID) (str $nextRankRoblox.ID)}}
+	{{if not $roleUpdate}}
+		{{template "logRobloxGroupRankChange" (sdict "Failed" true "RobloxMember" $robloxMember "Role" $nextRankRoblox.Name)}}
+		{{return}}
+	{{end}}
+	{{template "logRobloxGroupRankChange" (sdict "RobloxMember" $robloxMember "Role" $roleUpdate.Name)}}
+{{else if reFind `Deny` .StrippedID}}
+	{{$logEmbed := sdict
+		"title" "Promotion request denied"
+		"author" (sdict
+			"name" (printf "%s (ID %d)" $targetMember.User.Username $targetMember.User.ID)
+			"icon_url" ($targetMember.User.AvatarURL "1024")
+		)
+		"description" (printf "%s has not been promoted to <@&%d>\n### Deployment logs for promotion:\n- %s" $targetMember.User.Mention $nextRank.RoleID (joinStr "\n- " $logLinks))
+		"footer" (sdict
+			"text" (printf "Denied by %s (%s)" .User.Username (reReplace ` \|.*` .Member.Nick ""))
+		)
+		"color" $errorColor
+	}}
+	{{$components := cslice
+		(cbutton "label" "Confirm promotion" "custom_id" (printf "iota_PromotionConfirm-%v" $targetMember.User.ID) "style" "success" "disabled" true)
+		(cbutton "label" "Deny promotion" "custom_id" (printf "iota_PromotionDeny-%v" $targetMember.User.ID) "style" "danger" "disabled" true)
+	}}
+	{{editMessage nil .Interaction.Message.ID (complexMessageEdit "embed" $logEmbed "components" $components)}}
+{{end}}
+{{$x = sendResponseRetID nil (complexMessage "content" (printf "Done!") "ephemeral" true)}}
+{{deleteInteractionResponse .Interaction.Token $x}}
+
+{{define "logRobloxGroupRankChange"}}
+	{{$errorColor := 0xFF0000}}
+	{{$successColor := 0x00ff7b}}
+	{{$logEmbed := sdict
+		"author" (sdict
+			"name" .RobloxMember.Username
+			"icon_url" (.RobloxMember.GetUserThumbnailURI nil)
+		)
+		"color" $errorColor
+	}}
+	{{if .Failed}}
+		{{$logEmbed.Set "title" "Failed to update rank"}}
+		{{$logEmbed.Set "description" (printf "%s was not added to the role `%s`" .RobloxMember.Username .Role)}}
+		{{sendMessage 1393462324920057886 (cembed $logEmbed)}}
+		{{return}}
+	{{end}}
+	{{$logEmbed.Set "title" "Rank updated"}}
+	{{$logEmbed.Set "description" (printf "%s was added to the role `%s`" .RobloxMember.Username .Role)}}
+	{{$logEmbed.Set "color" $successColor}}
+	{{sendMessage 1393462324920057886 (cembed $logEmbed)}}
+{{end}}
