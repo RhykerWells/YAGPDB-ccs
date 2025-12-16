@@ -41,7 +41,7 @@
 	{{if eq (printf "%T" $host) "templates.SDict" "*templates.SDict"}}
 		{{$hostMember := getMember $host.ID}}
 		{{$hostRobloxName := reReplace ` \|.*` $hostMember.Nick ""}}
-		{{$host = printf "<@!%s> `(%s)`" $host.ID $hostRobloxName}}
+		{{$host = printf "<@!%s> (`%s`)" (str $host.ID) $hostRobloxName}}
 	{{end}}
 	{{if eq (lower .Cmd) "-tlog"}}
 		{{$fields = cslice 
