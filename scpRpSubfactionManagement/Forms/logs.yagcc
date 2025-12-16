@@ -164,7 +164,7 @@
 		{{end}}
 	{{end}}
 	{{if $logChannel}}
-		{{openThread (toInt $logData.Channel)}}
+		{{openThread (toInt $logChannel)}}
 	{{else}}
 		{{try}}
 			{{$logChannel = (createForumPost 1383919182889881790 $robloxName (printf "%s's Deployment log" .User.Mention)).ID}}
