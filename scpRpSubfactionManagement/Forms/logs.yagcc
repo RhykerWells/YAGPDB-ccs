@@ -146,31 +146,35 @@
 	{{$hostMember := getMember $logData.Host}}
 	{{$hostRobloxName := reReplace ` \|.*` $hostMember.Nick ""}}
 	{{$fields := cslice 
-		(sdict "name" "__Deployment host__" "value" (printf "<@!%s> `(%s)`" $logData.Host $hostRobloxName) "inline" true)
+		(sdict "name" "__Deployment host__" "value" (printf "<@!%s> (`%s`)" $logData.Host $hostRobloxName) "inline" true)
 		(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-		(sdict "name" "__Deployment type__" "value" $logData.Type "inline" true)
+		(sdict "name" "__Deployment type__" "value" (printf "`%s`" $logData.Type) "inline" true)
 		(sdict "name" "__Deployment summary__" "value" $logData.Summary "inline" true)
 		(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-		(sdict "name" "__Sightings__" "value" $logData.Sightings "inline" true)}}
+		(sdict "name" "__Sightings__" "value" $logData.Sightings "inline" true)
+	}}
 	{{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nDeployed as: <@&%d>" $timeOfLog $selectedRankProfile.RoleID) "fields" $fields "image" (sdict "url" $logData.Proof) "color" 0x4b9a4e}}
 	{{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
-	{{$post := false}}
-	{{range .Guild.Threads}}
-		{{if ne .ParentID 1383919182889881790}}
-			{{continue}}
-		{{end}}
-		{{if eq .Name $robloxName}}
-			{{$post = .ID}}
+	{{$logChannel := false}}
+	{{range $logID, $data := $logs}}
+		{{if eq $data.Roblox $robloxName}}
+			{{$logChannel = (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1)}}
 			{{break}}
 		{{end}}
 	{{end}}
-	{{if not $post}}
-		{{$post = (createForumPost 1383919182889881790 $robloxName (printf "%s's Deployment log" .User.Mention)).ID}}
+	{{if $logChannel}}
+		{{openThread (toInt $logData.Channel)}}
+	{{else}}
+		{{try}}
+			{{$logChannel = (createForumPost 1383919182889881790 $robloxName (printf "%s's Deployment log" .User.Mention)).ID}}
+		{{catch}}
+			{{if in .Error "unable to create forum post"}}
+				{{sendMessage 1384154677951856730 (printf "Was not able to create a forum post channel for log #%d" $logID)}}
+			{{end}}
+		{{end}}
 	{{end}}
-	{{$x := sendMessageRetID $post (complexMessage "embed" (cembed $embed))}}
 	{{$deploymentLog := sdict
 		"ID" $logID
-		"Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID $post $x)
 		"User" .User
 		"Roblox" $robloxName
 		"Time" $timeOfLog
@@ -181,6 +185,10 @@
 		"Sightings" $logData.Sightings
 		"Proof" $logData.Proof
 	}}
+	{{if $logChannel}}
+		{{$x := sendMessageRetID $logChannel (complexMessage "embed" (cembed $embed))}}
+		{{$deploymentLog.Set "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID $logChannel $x)}}
+	{{end}}
 	{{$logs.Set (toInt $logID) $deploymentLog}}
 	{{dbSet 0 "deploymentLogs" $logs}}
 	{{$_ := dbIncr 0 "Dlog" 1}}
@@ -263,7 +271,7 @@
 	{{sendMessage 1384142646536048740 (cembed $logEmbed)}}
 {{end}}
 
-{{define "updateRobloxRank"}}
+{{define "updateRobloxGroupRank"}}
 	{{$targetSubdivision := "Core"}}
 	{{$allTargetRanks := cslice}}
 	{{range .Divisions}}
@@ -310,14 +318,14 @@
 	{{$memberData.Set "RobloxMember" $robloxMember}}
 	{{$roleUpdate := updateMemberRole (str $robloxGroup.ID) (str $memberData.RobloxMember.ID) (str $memberData.RankSet.RobloxData.RoleID)}}
 	{{if not $roleUpdate}}
-		{{template "logRobloxGroupRankChange" (sdict "Failed" true "RobloxMember" $)}}
+		{{template "logRobloxGroupRankChange" (sdict "Failed" true "RobloxMember" $robloxMember)}}
 		{{return}}
 	{{end}}
-	{{template "logPromotion" (sdict "RobloxMember" $robloxMember "Role" $roleUpdate.Name)}}
+	{{template "logRobloxGroupRankChange" (sdict "RobloxMember" $robloxMember "Role" $roleUpdate.Name)}}
 {{end}}
 
 
-{{define "logGroupRankChange"}}
+{{define "logRobloxGroupRankChange"}}
 	{{$errorColor := 0xFF0000}}
 	{{$successColor := 0x00ff7b}}
 	{{$logEmbed := sdict
