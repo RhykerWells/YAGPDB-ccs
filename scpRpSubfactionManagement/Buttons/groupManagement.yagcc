@@ -1,0 +1,361 @@
+{{/*
+
+Made by ranger_4297 (765316548516380732)
+
+
+
+Trigger Type: `Message Component`
+
+Trigger: `\A(?i)iota_Roblox`
+
+
+
+©️ RhykerWells 2020-Present
+
+GNU, GPLV3 License
+
+Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+
+*/}}
+
+{{/* Only edit below if you know what you're doing (: rawr */}}
+
+{{/* Initiates variables */}}
+{{$successColor := 0x00ff7b}}
+{{$errorColor := 0xFF0000}}
+{{$robloxGroup := getRobloxGroupByID 36098297}}
+{{$discordMembers := getMembers}}
+
+{{if .ExecData}}
+	{{deleteInteractionResponse .ExecData.Token .ExecData.ID}}
+	{{return}}
+{{end}}
+
+{{$factionData := (dbGet 0 "FactionData")}}
+{{if not $factionData}}
+	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
+	{{return}}
+{{end}}
+{{$divisions := $factionData.Value.Get "Divisions"}}
+
+{{if eq .StrippedID "UpdateRanks"}}
+	{{$content := "```Working... [1/6]```"}}
+	{{$stageOne := sendResponseRetID nil $content}}
+	{{$content = printf "%s\nSetting whitelisted divisions" $content}}
+	{{editResponse .Interaction.Token $stageOne $content}}
+	{{$targetSubdivision := "Core"}}
+	{{$allTargetRanks := cslice}}
+	{{$content = printf "%s\nCompiling whitelisted divisions" $content}}
+	{{editResponse .Interaction.Token $stageOne $content}}
+	{{range $divisions}}
+		{{if ne $targetSubdivision .SubdivisionShortName}}
+			{{continue}}
+		{{end}}
+		{{range .Echelons}}
+			{{range .Ranks}}
+				{{$allTargetRanks = $allTargetRanks.Append .}}
+			{{end}}
+		{{end}}
+	{{end}}
+	{{$content = "```Working... [2/6]```"}}
+	{{$stageTwo := sendResponseRetID nil $content}}
+	{{$content = printf "%s\nRetrieving Roblox group roles" $content}}
+	{{editResponse .Interaction.Token $stageTwo $content}}
+	{{$robloxGroupRoles := $robloxGroup.GetRoles}}
+	{{$content = printf "%s\nCompiling the Roblox group role information per matching Discord rank" $content}}
+	{{editResponse .Interaction.Token $stageTwo $content}}
+	{{range $rank := $allTargetRanks}}
+		{{range $robloxGroupRoles}}
+			{{if not (in .Name $rank.RankLongName)}}
+				{{continue}}
+			{{end}}
+			{{$robloxData := sdict
+				"RoleID" (toInt .ID)
+				"RoleName" .Name
+				"Rank" (toInt .Rank)
+			}}
+			{{$rank.Set "RobloxData" $robloxData}}
+		{{end}}
+	{{end}}
+	{{$content = printf "%s\nCompiling unmatched Roblox roles" $content}}
+	{{editResponse .Interaction.Token $stageTwo $content}}
+	{{$notRobloxMapped := cslice}}
+	{{range $rank := $allTargetRanks}}
+		{{if $rank.RobloxData}}
+			{{continue}}
+		{{end}}
+		{{$notRobloxMapped = $notRobloxMapped.Append $rank}}
+	{{end}}
+	{{$notRobloxMappedPrintable := cslice}}
+	{{range $rank := $notRobloxMapped}}
+		{{$notRobloxMappedPrintable = $notRobloxMappedPrintable.Append (printf "%s - <@&%d>" $rank.RankLongName $rank.RoleID)}}
+	{{end}}
+	{{$matches := "**No unmatched Roblox roles**"}}
+	{{if $notRobloxMappedPrintable}}
+		{{$matches = (printf "**The following Discord ranks do not have Roblox roles matching their full name:\n%s**" (joinStr "\n" $notRobloxMappedPrintable))}}
+	{{end}}
+	{{$content = printf "%s\n%s" $content $matches}}
+	{{editResponse .Interaction.Token $stageTwo $content}}
+	{{$content := "```Working... [3/6]```"}}
+	{{$stageThree := sendResponseRetID nil $content}}
+	{{$content = printf "%s\nRetrieving the Discord rank information per matching Roblox role" $content}}
+	{{editResponse .Interaction.Token $stageThree $content}}
+	{{$newRobloxGroupRoles := cslice}}
+	{{range $role := $robloxGroupRoles}}
+		{{$robloxData := sdict
+			"RoleID" (toInt .ID)
+			"Name" .Name
+			"Rank" (toInt .Rank)
+		}}
+		{{if eq .Name "Guest"}}{{continue}}{{end}}
+		{{range $allTargetRanks}}
+			{{if not (in $robloxData.Name .RankLongName)}}
+				{{continue}}
+			{{end}}
+			{{$robloxData.Set "DiscordData" .}}
+		{{end}}
+		{{$newRobloxGroupRoles = $newRobloxGroupRoles.Append $robloxData}}
+	{{end}}
+	{{$content = printf "%s\nCompiling unmatched Discord ranks" $content}}
+	{{editResponse .Interaction.Token $stageThree $content}}
+	{{$notDiscordMapped := cslice}}
+	{{range $role := $newRobloxGroupRoles}}
+		{{if $role.DiscordData}}
+			{{continue}}
+		{{end}}
+		{{$notDiscordMapped = $notDiscordMapped.Append $role}}
+	{{end}}
+	{{$notDiscordMappedPrintable := cslice}}
+	{{range $role := $notDiscordMapped}}
+		{{$notDiscordMappedPrintable = $notDiscordMappedPrintable.Append (printf "%s - %d" $role.Name $role.ID)}}
+	{{end}}
+	{{$matches = "**No unmatched Discord ranks**"}}
+	{{if $notDiscordMappedPrintable}}
+		{{$matches = (printf "**The following Roblox roles do not have Discord ranks matching their full name:\n%s**" (joinStr "\n" $notDiscordMappedPrintable))}}
+	{{end}}
+	{{$content = printf  "%s\n%s" $content $matches}}
+	{{editResponse .Interaction.Token $stageThree $content}}
+	{{$content = "```Working... [4/6]```"}}
+	{{$stageFour := sendResponseRetID nil $content}}
+	{{$content = printf "%s\nRetrieving all Veilrunners" $content}}
+	{{editResponse .Interaction.Token $stageFour $content}}
+	{{$veilRunners := cslice}}
+	{{range $member := $discordMembers}}
+		{{if not (in $member.Roles 1375381774204665917)}}
+			{{continue}}
+		{{end}}
+		{{$selectedRankSet := sdict}}
+		{{range $allTargetRanks}}
+			{{if in $member.Roles .RoleID}}
+				{{$selectedRankSet = .}}
+				{{break}}
+			{{end}}
+		{{end}}
+		{{$memberData := structToSdict $member}}
+		{{range $k, $v := $memberData}}
+			{{- if eq (kindOf $v true) "struct" }}
+				{{- $memberData.Set $k (structToSdict $v) }}
+			{{- end -}}
+		{{end}}
+		{{$memberData.Set "RankSet" $selectedRankSet}}
+		{{$veilRunners = $veilRunners.Append $memberData}}
+	{{end}}
+	{{$content = printf "%s\nCompiling all non-core Veilrunners" $content}}
+	{{editResponse .Interaction.Token $stageFour $content}}
+	{{$notMembersCoreMapped := cslice}}
+	{{range $member := $veilRunners}}
+		{{if $member.RankSet}}
+			{{continue}}
+		{{end}}
+		{{$selectedRankSet := sdict}}
+		{{range $allTargetRanks}}
+			{{if eq .RankShortName "Riftling"}}
+				{{$selectedRankSet = .}}
+			{{end}}
+		{{end}}
+		{{$member.Set "RankSet" $selectedRankSet}}
+		{{$notMembersCoreMapped = $notMembersCoreMapped.Append $member}}
+	{{end}}
+	{{$notMembersCoreMappedPrintable := cslice}}
+	{{range $member := $notMembersCoreMapped}}
+		{{$notMembersCoreMappedPrintable = $notMembersCoreMappedPrintable.Append (printf "%s - <@!%d>" $member.User.Username $member.User.ID)}}
+	{{end}}
+	{{$matches = "**No non-core Veilrunners... is this right?**"}}
+	{{if $notMembersCoreMappedPrintable}}
+		{{$matches = (printf "**The following Discord members are not part of our core rank system and as such will be ranked to our default:\n%s**" (joinStr "\n" $notMembersCoreMappedPrintable))}}
+	{{end}}
+	{{$content = printf "%s\n%s" $content $matches}}
+	{{editResponse .Interaction.Token $stageFour $content}}
+	{{$content = printf "%s\nCompiling all non-nicknamed Veilrunners" $content}}
+	{{editResponse .Interaction.Token $stageFour $content}}
+	{{$notNickedMembersMapped := cslice}}
+	{{$nickedMembersMapped := cslice}}
+	{{range $member := $veilRunners}}
+		{{if $member.Nick}}
+			{{$nickedMembersMapped = $nickedMembersMapped.Append $member}}
+			{{continue}}
+		{{end}}
+		{{$notNickedMembersMapped = $notNickedMembersMapped.Append $member}}
+	{{end}}
+	{{$notNickedMembersMappedPrintable := cslice}}
+	{{range $member := $notNickedMembersMapped}}
+		{{$notNickedMembersMappedPrintable = $notNickedMembersMappedPrintable.Append (printf "%s - <@!%d>" $member.User.Username $member.User.ID)}}
+	{{end}}
+	{{$matches = "**No non-nicked Veilrunners**"}}
+	{{if $notNickedMembersMappedPrintable}}
+		{{$matches = (printf "**The following Discord members do not have a nickname set and as such their Roblox account has not been found:\n%s**" (joinStr "\n" $notNickedMembersMappedPrintable))}}
+	{{end}}
+	{{$content = printf "%s\n%s" $content $matches}}
+	{{editResponse .Interaction.Token $stageFour $content}}
+	{{$content = "```Working... [5/6]```"}}
+	{{$stageFive := sendResponseRetID nil $content}}
+	{{$content = printf "%s\nCompiling all member Roblox accounts" $content}}
+	{{editResponse .Interaction.Token $stageFive $content}}
+	{{$noRobloxAccountMapped := cslice}}
+	{{$robloxAccountMapped := cslice}}
+	{{range $member := $nickedMembersMapped}}
+		{{$robloxUsernameFromNickname := reReplace ` \|.*` .Nick ""}}
+		{{$robloxMember := getRobloxUserByUsername $robloxUsernameFromNickname}}
+		{{if $robloxMember}}
+			{{$member.Set "RobloxMember" $robloxMember}}
+			{{$robloxAccountMapped = $robloxAccountMapped.Append $member}}
+			{{continue}}
+		{{end}}
+		{{$noRobloxAccountMapped = $noRobloxAccountMapped.Append $member}}
+	{{end}}
+	{{$noRobloxAccountMappedPrintable := cslice}}
+	{{range $member := $noRobloxAccountMapped}}
+		{{$noRobloxAccountMappedPrintable = $noRobloxAccountMappedPrintable.Append (printf "%s - <@!%d>" $member.User.Username $member.User.ID)}}
+	{{end}}
+	{{$matches = "**No Discord members with missing Roblox accounts**"}}
+	{{if $noRobloxAccountMappedPrintable}}
+		{{$matches = (printf "**The following Discord members do not have a Roblox found with their user:\n%s**" (joinStr "\n" $noRobloxAccountMappedPrintable))}}
+	{{end}}
+	{{$content = printf "%s\n%s" $content $matches}}
+	{{editResponse .Interaction.Token $stageFive $content}}
+	{{$content = "```Working... [6/6]```"}}
+	{{$stageSix := sendResponseRetID nil $content}}
+	{{$content = printf "%s\nUpdating group ranks" $content}}
+	{{editResponse .Interaction.Token $stageSix $content}}
+	{{$failedSettingRankMapped := cslice}}
+	{{range $member := $robloxAccountMapped}}
+		{{$roleUpdate := updateMemberRole (str $robloxGroup.ID) (str $member.RobloxMember.ID) (str .RankSet.RobloxData.RoleID)}}
+		{{if $roleUpdate}}
+			{{template "logPromotion" (sdict "Member" $member "Role" $roleUpdate.Name "MemberPFP" ($member.RobloxMember.GetUserThumbnailURI nil))}}
+			{{continue}}
+		{{end}}
+		{{$failedSettingRankMapped = $failedSettingRankMapped.Append $member}}
+	{{end}}
+	{{$failedSettingRankMappedPrintable := cslice}}
+	{{range $member := $failedSettingRankMapped}}
+		{{$notRobloxMappedPrintable = $notRobloxMappedPrintable.Append (printf "%s - <@&%d>" $member.User.Username $member.RankSet.RoleID)}}
+	{{end}}
+	{{$matches = "**No users failed to update group ranks**"}}
+	{{if $failedSettingRankMappedPrintable}}
+		{{$matches = (printf "**The following Discord users did not have their Roblox group ranks updated:\n%s" (joinStr "\n" $failedSettingRankMappedPrintable))}}
+	{{end}}
+	{{$content = printf "%s\n%s" $content $matches}}
+	{{editResponse .Interaction.Token $stageSix $content}}
+	{{sendResponse nil "```Done!```"}}
+{{else}}
+	{{if eq .StrippedID "ViewRequests"}}
+		{{$requests := $robloxGroup.GetJoinRequests}}
+		{{if not $requests}}
+			{{$x := sendResponseRetID nil "There were no join requests at this time."}}
+			{{scheduleUniqueCC .CCID nil 20 (print $x "-start") (sdict "Token" .Interaction.Token "ID" $x)}}
+			{{return}}
+		{{end}}
+		{{$menuOptions := cslice}}
+		{{range $requests}}
+			{{$menuOptions = $menuOptions.Append (sdict "label" .Username "value" .Username)}}
+		{{end}}
+		{{$menu := cmenu
+			"type" "text"
+			"placeholder" "Choose a Roblox users request to view"
+			"custom_id" "iota_RobloxViewRequest"
+			"options" $menuOptions
+			"max_values" 1
+		}}
+		{{$x := sendResponseRetID nil (complexMessage "menus" $menu)}}
+		{{scheduleUniqueCC .CCID nil 20 (print $x "-start") (sdict "Token" .Interaction.Token "ID" $x)}}
+	{{else if eq .StrippedID "ViewRequest"}}
+		{{$requests := $robloxGroup.GetJoinRequests}}
+		{{$selectedRequest := sdict}}
+		{{range $requests}}
+			{{if eq .Username (index $.Values 0)}}
+				{{$selectedRequest = .}}
+				{{break}}
+			{{end}}
+		{{end}}
+		{{$robloxMember := getRobloxUserByID (toString $selectedRequest.ID)}}
+		{{$discordMember := sdict}}
+		{{range $discordMembers}}
+			{{if and .Nick (eq .Nick $robloxMember.Username)}}
+				{{$discordMember = .}}
+				{{break}}
+			{{end}}
+		{{end}}
+		{{$noDiscordMemberNotice := ""}}
+		{{if not $discordMember}}
+			{{$noDiscordMemberNotice = "\n\n**There is no verified Veilrunner in the Discord with this Roblox name**"}}
+		{{end}}
+		{{$requestEmbed := sdict
+			"title" "Join request"
+			"description" (printf "`%s` (`%d`) submitted a join request on **%v**%s" $robloxMember.Username (toInt $robloxMember.ID) (formatTime (($selectedRequest.CreatedAt).Add (toDuration "1h")) "January 02, 15:04") $noDiscordMemberNotice)
+			"thumbnail" (sdict
+				"url" ($robloxMember.GetUserThumbnailURI nil)
+			)
+			"color" 0x650678
+		}}
+		{{$components := cslice
+			(cbutton "label" "Accept group request" "custom_id" (printf "iota_RobloxRequestAccept-%v" $robloxMember.ID) "style" "success")
+			(cbutton "label" "Deny group request" "custom_id" (printf "iota_RobloxRequestDeny-%v" $robloxMember.ID) "style" "danger")
+		}}
+		{{sendResponse nil (complexMessage "embed" (cembed $requestEmbed) "components" $components)}}
+	{{else if reFind `Request(Accept|Deny)` .StrippedID}}
+		{{$robloxID := reFind `\d+` .StrippedID}}
+		{{$robloxMember := getRobloxUserByID (toString $robloxID)}}
+		{{$embed := sdict
+			"title" "Group join request"
+			"thumbnail" (sdict
+				"url" ($robloxMember.GetUserThumbnailURI nil)
+			)
+			"color" $successColor
+		}}
+		{{$ok := false}}
+		{{$type := "accepted"}}
+		{{if reFind `Accept` .Cmd}}
+			{{$ok = $robloxGroup.JoinRequestAccept (toString $robloxID)}}
+		{{else}}
+			{{$type = "denied"}}
+			{{$ok = $robloxGroup.JoinRequestDecline (toString $robloxID)}}
+			{{$embed.Set "color" $errorColor}}
+		{{end}}
+		{{if not $ok}}
+			{{$x := sendResponseRetID nil "Something went wrong, please try again."}}
+			{{scheduleUniqueCC .CCID nil 20 (print $x "-start") (sdict "Token" .Interaction.Token "ID" $x)}}
+			{{return}}
+		{{end}}
+		{{$embed.Set "description" (printf "%s (`%d`) **%s** a join request submitted by `%s`" .User.Mention .User.ID $type $robloxMember.Username)}}
+		{{sendResponse nil "Done"}}
+		{{$newComponents := cslice
+			(cbutton "label" "Accept group request" "custom_id" (printf "iota_RobloxRequestAccept-%v" $robloxMember.ID) "style" "success" "disabled" true)
+			(cbutton "label" "Deny group request" "custom_id" (printf "iota_RobloxRequestDeny-%v" $robloxMember.ID) "style" "danger" "disabled" true)
+		}}
+		{{editMessage nil .Interaction.Message.ID (complexMessageEdit "components" $newComponents)}}
+		{{sendMessage 1393462324920057886 (cembed $embed)}}
+	{{end}}
+{{end}}
+
+{{define "logPromotion"}}
+	{{$logEmbed := sdict
+		"title"  "Rank updated"
+		"author" (sdict
+			"name"	.RobloxMember.Username
+			"icon_url" (.RobloxMember.GetUserThumbnailURI nil)
+		)
+		"description" (printf "%s added to the role `%s`" .Member.RobloxMember.Username .Role)
+		"color" 0x650678
+	}}
+	{{sendMessage 1393462324920057886 (cembed $logEmbed)}}
+{{end}}
