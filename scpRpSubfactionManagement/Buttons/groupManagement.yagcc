@@ -324,7 +324,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
 		}}
 		{{$ok := false}}
 		{{$type := "accepted"}}
-		{{if reFind `Accept` .Cmd}}
+		{{if reFind `Accept` .StrippedID}}
 			{{$ok = $robloxGroup.JoinRequestAccept (toString $robloxID)}}
 		{{else}}
 			{{$type = "denied"}}
