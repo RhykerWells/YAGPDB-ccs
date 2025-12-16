@@ -88,7 +88,7 @@
 			{{sendMessageNoEscape nil (complexMessage "content" (printf "Insufficient confirmations within the time frame for %s training.%s" .TrainingRole.RankLongName $confirmedUsers))}}
 			{{return}}
 		{{end}}
-		{{$embed := sdict "title" (printf "%s training" .TrainingRole.Name) "description" (printf "Attending:\n%s" (joinStr "\n" $strConfirmed)) "color" 0x4b9a4e}}
+		{{$embed := sdict "title" (printf "%s training" .TrainingRole.RankLongName) "description" (printf "Attending:\n%s" (joinStr "\n" $strConfirmed)) "color" 0x4b9a4e}}
 		{{editMessage 1391567531046863041 .TrainingMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
 		{{sendMessageNoEscape nil (complexMessage "content" (printf "%s please ping %s in <#1391567531046863041> and the an SCP: RP server name" .Host (joinStr "\n" $strConfirmed)))}}
 	{{end}}
