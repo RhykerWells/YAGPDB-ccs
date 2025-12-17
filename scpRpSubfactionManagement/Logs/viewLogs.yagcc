@@ -73,17 +73,20 @@
 {{if reFind `s` .Cmd}}
 	{{$cmds := printf "```%[s]s [User:Mention/ID] [Page:Int]```" .Cmd}}
 	{{$logs := ""}}
+	{{$logNum := 0}}
 	{{if eq (lower .Cmd) "-tlogs"}}
 		{{$logs = (dbGet 0 "trainingLogs").Value}}
+		{{$logNum = (dbGet 0 "Tlog").Value}}
 	{{else}}
 		{{$logs = (dbGet 0 "deploymentLogs").Value}}
+		{{$logNum = (dbGet 0 "Dlog").Value}}
 	{{end}}
 	{{$page := 1}}
 	{{$logHeader := "All"}}
 	{{if (gt (len .CmdArgs) 0)}}
 		{{if getMember (index .CmdArgs 0)}}
 			{{$targetMember := getMember (index .CmdArgs 0)}}
-			{{$logHeader := reReplace ` \|.*` $targetMember.Nick ""}}
+			{{$logHeader = reReplace ` \|.*` $targetMember.Nick ""}}
 			{{$userLogs := dict}}
 			{{range $ID, $log := $logs}}
 				{{if eq (toInt $log.User.ID) $targetMember.User.ID}}
@@ -104,24 +107,25 @@
 			{{end}}
 		{{end}}
 	{{end}}
-    {{template "sendLogs" (sdict "Page" $page "Logs" $logs "LogType" (lower .Cmd) "LogHeader" $logHeader "ReplyID" .Message.ID)}}
+    {{template "sendLogs" (sdict "Page" $page "Logs" $logs "LogType" (lower .Cmd) "LogNum" $logNum "LogHeader" $logHeader "ReplyID" .Message.ID)}}
 {{end}}
 
 {{define "sendLogs"}}
-	{{$factionData := dbGet 0 "FactionData"}}
-	{{$divisions := $factionData.Value.Get "Divisions"}}
 	{{$lowest := mult 10 (sub .Page 1) | add 1}}
 	{{$highest := mult .Page 10}}
 	{{$fields := cslice}}
-	{{range (seq 1 (len $.Logs | add 1))}}
-		{{if or (lt . $lowest) (gt . $highest)}}
-			{{continue}}
+	{{$keys := seq 1 (add (toInt .LogNum) 1)}}
+	{{$orderedLogs := cslice}}
+	{{range $keys}}
+		{{if ($.Logs.Get .)}}
+			{{$orderedLogs = $orderedLogs.Append ($.Logs.Get .)}}
 		{{end}}
-		{{if not ($.Logs.Get .)}}
-			{{continue}}
+	{{end}}
+	{{range $i, $log := $orderedLogs}}
+		{{$index := add $i 1}}
+		{{if and (ge $index $lowest) (le $index $highest)}}
+			{{$fields = $fields.Append (sdict "name" (printf "#%d" (toInt $log.ID)) "value" (printf "<@&%d> | **%s** (<@!%d>)\n[Link](%s)" (or $log.Rank $log.Type) $log.Roblox $log.User.ID $log.Link))}}
 		{{end}}
-		{{$log := $.Logs.Get .}}
-		{{$fields = $fields.Append (sdict "name" (printf "#%d" (toInt $log.ID)) "value" (printf "<@&%d> | **%s** (<@!%d>)\n[Link](%s)" (or $log.Rank $log.Type) $log.Roblox $log.User.ID $log.Link))}}
 	{{end}}
 	{{$embed := sdict "title" (printf "%s %s logs" .LogHeader ((sdict "-dlogs" "deployment" "-tlogs" "training").Get .LogType)) "footer" (sdict "text" (print "Page: " .Page)) "timestamp" currentTime "color" 0xFF0000}}
 	{{if eq (len $fields) 0}}
