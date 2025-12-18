@@ -32,7 +32,11 @@
 	{{end}}
 	{{$duration := index .CmdArgs 0}}
 	{{if not (toDuration $duration)}}
-		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes")}}
+		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the deployment (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `20m`.")}}
+		{{return}}
+	{{end}}
+	{{if lt (toDuration $duration) (toDuration "20m")}}
+		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the deployment (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `20m`.")}}
 		{{return}}
 	{{end}}
 	{{$embed := sdict "title" (printf "Deployment notice") "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You cannot attend if you have not PASSED a training for your role**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix) "color" 0x650678}}
