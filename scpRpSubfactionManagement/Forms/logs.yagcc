@@ -57,7 +57,7 @@
 	{{dbSet 0 "TlogBackup" $ID}}
 	{{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
 	{{deleteInteractionResponse .Interaction.Token $x}}
-	{{$logID := dbIncr 0 "Tlog" 1}}
+	{{$logID := add $ID 1}}
 	{{$timeOfLog := (printf "<t:%d:f>" currentTime.Unix)}}
 	{{$logData := sdict}}
 	{{with .ModalValues}}
@@ -87,23 +87,28 @@
 	}}
 	{{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nTraining type: <@&%d>" $timeOfLog $selectedRankProfile.RoleID) "fields" $fields "image" (sdict "url" $logData.Proof) "color" 0x4b9a4e}}
 	{{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
-	{{$post := false}}
-	{{range .Guild.Threads}}
-		{{if ne .ParentID 1383638051984773241}}
-			{{continue}}
-		{{end}}
-		{{if eq .Name $robloxName}}
-			{{$post = .ID}}
+	{{$logChannel := false}}
+	{{range $_, $data := $logs}}
+		{{if not $data}}{{continue}}{{end}}
+		{{if eq $data.Roblox $robloxName}}
+				{{$clogData := sdict "Channel" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1) "ID" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 2)}}
+				{{$logChannel = $clogData.Channel}}
 			{{break}}
 		{{end}}
 	{{end}}
-	{{if not $post}}
-		{{$post = (createForumPost 1383638051984773241 $robloxName (printf "%s's training log" .User.Mention)).ID}}
+	{{if $logChannel}}
+		{{openThread (toInt $logChannel)}}
+	{{else}}
+		{{try}}
+			{{$logChannel = (createForumPost 1383638051984773241 $robloxName (printf "%s's training log" .User.Mention)).ID}}
+		{{catch}}
+			{{if in .Error "unable to create forum post"}}
+				{{sendMessage 1384154677951856730 (printf "Was not able to create a forum post channel for training log #%d" $logID)}}
+			{{end}}
+		{{end}}
 	{{end}}
-	{{$x := sendMessageRetID $post (complexMessage "embed" (cembed $embed))}}
 	{{$trainingLog := sdict
 		"ID" $logID
-		"Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID $post $x)
 		"User" .User
 		"Roblox" $robloxName
 		"Time" $timeOfLog
@@ -113,8 +118,13 @@
 		"Result" $logData.Result
 		"Proof" $logData.Proof
 	}}
+	{{if $logChannel}}
+		{{$x := sendMessageRetID $logChannel (complexMessage "embed" (cembed $embed))}}
+		{{$trainingLog.Set "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID (toInt $logChannel) $x)}}
+	{{end}}
 	{{$logs.Set (toInt $logID) $trainingLog}}
 	{{dbSet 0 "trainingLogs" $logs}}
+	{{$_ := dbIncr 0 "Dlog" 1}}
 {{end}}
 
 {{/* Deployment log submission */}}
@@ -156,10 +166,11 @@
 	{{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nDeployed as: <@&%d>" $timeOfLog $selectedRankProfile.RoleID) "fields" $fields "image" (sdict "url" $logData.Proof) "color" 0x4b9a4e}}
 	{{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
 	{{$logChannel := false}}
-	{{range $logID, $data := $logs}}
+	{{range $_, $data := $logs}}
 		{{if not $data}}{{continue}}{{end}}
 		{{if eq $data.Roblox $robloxName}}
-			{{$logChannel = (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1)}}
+				{{$clogData := sdict "Channel" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1) "ID" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 2)}}
+				{{$logChannel = $clogData.Channel}}
 			{{break}}
 		{{end}}
 	{{end}}
@@ -170,7 +181,7 @@
 			{{$logChannel = (createForumPost 1383919182889881790 $robloxName (printf "%s's Deployment log" .User.Mention)).ID}}
 		{{catch}}
 			{{if in .Error "unable to create forum post"}}
-				{{sendMessage 1384154677951856730 (printf "Was not able to create a forum post channel for log #%d" $logID)}}
+				{{sendMessage 1384154677951856730 (printf "Was not able to create a forum post channel for deployment log #%d" $logID)}}
 			{{end}}
 		{{end}}
 	{{end}}
@@ -188,7 +199,7 @@
 	}}
 	{{if $logChannel}}
 		{{$x := sendMessageRetID $logChannel (complexMessage "embed" (cembed $embed))}}
-		{{$deploymentLog.Set "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID $logChannel $x)}}
+		{{$deploymentLog.Set "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID (toInt $logChannel) $x)}}
 	{{end}}
 	{{$logs.Set (toInt $logID) $deploymentLog}}
 	{{dbSet 0 "deploymentLogs" $logs}}
@@ -257,17 +268,17 @@
 	{{end}}
 	{{$promotionRole := getRole $nextRank.RoleID}}
 	{{$logEmbed := sdict
-		"title" "Promotion request"
+		"title" "Promotion requirements met"
 		"author" (sdict
 			"name" (printf "%s (ID %d)" $targetMember.User.Username $targetMember.User.ID)
 			"icon_url" ($targetMember.User.AvatarURL "1024")
 		)
-		"description" (printf "%s has met the promotion requirements for <@&%d> and their promotion needs reviewing\n### Deployment logs for promotion:\n- %s" $targetMember.User.Mention $nextRank.RoleID (joinStr "\n- " $logLinks))
+		"description" (printf "%s has met the automatic promotion requirements for <@&%d> and their promotion needs reviewing\n### Deployment logs for promotion:\n- %s" $targetMember.User.Mention $nextRank.RoleID (joinStr "\n- " $logLinks))
 		"color" $promotionRole.Color
 	}}
 	{{$components := cslice
 		(cbutton "label" "Confirm promotion" "custom_id" (printf "iota_PromotionConfirm-%v" $targetMember.User.ID) "style" "success")
 		(cbutton "label" "Deny promotion" "custom_id" (printf "iota_PromotionDeny-%v" $targetMember.User.ID) "style" "danger")
 	}}
-	{{sendMessage nil (complexMessage "embed" $logEmbed "components" $components)}}
+	{{sendMessage 1384142646536048740 (complexMessage "embed" $logEmbed "components" $components)}}
 {{end}}
