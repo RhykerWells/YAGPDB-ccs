@@ -81,7 +81,7 @@
 
 {{if reFind `Confirm` .StrippedID}}
 	{{$logEmbed := sdict
-		"title" "Promotion request confirmed"
+		"title" "Promotion confirmed"
 		"author" (sdict
 			"name" (printf "%s (ID %d)" $targetMember.User.Username $targetMember.User.ID)
 			"icon_url" ($targetMember.User.AvatarURL "1024")
@@ -97,10 +97,10 @@
 		(cbutton "label" "Deny promotion" "custom_id" (printf "iota_PromotionDeny-%v" $targetMember.User.ID) "style" "danger" "disabled" true)
 	}}
 	{{editMessage nil .Interaction.Message.ID (complexMessageEdit "embed" $logEmbed "components" $components)}}
-	{{takeRoleID .TargetMember.User.ID $selectedRankProfile.RoleID}}
-	{{takeRoleID .TargetMember.User.ID $selectedEchelonProfile.RoleID}}
-	{{giveRoleID .TargetMember.User.ID $nextRank.RoleID}}
-	{{giveRoleID .TargetMember.User.ID $nextEchelon.RoleID}}
+	{{takeRoleID $targetMember.User.ID $selectedRankProfile.RoleID}}
+	{{takeRoleID $targetMember.User.ID $selectedEchelonProfile.RoleID}}
+	{{giveRoleID $targetMember.User.ID $nextRank.RoleID}}
+	{{giveRoleID $targetMember.User.ID $nextEchelon.RoleID}}
 	{{$nextRankRoblox := sdict}}
 	{{range $robloxGroup.GetRoles}}
 		{{if in .Name $nextRank.RankShortName}}
@@ -122,7 +122,7 @@
 	{{template "logRobloxGroupRankChange" (sdict "RobloxMember" $robloxMember "Role" $roleUpdate.Name)}}
 {{else if reFind `Deny` .StrippedID}}
 	{{$logEmbed := sdict
-		"title" "Promotion request denied"
+		"title" "Promotion denied"
 		"author" (sdict
 			"name" (printf "%s (ID %d)" $targetMember.User.Username $targetMember.User.ID)
 			"icon_url" ($targetMember.User.AvatarURL "1024")
