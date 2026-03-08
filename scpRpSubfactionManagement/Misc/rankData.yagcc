@@ -106,6 +106,11 @@ Because cslices are ordered, list echelons in descending order with higher echel
 		)
 	)
 	(sdict
+		"EchelonLongName" "Coordination Bureau"
+		"EchelonShortName" "CB"
+		"RoleID" 1461895105676972176
+	)
+	(sdict
 		"EchelonLongName" "Mission Control"
 		"EchelonShortName" "MC"
 		"RoleID" 1375379607594991667
@@ -241,6 +246,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 			"Health" 200
 		)
 	)
+
 	(sdict
 		"EchelonShortName" "VC"
 		"RankLongName" "Echo Marshal"
@@ -250,24 +256,23 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 			"Health" 200
 		)
 	)
-
 	(sdict
-		"EchelonShortName" "MC"
+		"EchelonShortName" "CB"
 		"RankLongName" "Drift Overseer"
 		"RankShortName" "Overseer"
 		"RoleID" 1375377969492787220
-		"MorphData" (sdict
-			"Health" 180
-		)
 	)
 	(sdict
-		"EchelonShortName" "MC"
+		"EchelonShortName" "CB"
 		"RankLongName" "Drift Controller"
 		"RankShortName" "Controller"
 		"RoleID" 1375378044767834133
-		"MorphData" (sdict
-			"Health" 170
-		)
+	)
+	(sdict
+		"EchelonShortName" "CB"
+		"RankLongName" "Drift Coordinator"
+		"RankShortName" "Coordinator"
+		"RoleID" 1461894600422850714
 	)
 	(sdict
 		"EchelonShortName" "MC"
