@@ -9,8 +9,25 @@
 	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
 */}}
 
-{{/* A cslice of all RankShortName that can host training & deployments */}}
-{{$allowedRanks := cslice "Warden" "Marshal" "Overseer" "Controller" "Threader" "Relay" "Adjutant" "Guardian"}}
+{{/* 
+	A cslice of all RankShortName that can host training & deployments
+	PLEASE NOTE: A user will not be able to pick a rank outside of their (sub)division
+*/}}
+
+{{$allowedToHostCoreRankShorts := cslice "Warden" "Marshal" "Overseer" "Controller" "Threader" "Executor" "Striker" "Threader" "Piercer" "Lance" "Seeker"}}
+{{$allowedToHostICADRankShorts := cslice "Relay" "Adjutant"}}
+{{$allowedToHostVGRankShorts := cslice "Guardian" "Sentintel"}}
+
+{{$allowedRanks := cslice}}
+{{range $allowedToHostCoreRankShorts}}
+	{{$allowedRanks = $allowedRanks.Append .}}
+{{end}}
+{{range $allowedToHostICADRankShorts}}
+	{{$allowedRanks = $allowedRanks.Append .}}
+{{end}}
+{{range $allowedToHostVGRankShorts}}
+	{{$allowedRanks = $allowedRanks.Append .}}
+{{end}}
 
 {{$targetMember := .Member}}
 {{$factionData := dbGet 0 "FactionData"}}
@@ -52,7 +69,7 @@
 
 
 {{$members := getMembers}}
-{{$allowedMembers := cslice}}
+{{$allowedToHostMembers := cslice}}
 {{range $members}}
 	{{$member := .}}
 	{{$mRankProfile := sdict}}
@@ -82,12 +99,12 @@
 	{{if not (in $allowedRanks $mRankProfile.RankShortName)}}
 		{{continue}}
 	{{end}}
-	{{$allowedMembers = $allowedMembers.Append $member}}
+	{{$allowedToHostMembers = $allowedToHostMembers.Append $member}}
 {{end}}
 
 
-{{$hostSlice := cslice}}
-{{range $allowedMembers}}
+{{$hostSlice := cslice (sdict "label" "Other" "value" 0)}}
+{{range $allowedToHostMembers}}
 	{{$rblxName := reReplace ` \|.*` .Nick ""}}
 	{{$hostSlice = $hostSlice.Append (sdict "label" $rblxName "value" (str .User.ID))}}
 {{end}}
