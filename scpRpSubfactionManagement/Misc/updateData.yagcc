@@ -114,6 +114,11 @@ Because cslices are ordered, list echelons in descending order with higher echel
 		)
 	)
 	(sdict
+		"EchelonLongName" "Coordination Bureau"
+		"EchelonShortName" "CB"
+		"RoleID" 1461895105676972176
+	)
+	(sdict
 		"EchelonLongName" "Mission Control"
 		"EchelonShortName" "MC"
 		"RoleID" 1375379607594991667
@@ -269,7 +274,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 
 	(sdict
-		"EchelonShortName" "MC"
+		"EchelonShortName" "CB"
 		"RankLongName" "Drift Overseer"
 		"RankShortName" "Overseer"
 		"RoleID" 1375377969492787220
@@ -278,7 +283,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		)
 	)
 	(sdict
-		"EchelonShortName" "MC"
+		"EchelonShortName" "CB"
 		"RankLongName" "Drift Controller"
 		"RankShortName" "Controller"
 		"RoleID" 1375378044767834133
@@ -287,8 +292,36 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		)
 	)
 	(sdict
+		"EchelonShortName" "CB"
+		"RankLongName" "Drift Coordinator"
+		"RankShortName" "Threader"
+		"RoleID" 1461894600422850714
+		"MorphData" (sdict
+			"Health" 160
+		)
+	)
+
+	(sdict
 		"EchelonShortName" "MC"
-		"RankLongName" "Drift Threader"
+		"RankLongName" "Veer Executor"
+		"RankShortName" "Executor"
+		"RoleID" 1461894911807852707
+		"MorphData" (sdict
+			"Health" 180
+		)
+	)
+	(sdict
+		"EchelonShortName" "MC"
+		"RankLongName" "Veer Striker"
+		"RankShortName" "Striker"
+		"RoleID" 1461894885794648218
+		"MorphData" (sdict
+			"Health" 170
+		)
+	)
+		(sdict
+		"EchelonShortName" "MC"
+		"RankLongName" "Veer Threader"
 		"RankShortName" "Threader"
 		"RoleID" 1375436353202032660
 		"MorphData" (sdict
@@ -300,7 +333,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"EchelonShortName" "EU"
 		"RankLongName" "Veil Piercer"
 		"RankShortName" "Piercer"
-		"RoleID" 0
+		"RoleID" 1467662671452045342
 		"MorphData" (sdict
 			"Health" 150
 		)
@@ -311,7 +344,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Lance"
 		"RoleID" 1375435912116437073
 		"MorphData" (sdict
-			"Health" 130
+			"Health" 140
 		)
 	)
 	(sdict
