@@ -34,16 +34,15 @@
 		{{if in (cslice "Warden" "Marshal" "Overseer" "Controller" "Threader") .RankShortName}}
 			{{continue}}
 		{{end}}
-		{{$rankShorts = $rankShorts.Append (lower .RankShortName)}}
+		{{$rankShorts = $rankShorts.Append (title .RankShortName)}}
 	{{end}}
-	{{/* Original announcement */}}
 	{{if not .CmdArgs}}
 		{{$ranks := printf "`%s`" (joinStr "`, `" $rankShorts)}}
-		{{sendMessage nil (printf "Missing required arguments.\n\n```training <Rank> <In:Duration>```\nAvailable ranks: %s" $ranks)}}
+		{{sendMessage nil (printf "Missing required arguments.\n\n```training <Rank> <In:Duration> <Num:Minimum confirmations>```\nAvailable ranks: %s" $ranks)}}
 		{{return}}
 	{{end}}
 	{{$trainingRank := index .CmdArgs 0 | lower}}
-	{{if not (reFind (printf "\\b(%s)\\b" (joinStr "|" $rankShorts)) $trainingRank)}}
+	{{if not (inFold $rankShorts $trainingRank)}}
 		{{$ranks := printf "`%s`" (joinStr "`, `" $rankShorts)}}
 		{{sendMessage nil (printf "Invalid `rank` argument.\nAvailable ranks: %s" $ranks)}}
 		{{return}}
@@ -67,10 +66,22 @@
 		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `20m`.")}}
 		{{return}}
 	{{end}}
-	{{$embed := sdict "title" (printf "%s training" $trainingRank.RankLongName) "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix $trainingRank.RoleID) "color" $trainingRank.Color}}
+	{{$minimumConfirmations := 3}}
+	{{if (gt (len .CmdArgs) 2)}}
+		{{$minimumConfirmations = index .CmdArgs 2 | toInt}}
+		{{if not $minimumConfirmations}}
+			{{sendMessage nil (printf "Invalid `Minimum confirmations` argument provided.\nHow many confirmations do you want to require for the training? (must be at least `3`)")}}
+			{{return}}
+		{{end}}
+		{{if lt $minimumConfirmations 1}}
+			{{sendMessage nil (printf "Invalid `Minimum confirmations` argument provided.\nHow many confirmations do you want to require for the training? (must be at least `3`)")}}
+			{{return}}
+		{{end}}
+	{{end}}
+	{{$embed := sdict "title" (printf "%s training" $trainingRank.RankLongName) "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**.\n\nRequires: `%d`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix $trainingRank.RoleID $minimumConfirmations) "color" $trainingRank.Color}}
 	{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" (printf "iota_joinTraining-%d" $trainingRank.RoleID) "style" "success") (cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)}}
 	{{$x := sendMessageNoEscapeRetID 1391567531046863041 (complexMessage "content" (printf "<@&%d>" $trainingRank.RoleID) "embed" (cembed $embed) "components" $components)}}
-	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "TrainingMsg" $x "TrainingRole" $trainingRank)}}
+	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "TrainingMsg" $x "TrainingRole" $trainingRank "MinimumConfirmations" $minimumConfirmations)}}
 	{{dbSetExpire $x "trainingConfirmations" cslice (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
 	{{sendMessage nil (printf "You've successfully started a %s training notice for <t:%d:f>. View the message [here](https://discord.com/channels/1375370805575155782/1391567531046863041/%d)" $trainingRank.RankLongName (currentTime.Add (toDuration $duration)).Unix $x)}}
 {{else}}
@@ -82,7 +93,7 @@
 		{{end}}
 		{{$message := getMessage 1391567531046863041 .TrainingMsg}}
 		{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" (printf "iota_joinTraining-%d" .TrainingRole.RoleID) "style" "success" "disabled" true) (cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $confirmed))) "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)}}
-		{{if lt (len $confirmed) 3}}
+		{{if lt (len $confirmed) .MinimumConfirmations}}
 			{{$embed := sdict "title" (printf "%s training" .TrainingRole.RankLongName) "description" (printf "Insufficient confirmations within time frame.\n\nTraining cancelled.") "color" 0xFF0000}}
 			{{editMessage 1391567531046863041 .TrainingMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
 			{{$confirmedUsers := ""}}
