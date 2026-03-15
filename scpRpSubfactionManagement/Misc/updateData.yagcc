@@ -21,6 +21,14 @@ This includes but is not limited to morph data, discord ranks, roblox ranks
 Changes here will not take affect until the command is re-run.
 */}}
 
+{{/* Main subfaction data */}}
+{{$baseData := sdict
+	"ApiKey" "XX"
+	"EmbedColor" 4003205
+	"RobloxGroupID" 36098297
+	"NicknameRegex" "\\s\\|.*"
+}}
+
 {{/* Echelon, subdivision & rank role data */}}
 
 {{/* Base morph data */}}
@@ -104,6 +112,11 @@ Because cslices are ordered, list echelons in descending order with higher echel
 			"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4507911797" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "holster" "exoskeleton")
 			"StarterGear" (cslice "hellion" "spas")
 		)
+	)
+	(sdict
+		"EchelonLongName" "Coordination Bureau"
+		"EchelonShortName" "CB"
+		"RoleID" 1461895105676972176
 	)
 	(sdict
 		"EchelonLongName" "Mission Control"
@@ -213,7 +226,7 @@ Each role must be represented as an sdict with the following fields:
 
 - "RankLongName" 	 (string):		  	The name of the rank. -- May differ from Discord rank role name.
 
-- "RankShortName"	 (string): A shorthand label for the role, such as "Chaser" for "Rift Chaser".
+- "RankShortName"	 (string): 			 A shorthand label for the role, such as "Chaser" for "Rift Chaser".
 										 Used for the the rank argument & rank portion of rank tags.
 
 - "RoleID"   		 (int):				The Discord role ID. This is required.
@@ -228,6 +241,15 @@ Each role must be represented as an sdict with the following fields:
 
 	- "StarterGear" (cslice, optional): A list of rank-specific gear provided to the user when spawning under this rank.
 										Can be omitted if no gear is assigned.
+
+- "PromotionData"   (sdict, optional):  Defines the promotion data if users can automatically progress from the current rank.
+										If omitted, no promotion data is applied.
+										PromotionData must be represented as an sdict with the following fields:
+
+- "DeploymentsRequired" (int):			Denotes how many trainings are required at the current rank to be promoted to whichever ranks
+										RankShortName matches the NextRankShortName key.
+
+	- "NextRankShortName"   (string):	This value MUST exactly match the "RankShortName" of the rank you want to automatically promote to.
 
 Because cslices are ordered, list ranks in ascending order with higher ranks higher.
 */}}
@@ -252,7 +274,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 
 	(sdict
-		"EchelonShortName" "MC"
+		"EchelonShortName" "CB"
 		"RankLongName" "Drift Overseer"
 		"RankShortName" "Overseer"
 		"RoleID" 1375377969492787220
@@ -261,7 +283,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		)
 	)
 	(sdict
-		"EchelonShortName" "MC"
+		"EchelonShortName" "CB"
 		"RankLongName" "Drift Controller"
 		"RankShortName" "Controller"
 		"RoleID" 1375378044767834133
@@ -270,8 +292,36 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		)
 	)
 	(sdict
+		"EchelonShortName" "CB"
+		"RankLongName" "Drift Coordinator"
+		"RankShortName" "Threader"
+		"RoleID" 1461894600422850714
+		"MorphData" (sdict
+			"Health" 160
+		)
+	)
+
+	(sdict
 		"EchelonShortName" "MC"
-		"RankLongName" "Drift Threader"
+		"RankLongName" "Veer Executor"
+		"RankShortName" "Executor"
+		"RoleID" 1461894911807852707
+		"MorphData" (sdict
+			"Health" 180
+		)
+	)
+	(sdict
+		"EchelonShortName" "MC"
+		"RankLongName" "Veer Striker"
+		"RankShortName" "Striker"
+		"RoleID" 1461894885794648218
+		"MorphData" (sdict
+			"Health" 170
+		)
+	)
+		(sdict
+		"EchelonShortName" "MC"
+		"RankLongName" "Veer Threader"
 		"RankShortName" "Threader"
 		"RoleID" 1375436353202032660
 		"MorphData" (sdict
@@ -283,7 +333,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"EchelonShortName" "EU"
 		"RankLongName" "Veil Piercer"
 		"RankShortName" "Piercer"
-		"RoleID" 0
+		"RoleID" 1467662671452045342
 		"MorphData" (sdict
 			"Health" 150
 		)
@@ -294,7 +344,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Lance"
 		"RoleID" 1375435912116437073
 		"MorphData" (sdict
-			"Health" 130
+			"Health" 140
 		)
 	)
 	(sdict
@@ -316,6 +366,10 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 			"Health" 125
 			"StarterGear" (cslice "shield")
 		)
+		"PromotionData" (sdict
+			"DeploymentsRequired" 3
+			"NextRankShortName" "Seeker"
+		)
 	)
 	(sdict
 		"EchelonShortName" "FA"
@@ -325,12 +379,20 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"MorphData" (sdict
 			"Health" 110
 		)
+		"PromotionData" (sdict
+			"DeploymentsRequired" 2
+			"NextRankShortName" "Operative"
+		)
 	)
 	(sdict
 		"EchelonShortName" "FA"
 		"RankLongName" "Riftling"
 		"RankShortName" "Riftling"
 		"RoleID" 1375378503024902164
+		"PromotionData" (sdict
+			"DeploymentsRequired" 1
+			"NextRankShortName" "Chaser"
+		)
 	)
 
 
@@ -450,5 +512,5 @@ The following parts of the code builds database entries
 	{{- $fullData = $fullData.Append $subdivision -}}
 {{end}}
 
-{{dbSet 0 "FactionDataNew" (sdict "Data" $fullData "MorphData" $baseMorphData)}}
+{{dbSet 0 "FactionData" (sdict "Settings" $baseData "Divisions" $fullData "BaseMorphData" $baseMorphData)}}
 {{sendMessage nil "Done!"}}

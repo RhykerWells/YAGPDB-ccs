@@ -13,14 +13,13 @@
 {{$member := getMember .User.ID}}
 {{$rblxName := reReplace ` \|.*` $member.Nick ""}}
 
-{{$data := dbGet 0 "FactionDataNew"}}
-{{if not $data}}
+{{$factionData := dbGet 0 "FactionData"}}
+{{if not $factionData}}
 	{{sendResponse nil "This factions data has not set up, please ask the faction management to do so."}}
 	{{return}}
 {{end}}
-
-{{$divisions := $data.Value.Get "Data"}}
-{{$baseMorphData := $data.Value.Get "MorphData"}}
+{{$divisions := $factionData.Value.Get "Divisions"}}
+{{$baseMorphData := $factionData.Value.Get "BaseMorphData"}}
 
 {{$selectedRankProfile := sdict}}
 {{$selectedEchelonProfile := sdict}}
@@ -46,7 +45,7 @@
 		{{$echelon := .}}
 		{{range $echelon.Ranks}}
 			{{$rank := .}}
-			{{if in $.Member.Roles $rank.RoleID}}
+			{{if in $member.Roles $rank.RoleID}}
 				{{$selectedRankProfile = .}}
 				{{$selectedEchelonProfile = $echelon}}
 				{{break}}
@@ -67,7 +66,7 @@
 {{$echelonMorphData := $selectedEchelonProfile.MorphData}}
 {{$rankMorphData := or $selectedRankProfile.MorphData sdict}}
 
-{{$rtag := printf "[%s] Iota-4 | \"Veilrunners\" | %s" $selectedEchelonProfile.EchelonShortName $selectedRankProfile.RoleName}}
+{{$rtag := printf "[%s] Iota-4 | \"Veilrunners\" | %s" $selectedEchelonProfile.EchelonShortName $selectedRankProfile.RankLongName}}
 {{$starterGear := $baseMorphData.StarterGear.AppendSlice ((or $echelonMorphData.StarterGear cslice).AppendSlice (or $rankMorphData.StarterGear cslice))}}
 {{$maxHealth := or ($rankMorphData.Health) 100}}
 

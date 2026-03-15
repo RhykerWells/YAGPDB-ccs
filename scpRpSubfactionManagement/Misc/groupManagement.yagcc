@@ -1,0 +1,14 @@
+{{if not .ExecData}}
+	{{$components := cslice 
+		(cbutton "label" "Update group ranks" "custom_id" "iota_RobloxUpdateRanks" "style" "success")
+		(cbutton "label" "View requests" "custom_id" "iota_RobloxViewRequests" "style" "primary")
+	}}
+    {{$x := sendMessageRetID nil (complexMessage "content" "What would you like to do?" "components" $components)}}
+    {{scheduleUniqueCC .CCID nil 20 $x (sdict "Channel" .Channel "ID" $x)}}
+	{{return}}
+{{end}}
+{{$components := cslice 
+	(cbutton "label" "Update group ranks" "custom_id" "iota_RobloxUpdateRanks" "style" "success" "disabled" true)
+	(cbutton "label" "View requests" "custom_id" "iota_RobloxViewRequests" "style" "primary" "disabled" true)
+}}
+{{editMessage nil .ExecData.ID (complexMessageEdit "content" "What would you like to do?\n\n-# This command has expired." "components" $components)}}

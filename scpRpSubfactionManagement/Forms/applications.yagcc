@@ -17,7 +17,7 @@
     {{$applicationID := dbIncr 0 "applications" 1}}
     {{$embed := sdict
         "title" (printf "Application #%s" (humanizeThousands $applicationID))
-        "description" (printf "Submitted by %s `(ID %d)`\n\n**Why did you decide to join iota-4?**\n%s\n**Have you fully read and understood the rules?**\n%s\n**What makes you stand out?**\n%s\n**Why should you be a Veilrunner**\n%s" .User.Mention .User.ID (index .Values 0) (index .Values 1) (index .Values 2) (index .Values 3))
+        "description" (printf "Submitted by %s `(ID %d)`\n\n**Why did you decide to join iota-4?**\n%s\n**What is Iota's primary goal?**\n%s\n**What is the Veil and why do we protect it?**\n%s\n**Why should you be a Veilrunner**\n%s" .User.Mention .User.ID (index .Values 0) (index .Values 1) (index .Values 2) (index .Values 3))
         "color" 0x650678
     }}
     {{$components := cslice

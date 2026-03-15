@@ -10,12 +10,13 @@
 */}}
 
 {{$targetMember := .Member}}
-{{$data := dbGet 0 "FactionDataNew"}}
-{{if not $data}}
+
+{{$factionData := dbGet 0 "FactionData"}}
+{{if not $factionData}}
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
 	{{return}}
 {{end}}
-{{$divisions := $data.Value.Get "Data"}}
+{{$divisions := $factionData.Value.Get "Divisions"}}
 
 {{$selectedRankProfile := sdict}}
 {{$selectedEchelonProfile := sdict}}
@@ -51,281 +52,233 @@
 {{/* Training log submission */}}
 {{if eq .StrippedID "TrainingLog"}}
 	{{$logs := (dbGet 0 "trainingLogs").Value}}
-    {{dbSet 0 "trainingLogBackup" $logs}}
+	{{dbSet 0 "trainingLogBackup" $logs}}
 	{{$ID := (dbGet 0 "Tlog").Value}}
-    {{dbSet 0 "TlogBackup" $ID}}
-    {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
-    {{deleteInteractionResponse .Interaction.Token $x}}
-    {{$logID := dbIncr 0 "Tlog" 1}}
-    {{$timeOfLog := (printf "<t:%d:f>" currentTime.Unix)}}
-    {{$logData := sdict}}
-    {{with .ModalValues}}
-        {{$logData.Set "Host" (index .hostDropdown.value 0)}}
-        {{$logData.Set "Result" (index .trainingResultDropdown.value 0)}}
-        {{$logData.Set "Summary" .trainingSummaryInput.value}}
-        {{$logData.Set "Proof" (index .uploadForm.value 0)}}
-    {{end}}
-    {{range $k, $v := .InteractionData.Resolved.Attachments}}
-        {{if ne $k $logData.Proof}}
-            {{continue}}
-        {{end}}
-        {{$url := reReplace "\u0026" $v.URL "&"}}
-        {{$logData.Set "Proof" $url}}
-        {{break}}
-    {{end}}
-    {{$hostMember := getMember $logData.Host}}
+	{{dbSet 0 "TlogBackup" $ID}}
+	{{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{$logID := add $ID 1}}
+	{{$timeOfLog := (printf "<t:%d:f>" currentTime.Unix)}}
+	{{$logData := sdict}}
+	{{with .ModalValues}}
+		{{$logData.Set "Host" (index .hostDropdown.value 0)}}
+		{{$logData.Set "Result" (index .trainingResultDropdown.value 0)}}
+		{{$logData.Set "Summary" .trainingSummaryInput.value}}
+		{{$logData.Set "Proof" (index .uploadForm.value 0)}}
+	{{end}}
+	{{range $k, $v := .InteractionData.Resolved.Attachments}}
+		{{if ne $k $logData.Proof}}
+			{{continue}}
+		{{end}}
+		{{$url := reReplace "\u0026" $v.URL "&"}}
+		{{$logData.Set "Proof" $url}}
+		{{break}}
+	{{end}}
+	{{$hostMember := getMember $logData.Host}}
 	{{$hostRobloxName := reReplace ` \|.*` $hostMember.Nick ""}}
-    {{$fields := cslice 
-        (sdict "name" "__Training host__" "value" (printf "<@!%s> `(%s)`" $logData.Host $hostRobloxName) "inline" true)
-        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-        (sdict "name" "__Training summary__" "value" $logData.Summary "inline" true)
-        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-        (sdict "name" "__Result__" "value" $logData.Result "inline" true)
-    }}
-    {{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nTraining type: <@&%d>" $timeOfLog $selectedRankProfile.RoleID) "fields" $fields "image" (sdict "url" $logData.Proof) "color" 0x4b9a4e}}
-    {{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
-    {{$post := false}}
-    {{range .Guild.Threads}}
-        {{if ne .ParentID 1383638051984773241}}
-            {{continue}}
-        {{end}}
-        {{if eq .Name $robloxName}}
-            {{$post = .ID}}
-            {{break}}
-        {{end}}
-    {{end}}
-    {{if not $post}}
-        {{$post = (createForumPost 1383638051984773241 $robloxName (printf "%s's training log" .User.Mention)).ID}}
-    {{end}}
-    {{$x := sendMessageRetID $post (complexMessage "embed" (cembed $embed))}}
-    {{$trainingLog := sdict
-        "ID" $logID
-        "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID $post $x)
-        "User" .User
-        "Roblox" $robloxName
-        "Time" $timeOfLog
-        "Host" (sdict "ID" $logData.Host "Roblox" $hostRobloxName)
-        "Type" $selectedRankProfile.RoleID
-        "Summary" $logData.Summary
-        "Result" $logData.Result
-        "Proof" $logData.Proof
-    }}
-    {{$logs.Set (toInt $logID) $trainingLog}}
-    {{dbSet 0 "trainingLogs" $logs}}
+	{{$fields := cslice 
+		(sdict "name" "__Training host__" "value" (printf "<@!%s> `(%s)`" $logData.Host $hostRobloxName) "inline" true)
+		(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+		(sdict "name" "__Training summary__" "value" $logData.Summary "inline" true)
+		(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+		(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+		(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+		(sdict "name" "__Result__" "value" $logData.Result "inline" true)
+	}}
+	{{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nTraining type: <@&%d>" $timeOfLog $selectedRankProfile.RoleID) "fields" $fields "image" (sdict "url" $logData.Proof) "color" 0x4b9a4e}}
+	{{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
+	{{$logChannel := false}}
+	{{range $_, $data := $logs}}
+		{{if not $data}}{{continue}}{{end}}
+		{{if eq $data.Roblox $robloxName}}
+				{{$clogData := sdict "Channel" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1) "ID" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 2)}}
+				{{$logChannel = $clogData.Channel}}
+			{{break}}
+		{{end}}
+	{{end}}
+	{{if $logChannel}}
+		{{openThread (toInt $logChannel)}}
+	{{else}}
+		{{try}}
+			{{$logChannel = (createForumPost 1383638051984773241 $robloxName (printf "%s's training log" .User.Mention)).ID}}
+		{{catch}}
+			{{if in .Error "unable to create forum post"}}
+				{{sendMessage 1384154677951856730 (printf "Was not able to create a forum post channel for training log #%d" $logID)}}
+			{{end}}
+		{{end}}
+	{{end}}
+	{{$trainingLog := sdict
+		"ID" $logID
+		"User" .User
+		"Roblox" $robloxName
+		"Time" $timeOfLog
+		"Host" (sdict "ID" $logData.Host "Roblox" $hostRobloxName)
+		"Type" $selectedRankProfile.RoleID
+		"Summary" $logData.Summary
+		"Result" $logData.Result
+		"Proof" $logData.Proof
+	}}
+	{{if $logChannel}}
+		{{$x := sendMessageRetID $logChannel (complexMessage "embed" (cembed $embed))}}
+		{{$trainingLog.Set "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID (toInt $logChannel) $x)}}
+	{{end}}
+	{{$logs.Set (toInt $logID) $trainingLog}}
+	{{dbSet 0 "trainingLogs" $logs}}
+	{{$_ := dbIncr 0 "Dlog" 1}}
 {{end}}
 
 {{/* Deployment log submission */}}
 {{if eq .StrippedID "DeploymentLog"}}
-    {{$logs := (dbGet 0 "deploymentLogs").Value}}
-    {{dbSet 0 "deploymentLogBackup" $logs}}
+	{{$logs := (dbGet 0 "deploymentLogs").Value}}
+	{{dbSet 0 "deploymentLogBackup" $logs}}
 	{{$ID := (dbGet 0 "Dlog").Value}}
-    {{dbSet 0 "DlogBackup" $ID}}
-    {{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
-    {{deleteInteractionResponse .Interaction.Token $x}}
-    {{$logID := dbIncr 0 "Dlog" 1}}
-    {{$timeOfLog := (printf "<t:%d:f>" currentTime.Unix)}}
-    {{$logData := sdict}}
-    {{with .ModalValues}}
-        {{$logData.Set "Host" (index .hostDropdown.value 0)}}
-        {{$logData.Set "Type" (index .deploymentTypeDropdown.value 0)}}
-        {{$logData.Set "Summary" .deploymentSummaryInput.value}}
-        {{$logData.Set "Sightings" (or (.deploymentSightingsInput.value) "None")}}
-        {{$logData.Set "Proof" (index .uploadForm.value 0)}}
-    {{end}}
-    {{range $k, $v := .InteractionData.Resolved.Attachments}}
-        {{if ne $k $logData.Proof}}
-            {{continue}}
-        {{end}}
-        {{$url := reReplace "\u0026" $v.URL "&"}}
-        {{$logData.Set "Proof" $url}}
-        {{break}}
-    {{end}}
-    {{$hostMember := getMember $logData.Host}}
+	{{dbSet 0 "DlogBackup" $ID}}
+	{{$x := sendResponseRetID .Interaction.Token (complexMessage "content" (printf "Your log has been submitted!") "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{$logID := add $ID 1}}
+	{{$timeOfLog := (printf "<t:%d:f>" currentTime.Unix)}}
+	{{$logData := sdict}}
+	{{with .ModalValues}}
+		{{$logData.Set "Host" (index .hostDropdown.value 0)}}
+		{{$logData.Set "Type" (index .deploymentTypeDropdown.value 0)}}
+		{{$logData.Set "Summary" .deploymentSummaryInput.value}}
+		{{$logData.Set "Sightings" (or (.deploymentSightingsInput.value) "None")}}
+		{{$logData.Set "Proof" (index .uploadForm.value 0)}}
+	{{end}}
+	{{range $k, $v := .InteractionData.Resolved.Attachments}}
+		{{if ne $k $logData.Proof}}
+			{{continue}}
+		{{end}}
+		{{$url := reReplace "\u0026" $v.URL "&"}}
+		{{$logData.Set "Proof" $url}}
+		{{break}}
+	{{end}}
+	{{$hostMember := getMember $logData.Host}}
 	{{$hostRobloxName := reReplace ` \|.*` $hostMember.Nick ""}}
-    {{$fields := cslice 
-        (sdict "name" "__Deployment host__" "value" (printf "<@!%s> `(%s)`" $logData.Host $hostRobloxName) "inline" true)
-        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-        (sdict "name" "__Deployment type__" "value" $logData.Type "inline" true)
-        (sdict "name" "__Deployment summary__" "value" $logData.Summary "inline" true)
-        (sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-        (sdict "name" "__Sightings__" "value" $logData.Sightings "inline" true)}}
-    {{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nDeployed as: <@&%d>" $timeOfLog $selectedRankProfile.RoleID) "fields" $fields "image" (sdict "url" $logData.Proof) "color" 0x4b9a4e}}
-    {{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
-    {{$post := false}}
-    {{range .Guild.Threads}}
-        {{if ne .ParentID 1383919182889881790}}
-            {{continue}}
-        {{end}}
-        {{if eq .Name $robloxName}}
-            {{$post = .ID}}
-            {{break}}
-        {{end}}
-    {{end}}
-    {{if not $post}}
-        {{$post = (createForumPost 1383919182889881790 $robloxName (printf "%s's Deployment log" .User.Mention)).ID}}
-    {{end}}
-    {{$x := sendMessageRetID $post (complexMessage "embed" (cembed $embed))}}
-    {{$deploymentLog := sdict
-        "ID" $logID
-        "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID $post $x)
-        "User" .User
-        "Roblox" $robloxName
-        "Time" $timeOfLog
-        "Host" (sdict "ID" $logData.Host "Roblox" $hostRobloxName)
-        "Type" $logData.Type
-        "Rank" $selectedRankProfile.RoleID
-        "Summary" $logData.Summary
-        "Sightings" $logData.Sightings
-        "Proof" $logData.Proof
-    }}
-    {{$logs.Set (toInt $logID) $deploymentLog}}
-    {{dbSet 0 "deploymentLogs" $logs}}
-    {{template "checkPromotion" (sdict "User" .User "DeployedAs" $selectedRankProfile.RoleID "Logs" (dbGet 0 "deploymentLogs").Value)}}
+	{{$fields := cslice 
+		(sdict "name" "__Deployment host__" "value" (printf "<@!%s> (`%s`)" $logData.Host $hostRobloxName) "inline" true)
+		(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+		(sdict "name" "__Deployment type__" "value" (printf "`%s`" $logData.Type) "inline" true)
+		(sdict "name" "__Deployment summary__" "value" $logData.Summary "inline" true)
+		(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+		(sdict "name" "__Sightings__" "value" $logData.Sightings "inline" true)
+	}}
+	{{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $logID)) "description" (printf "Time: %s\nDeployed as: <@&%d>" $timeOfLog $selectedRankProfile.RoleID) "fields" $fields "image" (sdict "url" $logData.Proof) "color" 0x4b9a4e}}
+	{{$robloxName := (reReplace ` \|.*` .Member.Nick "")}}
+	{{$logChannel := false}}
+	{{range $_, $data := $logs}}
+		{{if not $data}}{{continue}}{{end}}
+		{{if eq $data.Roblox $robloxName}}
+				{{$clogData := sdict "Channel" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1) "ID" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 2)}}
+				{{$logChannel = $clogData.Channel}}
+			{{break}}
+		{{end}}
+	{{end}}
+	{{if $logChannel}}
+		{{openThread (toInt $logChannel)}}
+	{{else}}
+		{{try}}
+			{{$logChannel = (createForumPost 1383919182889881790 $robloxName (printf "%s's Deployment log" .User.Mention)).ID}}
+		{{catch}}
+			{{if in .Error "unable to create forum post"}}
+				{{sendMessage 1384154677951856730 (printf "Was not able to create a forum post channel for deployment log #%d" $logID)}}
+			{{end}}
+		{{end}}
+	{{end}}
+	{{$deploymentLog := sdict
+		"ID" $logID
+		"User" .User
+		"Roblox" $robloxName
+		"Time" $timeOfLog
+		"Host" (sdict "ID" $logData.Host "Roblox" $hostRobloxName)
+		"Type" $logData.Type
+		"Rank" $selectedRankProfile.RoleID
+		"Summary" $logData.Summary
+		"Sightings" $logData.Sightings
+		"Proof" $logData.Proof
+	}}
+	{{if $logChannel}}
+		{{$x := sendMessageRetID $logChannel (complexMessage "embed" (cembed $embed))}}
+		{{$deploymentLog.Set "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID (toInt $logChannel) $x)}}
+	{{end}}
+	{{$logs.Set (toInt $logID) $deploymentLog}}
+	{{dbSet 0 "deploymentLogs" $logs}}
+	{{$_ := dbIncr 0 "Dlog" 1}}
+	{{template "checkPromotion" (sdict "Divisions" $divisions "User" .User "DeployedAs" $selectedRankProfile "Logs" $logs)}}
 {{end}}
 
 {{define "checkPromotion"}}
-    Check: {{sendMessage 1384154677951856730 .}}
-    {{$member := getMember .User.ID}}
-    {{$logs := .Logs}}
-    {{$userLogs := cslice}}
-    {{range $logs}}
-        {{if ne .User.ID $member.User.ID}}
-            {{continue}}
-        {{end}}
-        {{$userLogs = $userLogs.Append .}}
-    {{end}}
-    {{$logs = $userLogs}}
-    {{$logsAtCurrentRank := cslice}}
-    {{$logs = $userLogs}}
-    {{$logsAtCurrentRank := cslice}}
-    {{range $logs}}
-        {{if ne .Rank $.DeployedAs}}
-            {{continue}}
-        {{end}}
-        {{$logsAtCurrentRank = $logsAtCurrentRank.Append .}}
-    {{end}}
-    {{if hasRoleID 1375378503024902164}}
-        {{/* Riftling > Scout */}}
-        {{if ge (len $logsAtCurrentRank) 1}}
-            {{template "promoteUser" (sdict "User" .User "CurrentRank" .DeployedAs "NewRank" 1375436671948165143)}}
-        {{end}}
-    {{else if (hasRoleID 1375436671948165143)}}
-        {{/* Scout > Operative */}}
-        {{if ge (len $logsAtCurrentRank) 3}}
-            {{template "promoteUser" (sdict "User" .User "CurrentRank" .DeployedAs "NewRank" 1375378464336773142)}}
-        {{end}}
-    {{else if (hasRoleID 1375378464336773142)}}
-        {{/* Operative > Seeker */}}
-        {{if ge (len $logsAtCurrentRank) 4}}
-            {{template "promoteUser" (sdict "User" .User "CurrentRank" .DeployedAs "NewRank" 1375378431411228755)}}
-        {{end}}
-    {{end}}
-{{end}}
-{{define "promoteUser"}}
-    Promote: {{sendMessage 1384154677951856730 .}}
-    {{$targetMember := getMember .User.ID}}
-    {{$verifiedRole := 1375403523788898379}}
-    {{$removeRoles := sdict "unverified" 1375381637646258186 "visitor" 1375381740117430302}}
-    {{$rankRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
-    {{$echelonRoles := sdict "fa" 1375379122926260264 "eu" 1375379240165576764 "mcd" 1375379607594991667}}
-    {{$allRemoveRoles := cslice}}
-    {{range $_, $roleID := $removeRoles}}
-        {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
-    {{end}}
-    {{range $_, $roleID := $rankRoles}}
-        {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
-    {{end}}
-    {{range $_, $roleID := $echelonRoles}}
-        {{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
-    {{end}}
-    {{range $roleID := $targetMember.Roles}}
-        {{if in $allRemoveRoles $roleID}}
-            {{takeRoleID $targetMember.User.ID $roleID}}
-        {{end}}
-    {{end}}
-    {{$rank := ""}}
-    {{range $name, $id := $rankRoles}}
-        {{if eq $id $.NewRank}}
-            {{$rank = $name}}
-            {{break}}
-        {{end}}
-    {{end}}
-    {{$echelonRole := ""}}
-    {{if eq $rank "scout" "operative"}}
-        {{$echelonRole = $echelonRoles.fa}}
-    {{else}}
-        {{$echelonRole = $echelonRoles.eu}}
-    {{end}}
-    {{giveRoleID $targetMember.User.ID ($rankRoles.Get $rank)}}
-    {{giveRoleID $targetMember.User.ID $echelonRole}}
-    {{giveRoleID $targetMember.User.ID 1375381774204665917}} {{/* Veilrunners role, in case we're ranking a visitor up */}}
-    {{$logEmbed := sdict
-        "title" "Rank updated"
-        "author" (sdict
-            "name" (reReplace ` \|.*` $targetMember.Nick "")
-            "icon_url" ($targetMember.User.AvatarURL "1024")
-        )
-        "description" (printf "%s automatically promoted based on rank requirements to <@&%d> by. Previous rank was <@&%d>" $targetMember.User.Mention ($rankRoles.Get $rank) .CurrentRank.ID)
-        "color" (getRole ($rankRoles.Get $rank)).Color
-    }}
-    {{template "updateRobloxRank" (sdict "Member" $targetMember)}}
-    {{sendMessage 1384142646536048740 (cembed $logEmbed)}}
-{{end}}
-{{define "updateRobloxRank"}}
-    Roblox: {{sendMessage 1384154677951856730 .}}
-    {{$discordRoles := sdict "riftling" 1375378503024902164 "scout" 1375436671948165143 "operative" 1375378464336773142 "seeker" 1375378431411228755 "lance" 1375435912116437073 "relay" 1375378281078984704 "threader" 1375436353202032660 "controller" 1375378044767834133 "overseer" 1375377969492787220 "marshal" 1375377873241772095 "warden" 1375377194330755113}}
-    {{$mappedRoles := sdict "riftling" (sdict "Discord" 0 "Roblox" "") "scout" (sdict "Discord" 0 "Roblox" "") "operative" (sdict "Discord" 0 "Roblox" "") "seeker" (sdict "Discord" 0 "Roblox" "") "lance" (sdict "Discord" 0 "Roblox" "") "relay" (sdict "Discord" 0 "Roblox" "") "threader" (sdict "Discord" 0 "Roblox" "") "controller" (sdict "Discord" 0 "Roblox" "") "overseer" (sdict "Discord" 0 "Roblox" "") "marshal" (sdict "Discord" 0 "Roblox" "") "warden" (sdict "Discord" 0 "Roblox" "")}}
-    {{$group := getRobloxGroupByID 36098297}}
-    {{$robloxRoles := $group.GetRoles}}
-    {{range $k, $roleConfig := $mappedRoles}}
-        {{$roleConfig.Set "Discord" ($discordRoles.Get $k)}}
-        {{range $robloxRoles}}
-            {{if not (in (lower .Name) $k)}}
-                {{continue}}
-            {{end}}
-            {{$roleConfig.Set "Roblox" (toString .ID)}}
-        {{end}}
-    {{end}}
-    {{$rankSet := sdict}}
-    {{range $mappedRoles}}
-		{{if not (in .Member.Roles .Discord)}}
+	{{$targetMember := getMember .User.ID}}
+	{{$currentRank := .DeployedAs}}
+	{{$logs := .Logs}}
+	{{$userLogs := dict}}
+	{{range $logID, $data := $logs}}
+		{{if ne (toInt $data.User.ID) (toInt $targetMember.User.ID)}}
 			{{continue}}
 		{{end}}
-		{{$rankSet = .}}
+		{{$userLogs.Set $logID $data}}
 	{{end}}
-    {{$robloxMember := getRobloxUserByUsername (reReplace ` \|.*` .Member.Nick "")}}
-	{{$returnedRole := updateMemberRole (toString $group.ID) (toString $robloxMember.ID) $rankSet.Roblox}}
-	{{if not $returnedRole}}
-        {{template "logGroupRankChange" (sdict "Failed" true "Member" .robloxMember.Username "MemberPFP" ($robloxMember.GetUserThumbnailURI nil) "Role" nil)}}
+	{{$logs = $userLogs}}
+	{{$logsAtCurrentRank := dict}}
+	{{range $logID, $data := $logs}}
+		{{if ne $data.Rank $currentRank.RoleID}}
+			{{continue}}
+		{{end}}
+		{{$logsAtCurrentRank.Set $logID $data}}
+	{{end}}
+	{{$logs = $logsAtCurrentRank}}
+	{{if not $currentRank.PromotionData}}
 		{{return}}
 	{{end}}
-    {{template "logGroupRankChange" (sdict "Failed" false "Member" .robloxMember.Username "MemberPFP" ($robloxMember.GetUserThumbnailURI nil) "Role" $returnedRole.Name)}}
-{{end}}
-{{define "logGroupRankChange"}}
-    {{if .Failed}}
-        {{sendMessage 1393462324920057886 (printf "%v %v" .Member .MemberPFP)}}
-        {{$logEmbed := sdict
-            "title" "Rank failed to update"
-            "author" (sdict
-                "name" .Member
-                "icon_url" .MemberPFP
-            )
-            "description" (printf "%s was not updated" .Member)
-            "color" 0x650678
-        }}
-        {{sendMessage 1393462324920057886 (cembed $logEmbed)}}
-        {{return}}
-    {{end}}
-    {{$logEmbed := sdict
-        "title" "Rank updated"
-        "author" (sdict
-            "name" .Member
-            "icon_url" .MemberPFP
-        )
-        "description" (printf "%s was added to the role `%s`" .Member .Role)
-        "color" 0x650678
-    }}
-    {{sendMessage 1393462324920057886 (cembed $logEmbed)}}
+	{{$nextRankShortName := $currentRank.PromotionData.NextRankShortName}}
+	{{$nextRankDeploymentRequirements := $currentRank.PromotionData.DeploymentsRequired}}
+	{{if lt (len $logsAtCurrentRank) $nextRankDeploymentRequirements}}
+		{{return}}
+	{{end}}
+	{{$currentEchelon := sdict}}
+	{{range .Divisions}}
+		{{range .Echelons}}
+			{{$echelon := .}}
+			{{range .Ranks}}
+				{{if in $targetMember.Roles .RoleID}}
+					{{$currentEchelon = $echelon}}
+					{{break}}
+				{{end}}
+			{{end}}
+		{{end}}
+	{{end}}
+	{{$nextRank := sdict}}
+	{{$nextEchelon := sdict}}
+	{{range .Divisions}}
+		{{range .Echelons}}
+			{{$echelon := .}}
+			{{range .Ranks}}
+				{{$rank := .}}
+				{{if eq $rank.RankShortName $nextRankShortName}}
+					{{$nextRank = .}}
+					{{$nextEchelon = $echelon}}
+					{{break}}
+				{{end}}
+			{{end}}
+		{{end}}
+	{{end}}
+	{{$logLinks := cslice}}
+	{{range $logID, $data := $logsAtCurrentRank}}
+		{{$logLinks = $logLinks.Append (printf "[%d](%s)" $logID $data.Link)}}
+	{{end}}
+	{{$promotionRole := getRole $nextRank.RoleID}}
+	{{$logEmbed := sdict
+		"title" "Promotion requirements met"
+		"author" (sdict
+			"name" (printf "%s (ID %d)" $targetMember.User.Username $targetMember.User.ID)
+			"icon_url" ($targetMember.User.AvatarURL "1024")
+		)
+		"description" (printf "%s has met the automatic promotion requirements for <@&%d> and their promotion needs reviewing\n### Deployment logs for promotion:\n- %s" $targetMember.User.Mention $nextRank.RoleID (joinStr "\n- " $logLinks))
+		"color" $promotionRole.Color
+	}}
+	{{$components := cslice
+		(cbutton "label" "Confirm promotion" "custom_id" (printf "iota_PromotionConfirm-%v" $targetMember.User.ID) "style" "success")
+		(cbutton "label" "Deny promotion" "custom_id" (printf "iota_PromotionDeny-%v" $targetMember.User.ID) "style" "danger")
+	}}
+	{{sendMessage 1384142646536048740 (complexMessage "embed" $logEmbed "components" $components)}}
 {{end}}

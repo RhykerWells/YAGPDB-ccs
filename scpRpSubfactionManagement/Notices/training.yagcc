@@ -15,8 +15,8 @@
 {{end}}
 
 {{if not .ExecData}}
-	{{$data := dbGet 0 "FactionDataNew"}}
-	{{$divisions := $data.Value.Get "Data"}}
+	{{$factionData := dbGet 0 "FactionData"}}
+	{{$divisions := $factionData.Value.Get "Divisions"}}
 	{{$targetSubdivision := "Core"}}
 	{{$allRanks := cslice}}
 	{{range $divisions}}
@@ -55,12 +55,16 @@
 		{{end}}
 	{{end}}
 	{{if not (gt (len .CmdArgs) 1)}}
-		{{sendMessage nil (printf "No `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes")}}
+		{{sendMessage nil (printf "No `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `20m`.")}}
 		{{return}}
 	{{end}}
 	{{$duration := index .CmdArgs 1}}
 	{{if not (toDuration $duration)}}
-		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes")}}
+		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `20m`.")}}
+		{{return}}
+	{{end}}
+	{{if lt (toDuration $duration) (toDuration "20m")}}
+		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `20m`.")}}
 		{{return}}
 	{{end}}
 	{{$embed := sdict "title" (printf "%s training" $trainingRank.RankLongName) "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix $trainingRank.RoleID) "color" $trainingRank.Color}}
@@ -88,7 +92,7 @@
 			{{sendMessageNoEscape nil (complexMessage "content" (printf "Insufficient confirmations within the time frame for %s training.%s" .TrainingRole.RankLongName $confirmedUsers))}}
 			{{return}}
 		{{end}}
-		{{$embed := sdict "title" (printf "%s training" .TrainingRole.Name) "description" (printf "Attending:\n%s" (joinStr "\n" $strConfirmed)) "color" 0x4b9a4e}}
+		{{$embed := sdict "title" (printf "%s training" .TrainingRole.RankLongName) "description" (printf "Attending:\n%s" (joinStr "\n" $strConfirmed)) "color" 0x4b9a4e}}
 		{{editMessage 1391567531046863041 .TrainingMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
 		{{sendMessageNoEscape nil (complexMessage "content" (printf "%s please ping %s in <#1391567531046863041> and the an SCP: RP server name" .Host (joinStr "\n" $strConfirmed)))}}
 	{{end}}
