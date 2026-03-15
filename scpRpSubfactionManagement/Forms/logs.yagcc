@@ -124,7 +124,7 @@
 	{{end}}
 	{{$logs.Set (toInt $logID) $trainingLog}}
 	{{dbSet 0 "trainingLogs" $logs}}
-	{{$_ := dbIncr 0 "Dlog" 1}}
+	{{$_ := dbIncr 0 "Tlog" 1}}
 {{end}}
 
 {{/* Deployment log submission */}}
