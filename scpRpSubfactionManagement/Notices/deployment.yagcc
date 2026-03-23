@@ -32,17 +32,29 @@
 	{{end}}
 	{{$duration := index .CmdArgs 0}}
 	{{if not (toDuration $duration)}}
-		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the deployment (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `20m`.")}}
+		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the deployment (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
 		{{return}}
 	{{end}}
-	{{if lt (toDuration $duration) (toDuration "20m")}}
-		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the deployment (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `20m`.")}}
+	{{if lt (toDuration $duration) (toDuration "10m")}}
+		{{sendMessage nil (printf "Invalid `Duration` argument provided.\nIn how long do you want to host the deployment (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
 		{{return}}
 	{{end}}
-	{{$embed := sdict "title" (printf "Deployment notice") "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 15 minutes before.\n**You cannot attend if you have not PASSED a training for your role**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 15 minutes before with the server name if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix) "color" 0x650678}}
+	{{$minimumConfirmations := 3}}
+	{{if (gt (len .CmdArgs) 2)}}
+		{{$minimumConfirmations = index .CmdArgs 2 | toInt}}
+		{{if not $minimumConfirmations}}
+			{{sendMessage nil (printf "Invalid `Minimum confirmations` argument provided.\nHow many confirmations do you want to require for the deployment? (must be at least `3`)")}}
+			{{return}}
+		{{end}}
+		{{if lt $minimumConfirmations 1}}
+			{{sendMessage nil (printf "Invalid `Minimum confirmations` argument provided.\nHow many confirmations do you want to require for the deployment? (must be at least `3`)")}}
+			{{return}}
+		{{end}}
+	{{end}}
+	{{$embed := sdict "title" (printf "Deployment notice") "description" (printf "Host: %s,\nSession time: <t:%d:f>.\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You cannot log this deployment if you have not PASSED a training for your role**.\n\nRequires: `3`+ confirmations.\n\nYou will be pinged 5 minutes before if there are sufficient confirmations." .User.Mention (currentTime.Add (toDuration $duration)).Unix) "color" 0x650678}}
 	{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" "iota_joinDeployment" "style" "success") (cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedDeployment" "style" "secondary" "disabled" true)}}
 	{{$x := sendMessageNoEscapeRetID 1391567579813908633 (complexMessage "content" (printf "<@&1375381774204665917>") "embed" (cembed $embed) "components" $components)}}
-	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "15m"))).Seconds (sdict "Host" .User.Mention "DeploymentMsg" $x)}}
+	{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "5m"))).Seconds (sdict "Host" .User.Mention "DeploymentMsg" $x "MinimumConfirmations" $minimumConfirmations)}}
 	{{dbSetExpire $x "deploymentConfirmations" cslice (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
 	{{sendMessage nil (printf "You've successfully started a deployment notice. View the message [here](https://discord.com/channels/1375370805575155782/1391567579813908633/%d)" $x)}}
 {{else}}
@@ -54,7 +66,7 @@
 		{{end}}
 		{{$message := getMessage 1391567579813908633 .DeploymentMsg}}
 		{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" "iota_joinDeployment" "style" "success" "disabled" true) (cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $confirmed))) "custom_id" "iota_confirmedDeployment" "style" "secondary" "disabled" true)}}
-		{{if lt (len $confirmed) 3}}
+		{{if lt (len $confirmed) .MinimumConfirmations}}
 			{{$embed := sdict "title" "Deployment notice" "description" (printf "Insufficient confirmations within time frame.\n\nDeployment cancelled.") "color" 0xFF0000}}
 			{{editMessage 1391567579813908633 .DeploymentMsg (complexMessageEdit "embed" (cembed $embed) "components" $components)}}
 			{{$confirmedUsers := ""}}
