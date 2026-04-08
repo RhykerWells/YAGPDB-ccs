@@ -215,13 +215,19 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
 	{{$robloxAccountMapped := cslice}}
 	{{range $member := $nickedMembersMapped}}
 		{{$robloxUsernameFromNickname := reReplace ` \|.*` .Nick ""}}
-		{{$robloxMember := getRobloxUserByUsername $robloxUsernameFromNickname}}
-		{{if $robloxMember}}
-			{{$member.Set "RobloxMember" $robloxMember}}
-			{{$robloxAccountMapped = $robloxAccountMapped.Append $member}}
-			{{continue}}
+		{{try}}
+			{{$robloxMember := getRobloxUserByUsername $robloxUsernameFromNickname}}
+			{{if $robloxMember}}
+				{{$member.Set "RobloxMember" $robloxMember}}
+				{{$robloxAccountMapped = $robloxAccountMapped.Append $member}}
+				{{continue}}
+			{{end}}
+			{{$noRobloxAccountMapped = $noRobloxAccountMapped.Append $member}}
+		{{catch}}
+			{{if in .Error "invalid username provide"}}
+				{{$noRobloxAccountMapped = $noRobloxAccountMapped.Append $member}}
+			{{end}}
 		{{end}}
-		{{$noRobloxAccountMapped = $noRobloxAccountMapped.Append $member}}
 	{{end}}
 	{{$noRobloxAccountMappedPrintable := cslice}}
 	{{range $member := $noRobloxAccountMapped}}
@@ -229,7 +235,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
 	{{end}}
 	{{$matches = "**No Discord members with missing Roblox accounts**"}}
 	{{if $noRobloxAccountMappedPrintable}}
-		{{$matches = (printf "**The following Discord members do not have a Roblox found with their user:\n%s**" (joinStr "\n" $noRobloxAccountMappedPrintable))}}
+		{{$matches = (printf "**The following Discord members do not have a Roblox found with their user (does their nickname follow the correct format?):\n%s**" (joinStr "\n" $noRobloxAccountMappedPrintable))}}
 	{{end}}
 	{{$content = printf "%s\n%s" $content $matches}}
 	{{editResponse .Interaction.Token $stageFive $content}}
