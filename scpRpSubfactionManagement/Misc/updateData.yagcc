@@ -36,7 +36,6 @@ Changes here will not take affect until the command is re-run.
 	"Shirt" 9326560199
 	"Pants" 4607034531
 	"RTagColour" "61 21 133"
-	"NVGColour" "97 37 209"
 	"StarterGear" (cslice "bp-77" "pistol")
 }}
 
@@ -72,6 +71,11 @@ Each subdivision must be represented as an sdict with the following fields:
 		"SubdivisionShortName" "VG"
 		"SubdivisionRoleID" 1442973306142589019
 	)
+  	(sdict
+     	"SubdivisionLongName" "Council of the Veil"
+     	"SubdivisionShortName" "COTV"
+     	"SubdivisionRoleID" 1458154557598072965
+    )
 }}
 
 {{/* 
@@ -95,7 +99,13 @@ Each echelon must be represented as an sdict with the following fields:
 	- "Morph"  (string):		     	The base morph name to apply. Example: "Vest", "TV".
 
 	- "Hats"   (cslice):		     	A string list of accessory identifiers (asset IDs or keyword 
-									 	labels) that can be equipped with the morph. 
+									 	labels) that can be equipped with the morph.
+
+	- "Arms" (cslice, optional):		A string list of accessory identifiers used to equip to the arms/shoulders of the morph.
+										Can be omitted if not required.
+
+	- "Other" (cslice, optional):		A string list of other accessory identifiers used to equip to other parts of the morph, such as back or waist accessories.
+										Can be omitted if not required.
 
 	- "StarterGear" (cslice, optional): A list of echelon-specific gear provided to the user when spawning 
 										under this echelon. Can be omitted if no gear is assigned.
@@ -109,8 +119,10 @@ Because cslices are ordered, list echelons in descending order with higher echel
 		"RoleID" 1375379736297078864
 		"MorphData" (sdict
 			"Morph" "TV"
-			"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4507911797" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "holster" "exoskeleton")
-			"StarterGear" (cslice "hellion" "spas")
+			"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4507911797")
+			"Arms" (cslice "11515333598" "109131663471317" "18970779951" "18970871297")
+			"Other" (cslice "12383357842" "holster" "exoskeleton")
+			"StarterGear" (cslice "spas")
 		)
 	)
 	(sdict
@@ -123,8 +135,10 @@ Because cslices are ordered, list echelons in descending order with higher echel
 		"EchelonShortName" "MC"
 		"RoleID" 1375379607594991667
 		"MorphData" (sdict
-			"Morph" "TV"
-			"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "15330922823" "holster" "exoskeleton")
+			"Morph" "remove"
+			"Hats" (cslice "11989323584" "4420280348" "14807833998" "13368999418" "4391089678" "holster" "exoskeleton")
+			"Arms" (cslice "11515333598" "109131663471317" "18970779951" "18970871297")
+			"Other" (cslice "12383357842" "Kneepads" "15330922823")
 			"StarterGear" (cslice "spas")
 		)
 	)
@@ -133,9 +147,11 @@ Because cslices are ordered, list echelons in descending order with higher echel
 		"EchelonShortName" "EU"
 		"RoleID" 1375379240165576764
 		"MorphData" (sdict
-			"Morph" "Vest"
-			"Hats" (cslice "0" "qnvg 97 37 209" "11989323584" "12201396170" "13368999418" "16269019420" "4391089678" "11515333598" "109131663471317" "18970779951" "18970871297" "12383357842" "12348970347" "holster" "exoskeleton")
-			"StarterGear" (cslice "arx")
+			"Morph" "remove"
+			"Hats" (cslice "jqnvg 97 37 209" "6602077191" "14017332608" "13770147630" "14844345331" "12850150835" "17430938152" "77747420289763")
+			"Arms" (cslice "109131663471317" "18970779951" "18970871297" "11515333598")
+			"Other" (cslice "15177836845" "15177851447" "18325772674" "holster" "exoskeleton")
+		
 		)
 	)
 	(sdict
@@ -143,8 +159,10 @@ Because cslices are ordered, list echelons in descending order with higher echel
 		"EchelonShortName" "FA"
 		"RoleID" 1375379122926260264
 		"MorphData" (sdict
-			"Morph" "Vest"
-			"Hats" (cslice "0" "qnvg 97 37 209" "13770147630" "13517980810" "12201396170" "16269019420" "12201396170" "8087415055" "109131663471317" "18970779951" "18970871297" "12383357842" "8087415055" "holster")
+			"Morph" "Holster"
+			"Hats" (cslice "jqnvg 97 37 209" "6602077191" "71788582607822" "12310728474" "13770147630")
+			"Arms" (cslice "98125108280860" "18970871297" "18970779951")
+			"Other" (cslice "109855952672286" "15893925206" "13152503251" "11922435004")
 		)
 	)
 
@@ -260,7 +278,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Warden"
 		"RoleID" 1375377194330755113
 		"MorphData" (sdict
-			"Health" 200
+			"Health" 160
 		)
 	)
 	(sdict
@@ -269,7 +287,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Marshal"
 		"RoleID" 1375377873241772095
 		"MorphData" (sdict
-			"Health" 200
+			"Health" 160
 		)
 	)
 
@@ -279,7 +297,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Overseer"
 		"RoleID" 1375377969492787220
 		"MorphData" (sdict
-			"Health" 180
+			"Health" 160
 		)
 	)
 	(sdict
@@ -288,13 +306,13 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Controller"
 		"RoleID" 1375378044767834133
 		"MorphData" (sdict
-			"Health" 170
+			"Health" 160
 		)
 	)
 	(sdict
 		"EchelonShortName" "CB"
 		"RankLongName" "Drift Coordinator"
-		"RankShortName" "Threader"
+		"RankShortName" "Coordinator"
 		"RoleID" 1461894600422850714
 		"MorphData" (sdict
 			"Health" 160
@@ -307,7 +325,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Executor"
 		"RoleID" 1461894911807852707
 		"MorphData" (sdict
-			"Health" 180
+			"Health" 160
 		)
 	)
 	(sdict
@@ -316,7 +334,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Striker"
 		"RoleID" 1461894885794648218
 		"MorphData" (sdict
-			"Health" 170
+			"Health" 160
 		)
 	)
 		(sdict
@@ -335,7 +353,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Piercer"
 		"RoleID" 1467662671452045342
 		"MorphData" (sdict
-			"Health" 150
+			"Health" 130
 		)
 	)
 	(sdict
@@ -344,7 +362,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Lance"
 		"RoleID" 1375435912116437073
 		"MorphData" (sdict
-			"Health" 140
+			"Health" 130
 		)
 	)
 	(sdict
@@ -363,7 +381,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Operative"
 		"RoleID" 1375378464336773142 
 		"MorphData" (sdict
-			"Health" 125
+			"Health" 115
 			"StarterGear" (cslice "shield")
 		)
 		"PromotionData" (sdict
@@ -377,7 +395,7 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankShortName" "Chaser"
 		"RoleID" 1375436671948165143 
 		"MorphData" (sdict
-			"Health" 110
+			"Health" 115
 		)
 		"PromotionData" (sdict
 			"DeploymentsRequired" 2
@@ -389,6 +407,9 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 		"RankLongName" "Riftling"
 		"RankShortName" "Riftling"
 		"RoleID" 1375378503024902164
+     	"MorphData" (sdict
+            "Health" 115
+        )
 		"PromotionData" (sdict
 			"DeploymentsRequired" 1
 			"NextRankShortName" "Chaser"
@@ -399,8 +420,8 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "ICAD-C"
-		"RankLongName" "Echo Relay"
-		"RankShortName" "Relay"
+		"RankLongName" "Director of ICAD"
+		"RankShortName" "D-ICAD"
 		"RoleID" 1375378281078984704
 		"MorphData" (sdict
 			"Health" 180
@@ -408,8 +429,8 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 	)
 	(sdict
 		"EchelonShortName" "ICAD-C"
-		"RankLongName" "Echo Adjutant"
-		"RankShortName" "Adjutant"
+		"RankLongName" "Ass.Director of ICAD"
+		"RankShortName" "Ass.D-ICAD"
 		"RoleID" 1400672809469870120
 		"MorphData" (sdict
 			"Health" 180
@@ -418,8 +439,8 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "ICAD-H"
-		"RankLongName" "Glyph Agent"
-		"RankShortName" "Agent"
+		"RankLongName" "Glyph Adjutent"
+		"RankShortName" "Adjutent"
 		"RoleID" 1396293360737845349
 		"MorphData" (sdict
 			"Health" 140
@@ -437,8 +458,8 @@ Because cslices are ordered, list ranks in ascending order with higher ranks hig
 
 	(sdict
 		"EchelonShortName" "ICAD-W"
-		"RankLongName" "Rift Tracer"
-		"RankShortName" "Tracer"
+		"RankLongName" "Rift Agent"
+		"RankShortName" "Agent"
 		"RoleID" 1400673095626260540
 		"MorphData" (sdict
 			"Health" 110
