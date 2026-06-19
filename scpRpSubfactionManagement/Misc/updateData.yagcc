@@ -39,6 +39,67 @@ Changes here will not take affect until the command is re-run.
 }}
 
 {{/* 
+TODO: Finish Core (Add Default for CB & add VC)
+TODO: Ad remaining divisions
+Asset Library
+
+Used within the MorphData field to allow human-readable morph data to be set while maintaining a reference
+*/}}
+{{$assetLibrary := sdict
+    "Head" (sdict
+        "jqnvg" "jnvg 97 37"
+        "Beret" 13771308321
+		"BeretVariant" 4420280348
+        "Helmet" 17172715247
+        "Headset" 17430938152
+        "HelmetAccessories" 90017702327547
+        "HelmetAccessoriesVariant" 111740885429679
+        "GasMask" 8928560917
+        "Goggles" 8263401404
+		"Sunglasses" 4507911797
+        "Balaclava" 13770147630
+		"BalaclavaVariant" 11989323584
+        "BalaclavaGoggles" 110257366186328
+    )
+
+    "Torso" (sdict
+		"ExoSkeleton" "exoskeleton"
+        "NeckGuard" 89079953984743
+		"NeckWrap" 13368999418
+        "Backpack" 87519388025322
+        "BackpackVariant" 93420325044529
+        "Vest" 106394046428843
+        "VestAccessories" 92259957388280
+        "VestAccessoriesVariant1" 96330760094289
+        "VestAccessoriesVariant2" 87971202003479
+        "SmershRig" 13495922328
+        "SmershRigVariant1" 110159178776472
+        "SmershRigVariant2" 114307579023914
+        "Belt" 18406147686
+        "BeltVariant1" 136400560428473
+		"BeltVariant2" 12383357842
+        "Pouch" 87197117800358
+        "Camera" 132105235960950
+        "Phone" 110105829778884
+    )
+
+    "Arms" (sdict
+        "PurpleArmBandRight" 98125108280860
+		"PuplrArmBandLeft" 109131663471317
+        "ElbowPadLeft" 18970779951
+        "ElbowPadRight" 18970871297
+        "ShoulderArmourLeft" 12497812780
+		"ShoulderArmourRight" 11515333598
+        "BicepArmourLeft" 77321284179231
+    )
+
+    "Legs" (sdict
+        "Holster" "holster"
+        "Kneepads" "kneepads"
+    )
+}}
+
+{{/* 
 A cslice containing ordered subdivision definitions for your system.
 Each subdivision must be represented as an sdict with the following fields:
 
@@ -523,5 +584,5 @@ The following parts of the code builds database entries
 	{{- $fullData = $fullData.Append $subdivision -}}
 {{end}}
 
-{{dbSet 0 "FactionData" (sdict "Settings" $baseData "Divisions" $fullData "BaseMorphData" $baseMorphData)}}
+{{dbSet 0 "FactionData" (sdict "Settings" $baseData "Divisions" $fullData "BaseMorphData" $baseMorphData "AssetLibrary" $assetLibrary)}}
 {{sendMessage nil "Done!"}}
