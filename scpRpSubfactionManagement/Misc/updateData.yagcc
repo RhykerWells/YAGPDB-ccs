@@ -23,7 +23,6 @@ Changes here will not take affect until the command is re-run.
 
 {{/* Main subfaction data */}}
 {{$baseData := sdict
-	"ApiKey" "XX"
 	"EmbedColor" 4003205
 	"RobloxGroupID" 36098297
 	"NicknameRegex" "\\s\\|.*"
@@ -48,23 +47,17 @@ Each subdivision must be represented as an sdict with the following fields:
 - "SubdivisionShortName" (string):			 A short identifier (acronym) for internal command use.
 
 - "SubdivisionRoleID"    (int):				 The Discord role ID tied to the subdivision identifier.
-
-- "Public"               (bool, optional):   Determines whether the subdivision is selectable 
-											 by any user who meets the subdivision requirements.
-											 This field can be OMITTED to set as false.
 */}}
 {{$subdivisionRoles := cslice
 	(sdict
 		"SubdivisionLongName" "Core"
 		"SubdivisionShortName" "Core"
 		"SubdivisionRoleID" 1375381774204665917
-		"Public" false
 	)
 	(sdict
 		"SubdivisionLongName" "Internal Cult Analysis Division"
 		"SubdivisionShortName" "ICAD"
 		"SubdivisionRoleID" 1400135588090220605
-		"Public" true
 	)
 	(sdict
 		"SubdivisionLongName" "Veil Guard"
@@ -508,9 +501,6 @@ The following parts of the code builds database entries
 {{$fullData := cslice}}
 {{range $subdivisionRoles}}
 	{{- $subdivision := . -}}
-	{{if not ($subdivision.HasKey "Public")}}
-		{{- $subdivision.Set "Public" false -}}
-	{{end}}
 	{{$echelonsInSubdivision := cslice}}
 	{{range $echelonRoles}}
 		{{- $echelon := . -}}
