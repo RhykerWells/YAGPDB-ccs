@@ -1,0 +1,147 @@
+{{/*
+Made by ranger_4297 (765316548516380732)
+
+Trigger Type: `Regex`
+Trigger: `rankto`
+
+©️ RhykerWells 2020-Present
+GNU, GPLV3 License
+Repository: https://github.com/RhykerWells/YAGPDB-ccs
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{/* Initiates variables */}}
+{{$verifiedRole := 1375403523788898379}}
+{{$removeRoles := sdict "unverified" 1375381637646258186 "visitor" 1375381740117430302}}
+{{$factionData := dbGet 0 "FactionDataV2"}}
+{{if not $factionData}}
+	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
+	{{return}}
+{{end}}
+{{$data := $factionData.Value}}
+
+{{$divisionLookup := $data.Get "DivisionLookup"}}
+{{$ranksByDivision := $data.Get "RanksByDivision"}}
+
+{{$rankLookup := $data.Get "RankLookup"}}
+{{$echelonLookup := $data.Get "EchelonLookup"}}
+
+{{$allRemoveRoles := cslice}}
+{{range $_, $roleID := $removeRoles}}
+	{{$allRemoveRoles = $allRemoveRoles.Append $roleID}}
+{{end}}
+
+{{$availableDivs := cslice}}
+{{range $k, $_ := $divisionLookup}}
+	{{$availableDivs = $availableDivs.Append $k}}
+{{end}}
+{{if not .CmdArgs}}
+	{{sendMessage nil (printf "Missing required arguments.\n\n```rankto <Division> <Rank> <User>```\nAvailable divisions: `%s`" (joinStr "`, `" $availableDivs))}}
+	{{return}}
+{{end}}
+{{$targetDivision := index .CmdArgs 0}}
+{{if not ($divisionLookup.Get $targetDivision)}}
+	{{sendMessage nil (printf "Invalid `Division` argument.\n\n```rankto <Division> <Rank> <User>```\nAvailable divisions: `%s`" (joinStr "`, `" $availableDivs))}}
+	{{return}}
+{{end}}
+{{$availableRanks := $ranksByDivision.Get $targetDivision}}
+{{if not (gt (len .CmdArgs) 1)}}
+	{{sendMessage nil (printf "No `Rank` argument provided.\n\n```rankto <Division> <Rank> <User>```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
+	{{return}}
+{{end}}
+{{$targetRank := index .CmdArgs 1}}
+{{if not (in $availableRanks $targetRank)}}
+	{{sendMessage nil (printf "Invalid `Rank` argument.\n\n```rankto <Division> <Rank> <User>```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
+	{{return}}
+{{end}}
+{{if not (gt (len .CmdArgs) 2)}}
+	{{sendMessage nil "No `User` argument provided.\n\n```rankto <Division> <Rank> <User>```"}}
+	{{return}}
+{{end}}
+{{$targetUser := index .CmdArgs 2}}
+{{if not (getMember $targetUser)}}
+	{{sendMessage nil "Invalid `User` argument provided.\n\n```rankto <Division> <Rank> <User>```"}}
+	{{return}}
+{{end}}
+{{$targetMember := getMember $targetUser}}
+{{if eq .User.ID $targetMember.User.ID}}
+	{{sendMessage nil "You cannot rank yourself."}}
+	{{return}}
+{{end}}
+{{$positions := sdict "Staff" 0 "Target" 0}}
+{{range .Guild.Roles}}
+	{{- if and (in $.Member.Roles .ID) (lt $positions.Staff .Position)}}
+		{{- $positions.Set "Staff" .Position}}
+	{{- end -}}
+{{end}}
+{{range .Guild.Roles}}
+	{{- if and (in $targetMember.Roles .ID) (lt $positions.Target .Position)}}
+		{{- $positions.Set "Target" .Position}}
+	{{- end -}}
+{{end}}
+{{if or (eq $positions.Staff $positions.Target) (lt $positions.Staff $positions.Target)}}
+	{{sendMessage nil "You cannot assign a rank to a member higher or the same rank as you."}}
+	{{return}}
+{{end}}
+{{if not (in $targetMember.Roles $verifiedRole)}}
+	{{sendMessage nil "This user is not verified with Bloxlink, I cannot rank them. Please ask them to verify their ROBLOX account."}}
+	{{return}}
+{{end}}
+
+{{$oldRank := sdict}}
+
+{{range $_, $rankData := $rankLookup}}
+    {{if in $targetMember.Roles $rankData.RoleID}}
+        {{$oldRank = $rankData}}
+        {{break}}
+    {{end}}
+{{end}}
+
+{{$division := $divisionLookup.Get $targetDivision}}
+
+{{/* Add every ranks role in this division to remove list*/}}
+{{range $r := ($ranksByDivision.Get $targetDivision)}}
+    {{$allRemoveRoles = $allRemoveRoles.Append (($rankLookup.Get $r).RoleID)}}
+{{end}}
+
+{{/* Add every echelon role in this division to remove list */}}
+{{range $echShort, $_ := $division.Echelons}}
+    {{$allRemoveRoles = $allRemoveRoles.Append (($echelonLookup.Get $echShort).RoleID)}}
+{{end}}
+
+{{range $targetMember.Roles}}
+    {{if in $allRemoveRoles .}}
+        {{takeRoleID $targetMember.User.ID .}}
+    {{end}}
+{{end}}
+
+{{$rank := $rankLookup.Get $targetRank}}
+{{$echelon := $echelonLookup.Get $rank.Echelon}}
+{{$echelon}}
+
+{{giveRoleID $targetMember.User.ID $division.RoleID}}
+{{giveRoleID $targetMember.User.ID $echelon.RoleID}}
+{{giveRoleID $targetMember.User.ID $rank.RoleID}}
+
+{{$color := (getRoleID $rank.RoleID).Color}}
+{{$notificationContainer := (componentBuilder
+	"allowed_mentions" (sdict
+		"parse" cslice
+	)
+	"container" (sdict
+		"color" $color
+		"components" (componentBuilder
+			"section" (sdict
+				"text" (printf "# Discord Role Updated\n>>> **Discord Account**: %s (%s)\n**New rank**: <@&%d>\n**Old Rank**: %s" $targetMember.User.Mention (reReplace ` \|.*` $targetMember.Nick "") $rank.RoleID (or (printf "<@&%d>" $oldRank.RoleID) "None"))
+				"thumbnail" (sdict
+					"media" ($targetMember.AvatarURL "1024")
+				)
+			)
+		)
+	)
+)}}
+{{sendMessage 1384142646536048740 $notificationContainer}}
