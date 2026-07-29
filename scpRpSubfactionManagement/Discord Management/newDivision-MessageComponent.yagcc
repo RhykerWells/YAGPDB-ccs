@@ -1,0 +1,201 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Message Component`
+	Trigger: `\A(?i)iota_discordAddSubdivision`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/
+*/}}
+
+{{if eq .StrippedID "Start"}}
+	{{$nameInput := ctextInput
+		"custom_id" "division_name"
+		"style" 1
+		"placeholder" "e.g. Generic Division Name"
+		"max_length" 50
+		"required" true
+	}}
+	{{$nameLabel := clabel
+		"label" "Division Name"
+		"description" "Full name of the division"
+		"component" $nameInput
+	}}
+	{{$designatiomInput := ctextInput
+		"custom_id" "div_designation"
+		"style" 1
+		"placeholder" "e.g. GDN"
+		"max_length" 10
+		"required" true
+	}}
+	{{$designLabel := clabel
+		"label" "Division Designation"
+		"description" "Short code for the division"
+		"component" $designatiomInput
+	}}
+	{{$purposeInput := ctextInput
+		"custom_id" "div_purpose"
+		"style" 2
+		"placeholder" "What is this division responsible for?"
+		"max_length" 500
+		"required" true
+	}}
+	{{$purposeLabel := clabel
+		"label" "Purpose"
+		"description" "Explain the division purpose"
+		"component" $purposeInput
+	}}
+	{{$modal := modalBuilder "iota_discordAddSubdivisionStart" "Create Division + Ranks" $nameLabel $designLabel $purposeLabel}}
+	{{sendModal $modal}}
+{{end}}
+
+{{if eq .StrippedID "Echelons"}}
+	{{$echelonHRInput := ctextInput
+		"custom_id" "hr_echelon_name"
+		"style" 1
+		"placeholder" "e.g. Control"
+		"max_length" 50
+		"required" true
+	}}
+	{{$echelonHRLabel := clabel
+		"label" "HR Echelon Name"
+		"description" "The name (excluding the division designation) of the echelon"
+		"component" $echelonHRInput
+	}}
+	{{$echelonMRInput := ctextInput
+		"custom_id" "mr_echelon_name"
+		"style" 1
+		"placeholder" "e.g. Units"
+		"max_length" 50
+		"required" true
+	}}
+	{{$echelonMRLabel := clabel
+		"label" "MR Echelon Name"
+		"description" "The name (excluding the division designation) of the echelon"
+		"component" $echelonMRInput
+	}}
+	{{$echelonLRInput := ctextInput
+		"custom_id" "lr_echelon_name"
+		"style" 1
+		"placeholder" "e.g. Trainees"
+		"max_length" 50
+		"required" true
+	}}
+	{{$echelonLRLabel := clabel
+		"label" "LR Echelon Name"
+		"description" "The name (excluding the division designation) of the echelon"
+		"component" $echelonLRInput
+	}}
+	{{$modal := modalBuilder "iota_discordAddSubdivisionEchelons" "Create Division + Ranks" $echelonHRLabel $echelonMRLabel $echelonLRLabel}}
+	{{sendModal $modal}}
+{{end}}
+
+{{if eq .StrippedID "RanksHR"}}
+	{{$HRRank1Input := ctextInput
+		"custom_id" "hr1_rank_name"
+		"style" 1
+		"placeholder" "e.g. Director of GDN"
+		"max_length" 50
+		"required" true
+	}}
+	{{$HRRank1Label := clabel
+		"label" "1ic Rank Name"
+		"description" "The name of the rank"
+		"component" $HRRank1Input
+	}}
+	{{$HRRank2Input := ctextInput
+		"custom_id" "hr2_rank_name"
+		"style" 1
+		"placeholder" "e.g. Assistant Director of GDN"
+		"max_length" 50
+		"required" true
+	}}
+	{{$HRRank2Label := clabel
+		"label" "2ic Rank Name"
+		"description" "The name of the rank"
+		"component" $HRRank2Input
+	}}
+	{{$modal := modalBuilder "iota_discordAddSubdivisionRanksHR" "Create Division + Ranks" $HRRank1Label $HRRank2Label}}
+	{{sendModal $modal}}
+{{end}}
+
+{{if eq .StrippedID "RanksMR"}}
+	{{$MRRank1Input := ctextInput
+		"custom_id" "mr1_rank_name"
+		"style" 1
+		"placeholder" "e.g. Senior Operative"
+		"max_length" 50
+		"required" true
+	}}
+	{{$MRRank1Label := clabel
+		"label" "Mid Rank Name"
+		"description" "Highest rank within Echelon II"
+		"component" $MRRank1Input
+	}}
+	{{$MRRank2Input := ctextInput
+		"custom_id" "mr2_rank_name"
+		"style" 1
+		"placeholder" "e.g. Operative"
+		"max_length" 50
+		"required" true
+	}}
+	{{$MRRank2Label := clabel
+		"label" "Mid Rank Name"
+		"description" "Second/lowest (when applicable) rank within Echelon II"
+		"component" $MRRank2Input
+	}}
+	{{$MRRank3Input := ctextInput
+		"custom_id" "mr3_rank_name"
+		"style" 1
+		"placeholder" "e.g. Junior Operative"
+		"max_length" 50
+	}}
+	{{$MRRank3Label := clabel
+		"label" "Mid Rank Name"
+		"description" "Lowest rank within Echelon II (optional)"
+		"component" $MRRank3Input
+	}}
+	{{$modal := modalBuilder "iota_discordAddSubdivisionRanksMR" "Create Division + Ranks" $MRRank1Label $MRRank2Label $MRRank3Label}}
+	{{sendModal $modal}}
+{{end}}
+
+{{if eq .StrippedID "RanksLR"}}
+	{{$LRRank1Input := ctextInput
+		"custom_id" "lr1_rank_name"
+		"style" 1
+		"placeholder" "e.g. Trainee"
+		"max_length" 50
+		"required" true
+	}}
+	{{$LRRank1Label := clabel
+		"label" "Low Rank Name"
+		"description" "Highest rank within Echelon III"
+		"component" $LRRank1Input
+	}}
+	{{$LRRank2Input := ctextInput
+		"custom_id" "lr2_rank_name"
+		"style" 1
+		"placeholder" "e.g. Junior Trainee"
+		"max_length" 50
+		"required" true
+	}}
+	{{$LRRank2Label := clabel
+		"label" "Low Rank Name"
+		"description" "Second/lowest (when applicable) rank within Echelon III"
+		"component" $LRRank2Input
+	}}
+	{{$LRRank3Input := ctextInput
+		"custom_id" "lr3_rank_name"
+		"style" 1
+		"placeholder" "e.g. Conscript"
+		"max_length" 50
+	}}
+	{{$LRRank3Label := clabel
+		"label" "Low Rank Name"
+		"description" "Lowest rank within Echelon III (optional)"
+		"component" $LRRank3Input
+	}}
+	{{$modal := modalBuilder "iota_discordAddSubdivisionRanksLR" "Create Division + Ranks" $LRRank1Label $LRRank2Label $LRRank3Label}}
+	{{sendModal $modal}}
+{{end}}

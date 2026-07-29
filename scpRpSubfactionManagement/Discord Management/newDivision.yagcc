@@ -1,0 +1,33 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `newdivisioncategory`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{if not .ExecData}}
+	{{$components := cslice 
+		(cbutton "label" "Add new subdivision" "custom_id" "iota_discordAddSubdivisionStart" "style" "success")
+	}}
+	{{if dbGet 0 "TempDivision"}}
+		{{sendMessage "There is currently one (1) guild waiting for it's channels to be created"}}
+		{{return}}
+	{{end}}
+    {{$x := sendMessageRetID nil (complexMessage "content" "Add new subdivision?" "components" $components)}}
+	{{dbSet 0 "NewDivision" sdict}}
+    {{scheduleUniqueCC .CCID nil 20 $x (sdict "Channel" .Channel "ID" $x)}}
+	{{return}}
+{{end}}
+{{$components := cslice 
+	(cbutton "label" "Add new subdivision" "custom_id" "iota_iota_discordAddSubdivisionStart" "style" "success" "disabled" true)
+}}
+{{editMessage nil .ExecData.ID (complexMessageEdit "content" "Add new subdivision?\n\n-# This command has expired." "components" $components)}}

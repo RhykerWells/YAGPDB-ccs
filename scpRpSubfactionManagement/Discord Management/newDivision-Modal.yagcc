@@ -1,0 +1,157 @@
+{{/*
+Made by ranger_4297 (765316548516380732)
+
+Trigger Type: `Modal`
+Trigger: `\A(?i)iota_discordAddSubdivision`
+
+©️ RhykerWells 2020-Present
+GNU, GPLV3 License
+Repository: https://github.com/RhykerWells/YAGPDB-ccs/
+*/}}
+
+{{$domain := "records.iota-4.org"}}
+
+{{$newDivision := or (dbGet 0 "NewDivision").Value sdict}}
+{{$settings := or (dbGet 0 "managementSettings").Value sdict}}
+{{$color := or $settings.Colour 0x231068}}
+
+{{cancelScheduledUniqueCC 91 .Interaction.Message.ID}}
+{{if eq .StrippedID "Start"}}
+	{{$components := cslice 
+		(cbutton "label" "Continue" "custom_id" "iota_discordAddSubdivisionEchelons" "style" "success")
+	}}
+	{{$newDivision.Set "Name" (index .Values 0)}}
+	{{$newDivision.Set "Designation" (index .Values 1)}}
+	{{$newDivision.Set "Purpose" (index .Values 2)}}
+	{{updateMessage (complexMessageEdit "content" "Continue creating subdivision: Echelons" "components" $components)}}
+	{{dbSet 0 "NewDivision" $newDivision}}
+{{end}}
+{{if eq .StrippedID "Echelons"}}
+	{{$components := cslice 
+		(cbutton "label" "Continue" "custom_id" "iota_discordAddSubdivisionRanksHR" "style" "success")
+	}}
+	{{$newDivision.Set "E3" (index .Values 0)}}
+	{{$newDivision.Set "E2" (index .Values 1)}}
+	{{$newDivision.Set "E1" (index .Values 2)}}
+	{{updateMessage (complexMessageEdit "content" "Continue creating subdivision: High Ranks" "components" $components)}}
+{{end}}
+{{if eq .StrippedID "RanksHR"}}
+	{{$components := cslice 
+		(cbutton "label" "Continue" "custom_id" "iota_discordAddSubdivisionRanksMR" "style" "success")
+	}}
+	{{$newDivision.Set "HR1" (index .Values 0)}}
+	{{$newDivision.Set "HR2" (index .Values 1)}}
+	{{updateMessage (complexMessageEdit "content" "Continue creating subdivision: Mid Ranks" "components" $components)}}
+{{end}}
+{{if eq .StrippedID "RanksMR"}}
+	{{$components := cslice 
+		(cbutton "label" "Continue" "custom_id" "iota_discordAddSubdivisionRanksLR" "style" "success")
+	}}
+	{{$newDivision.Set "MR1" (index .Values 0)}}
+	{{$newDivision.Set "MR2" (index .Values 1)}}
+	{{if gt (len .Values) 2}}
+		{{$newDivision.Set "MR3" (index .Values 2)}}
+	{{end}}
+	{{updateMessage (complexMessageEdit "content" "Continue creating subdivision: Low Ranks" "components" $components)}}
+{{end}}
+{{if eq .StrippedID "RanksLR"}}
+	{{updateMessage (complexMessageEdit "content" "Creating roles, channels and applying default overrides now....")}}
+	{{$newDivision.Set "LR1" (index .Values 0)}}
+	{{$newDivision.Set "LR2" (index .Values 1)}}
+	{{if gt (len .Values) 2}}
+		{{$newDivision.Set "LR3" (index .Values 2)}}
+	{{end}}
+	{{/* 
+	Create roles:
+	- Access
+	- LR
+	- MR
+	- HR
+	Create channels:
+	*/}}
+	{{$E3 := createRole (sdict "name" (printf "%s %s" $newDivision.Designation $newDivision.E3))}}
+	{{$HR1 := createRole (sdict "name" $newDivision.HR1)}}
+	{{$HR2 := createRole (sdict "name" $newDivision.HR2)}}
+	{{$E2 := createRole (sdict "name" (printf "%s %s" $newDivision.Designation $newDivision.E2))}}
+	{{$MR1 := createRole (sdict "name" $newDivision.MR1)}}
+	{{$MR2 := createRole (sdict "name" $newDivision.MR2)}}
+	{{if $newDivision.HasKey "MR3"}}
+		{{$_ := createRole (sdict "name" $newDivision.MR3)}}
+	{{end}}
+	{{$E1 := createRole (sdict "name" (printf "%s %s" $newDivision.Designation $newDivision.E1))}}
+	{{$LR1 := createRole (sdict "name" $newDivision.LR1)}}
+	{{$LR2 := createRole (sdict "name" $newDivision.LR2)}}
+	{{if $newDivision.HasKey "MT3"}}
+		{{$_ := createRole (sdict "name" $newDivision.LR3)}}
+	{{end}}
+	{{$accessRole := createRole (sdict "name" $newDivision.Designation "color" 0x010000)}}
+
+	{{$cleaned := reReplace `[✪─]+` $E3.Name "" | trimSpace | title}}
+	{{$parts := split $cleaned " "}}
+	{{$E3Delim := printf  "%s-%s" (index $parts 0) (index (split (index $parts 1) "") 0)}}
+
+	{{$categoryOverwrites := sdict
+		"1375370805575155782" (sdict "Deny" .Permissions.PermissionAll)
+		(toString $accessRole.ID) (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory))
+		"1461895105676972176" (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory))
+	}}
+	{{$announcementOverwrites := sdict "1375370805575155782"
+		(sdict "Deny" .Permissions.PermissionAll)
+		(toString $accessRole.ID) (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis))
+		(toString $E3.ID) (sdict "Allow" (bitwiseOr .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles .Permissions.SendPolls .Permissions.MentionEveryone))
+		"1461895105676972176" (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles .Permissions.SendPolls .Permissions.MentionEveryone .Permissions.ManageMessages .Permissions.PinMessages .Permissions.BypassSlowmode))
+	}}
+	{{$promotionOverwrites := sdict
+		"1375370805575155782" (sdict "Deny" .Permissions.PermissionAll)
+		(toString $accessRole.ID) (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis))
+		(toString $E3.ID) (sdict "Allow" (bitwiseOr .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles))
+		"1461895105676972176" (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles .Permissions.MentionEveryone .Permissions.ManageMessages .Permissions.PinMessages .Permissions.BypassSlowmode))
+	}}
+	{{$controlOfficeOverwrites := sdict
+		"1375370805575155782" (sdict "Deny" .Permissions.PermissionAll)
+		(toString $E3.ID) (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles))
+		"1461895105676972176" (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles .Permissions.MentionEveryone .Permissions.ManageMessages .Permissions.PinMessages .Permissions.BypassSlowmode))
+	}}
+	{{$midrankOfficeOverwrites := sdict
+		"1375370805575155782" (sdict "Deny" .Permissions.PermissionAll)
+		(toString $E2.ID) (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles))
+		(toString $E3.ID) (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles .Permissions.ManageMessages .Permissions.PinMessages .Permissions.BypassSlowmode))
+		"1461895105676972176" (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles .Permissions.MentionEveryone .Permissions.ManageMessages .Permissions.PinMessages .Permissions.BypassSlowmode))
+	}}
+	{{$generalOverwrites := sdict
+		"1375370805575155782" (sdict "Deny" .Permissions.PermissionAll)
+		(toString $accessRole.ID) (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles))
+		(toString $E3.ID) (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles .Permissions.ManageMessages .Permissions.PinMessages .Permissions.BypassSlowmode))
+		"1461895105676972176" (sdict "Allow" (bitwiseOr .Permissions.ViewChannel .Permissions.ReadMessages .Permissions.ReadMessageHistory .Permissions.AddReactions .Permissions.UseExternalEmojis .Permissions.SendMessages .Permissions.EmbedLinks .Permissions.AttachFiles .Permissions.MentionEveryone .Permissions.ManageMessages .Permissions.PinMessages .Permissions.BypassSlowmode))
+	}}
+
+	{{$divCategory := createChannel $newDivision.Name "category" nil $categoryOverwrites}}
+	{{$infoChannel := createChannel (printf "%s Information" $newDivision.Designation) "text" $divCategory.ID $categoryOverwrites}}
+	{{$rulesEmbed := cembed
+		"title" (printf "Task Force Iota-4 | %s Rules & procedures" $newDivision.Name)
+		"description" (printf "# Rules\nThe %s within Iota-4 follows the same standards and regulations as [Site 416](https://discord.com/channels/1331497708380225566/1331505776262512670/1351378908225994824), and our [SOP](https://%s/en/Divisions/Core/SOP).\nIn addition to these, the %s also follows the [%[2]s SOP](https://%[2]s/en/Divisions/%[3]s/SOP).\n-# Division based SOP superseeds the core SOP." $domain $newDivision.Name $newDivision.Designation)
+		"color" $color
+	}}
+	{{$informationEmbed := cembed
+		"title" (printf "Task Force Iota-4 | %s Information" $newDivision.Name)
+		"description" (printf "# What is the %s?\nThe %s is a specialized unit within Iota-4 focused on %s.\n\n# Leadership team\n### Veil Command (VC)\n- <@&1375377194330755113>\n- <@&1375377873241772095>\n\n### Coordination Bureau (CB)\n- <@&1375377969492787220>\n- <@&1375378044767834133>\n- <@&1461894600422850714>\n\n### %s (%s)\n- <@&%d>\n- <@&%d>" $newDivision.Name $newDivision.Purpose $newDivision.E3 (printf "%s %s" $newDivision.Designation $newDivision.E3) (upper $E3Delim) $HR1.ID $HR2.ID)
+		"color" $color
+	}}
+	{{$informationContEmbed := sdict
+		"title" (printf "Task Force Iota-4 | %s Information: Continued" $newDivision.Name)
+		"description" (printf "# Other important information\nOur official documents follow specific versioning.\nThe version is as follows: `EDITION.FEATURE.PATCH`\n- `EDITION` | New version, e.g. Document rewrites.\n- `FEATURE` | New document sections.\n- `PATCH` | Non structural tweaks, e.g. spelling & grammar.\nWe will always update you on `EDITION` and `FEATURE` changes.\n\n# Links & queries\n- Site 416 | [Communications server](<https://discord.com/site416>), [Rules & Guidelines](<https://discord.com/channels/1331497708380225566/1331505776262512670>), [Manual Of Operations](<https://docs.google.com/document/d/1dCULOisRiiLRYojTmC4DEQjWBco9M7bLhWZhQuFfgP0/edit?usp=sharing>)\n\n - [Iota-4 | Communications server](<https://join.iota-4.org>)\n- [Iota-4 | Core SOP](<https://%s/en/Divisions/Core/SOP>)\n- [Iota-4 | Core Codex](<https://%[1]s/en/Divisions/Core/Codex>)\n\n- [Iota-4 | %[2]s SOP](<https://%[1]s/en/Divisions/%[3]s/SOP>)\n- [Iota-4 | %[1]s Codex](<https://%[1]s/en/Divisions/%[3]s/Codex>)\n- [Iota-4 | %[2]s Morph Document](<https://%[1]s.com/en/Divisions/%[3]s/Morphs>)\n\n- [Iota-4 | ROBLOX GROUP](<https://www.roblox.com/communities/36098297/Task-Force-Iota-4-Veil-Runners#!/about>)\n\nIf you require any other help UNRELATED TO `EU`/`MC` issues, please direct then to our <#1375374104764354580> channel, otherwise, please direct them to your designated channel." $domain $newDivision.Name $newDivision.Designation)
+		"color" $color
+	}}
+	{{$x := sendMessageRetID $infoChannel.ID (complexMessage "embed" (cslice $rulesEmbed $informationEmbed $informationContEmbed))}}
+	{{$_ := createChannel (printf "%s Announcements" $newDivision.Designation) "text" $divCategory.ID $announcementOverwrites}}
+	{{$_ := createChannel (printf "%s Promotions" $newDivision.Designation) "text" $divCategory.ID $promotionOverwrites}}
+	{{$_ := createChannel (printf "%s Control Office" $newDivision.Designation) "text" $divCategory.ID $controlOfficeOverwrites}}
+	{{$_ := createChannel (printf "%s Midrank Office" $newDivision.Designation) "text" $divCategory.ID $midrankOfficeOverwrites}}
+	{{$_ := createChannel (printf "%s General" $newDivision.Designation) "text" $divCategory.ID $generalOverwrites}}
+	{{$newDivision.Set "Links" (sdict "InfoMID" $x "InfoCID" $infoChannel.ID)}}
+	{{dbSet 0 $newDivision.Name $newDivision}}
+	{{dbSet 0 "NewDivision" sdict}}
+	{{return}}
+{{end}}
+{{scheduleUniqueCC 91 nil 20 .Interaction.Message.ID (sdict "Channel" .Interaction.ChannelID "ID" .Interaction.Message.ID)}}
+{{dbSet 0 "NewDivision" $newDivision}}
