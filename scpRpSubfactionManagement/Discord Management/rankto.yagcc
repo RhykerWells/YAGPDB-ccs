@@ -127,6 +127,10 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 {{giveRoleID $targetMember.User.ID $rank.RoleID}}
 
 {{$color := (getRoleID $rank.RoleID).Color}}
+{{$oldRankDisplay := "None"}}
+{{if $oldRank}}
+	{{$oldRankDisplay = printf "<@&%d>" $oldRank.RoleID}}
+{{end}}
 {{$notificationContainer := (componentBuilder
 	"allowed_mentions" (sdict
 		"parse" cslice
@@ -135,7 +139,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 		"color" $color
 		"components" (componentBuilder
 			"section" (sdict
-				"text" (printf "# Discord Role Updated\n>>> **Discord Account**: %s (%s)\n**Division**: %s\n**New rank**: <@&%d>\n**Old Rank**: %s" $targetMember.User.Mention (reReplace ` \|.*` $targetMember.Nick "") $division.Name $rank.RoleID (or (printf "<@&%d>" $oldRank.RoleID) "None"))
+				"text" (printf "# Discord Role Updated\n>>> **Discord Account**: %s (%s)\n**Division**: %s\n**New rank**: <@&%d>\n**Old Rank**: %s" $targetMember.User.Mention (reReplace ` \|.*` $targetMember.Nick "") $division.Name $rank.RoleID $oldRankDisplay)
 				"thumbnail" (sdict
 					"media" ($targetMember.AvatarURL "1024")
 				)
