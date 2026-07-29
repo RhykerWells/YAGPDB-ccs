@@ -52,7 +52,6 @@
 	We use the same loop system throughought the new rank data system to maintain consistency
 */}}
 {{range $_, $divisionData := $divisions}}
-	{{$division := .}}
 	{{range $divisionData.Echelons}}
 		{{$echelon := .}}
 		{{range $echelon.Ranks}}
@@ -131,8 +130,8 @@
 		{{end}}
 		{{$userLogs.Set $ID $log}}
 	{{end}}
-	{{range $ID, $log := $userLogs}}
-		{{if ne $log.Type $selectedRankProfile.RoleID}}
+	{{range $userLogs}}
+		{{if ne .Type $selectedRankProfile.RoleID}}
 			{{continue}}
 		{{end}}
 		{{$x := sendResponseRetID nil (complexMessage "content" "You have already submit a training for this rank." "ephemeral" true)}}
@@ -167,7 +166,7 @@
 		{{- if not $log -}}
 			{{- continue -}}
 		{{- end -}}
-		{{- if ne $log.User.ID $targetMember.User.ID -}}
+		{{- if ne $ID $targetMember.User.ID -}}
 			{{- continue -}}
 		{{- end -}}
 		{{- $userLogsAtRank = $userLogsAtRank.Append . -}}
@@ -203,4 +202,35 @@
 	{{$deploymentSightingsLabel := clabel "label" "Deployment sightings" "description" "What anomalous sightings occured?" "component" $deploymentSightingsInput}}
 	{{$modal := modalBuilder "iota_formsDeploymentLog" "Iota-4 | Deployment log form" $hostLabel $deploymentTypeLabel $deploymentSummaryLabel $deploymentSightingsLabel $proofLabel}}
 	{{sendModal $modal}}
+{{end}}
+
+{{/* Send training assitance log */}}
+{{if eq .StrippedID "SubmitALog"}}
+	{{$logs := (dbGet 0 "trainingLogs").Value}}
+		{{$userLogsAtRank := cslice}}
+		{{range $ID, $log := $logs}}
+		{{- if not $log -}}
+			{{- continue -}}
+		{{- end -}}
+		{{- if ne $ID $targetMember.User.ID -}}
+			{{- continue -}}
+		{{- end -}}
+		{{- $userLogsAtRank = $userLogsAtRank.Append . -}}
+	{{end}}
+	{{if and (not (eq $selectedRankProfile.RankShortName "Seeker")) (not $userLogsAtRank)}}
+		{{$x := sendResponseRetID nil (complexMessage "content" (printf "You've not completed the training for this role, this deployment will not count towards your quota.") "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+		{{return}}
+	{{end}}
+	{{$assistanceTypeSlice := cslice}}
+	{{range $_, $divisionData := $divisions}}
+		{{if ne $selectedDivisionProfile.SubdivisionShortName $divisionData.SubdivisionShortName}}
+			{{continue}}
+		{{end}}
+		{{range $divisionData.Echelons}}
+			{{$echelon := .}}
+			{{range $echelon.Ranks}}
+			{{end}}
+		{{end}}
+	{{end}}
 {{end}}
