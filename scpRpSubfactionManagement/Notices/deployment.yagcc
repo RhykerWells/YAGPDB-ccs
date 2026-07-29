@@ -64,7 +64,6 @@
 		{{range $confirmed}}
 			{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
 		{{end}}
-		{{$message := getMessage 1391567579813908633 .DeploymentMsg}}
 		{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" "iota_joinDeployment" "style" "success" "disabled" true) (cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $confirmed))) "custom_id" "iota_confirmedDeployment" "style" "secondary" "disabled" true)}}
 		{{if lt (len $confirmed) .MinimumConfirmations}}
 			{{$embed := sdict "title" "Deployment notice" "description" (printf "Insufficient confirmations within time frame.\n\nDeployment cancelled.") "color" 0xFF0000}}

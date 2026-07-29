@@ -91,7 +91,6 @@
 		{{range $confirmed}}
 			{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
 		{{end}}
-		{{$message := getMessage 1391567531046863041 .TrainingMsg}}
 		{{$components := cslice (cbutton "label" "Toggle confirmation" "custom_id" (printf "iota_joinTraining-%d" .TrainingRole.RoleID) "style" "success" "disabled" true) (cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $confirmed))) "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)}}
 		{{if lt (len $confirmed) .MinimumConfirmations}}
 			{{$embed := sdict "title" (printf "%s training" .TrainingRole.RankLongName) "description" (printf "Insufficient confirmations within time frame.\n\nTraining cancelled.") "color" 0xFF0000}}
