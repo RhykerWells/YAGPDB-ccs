@@ -16,7 +16,6 @@
 	{{return}}
 {{end}}
 
-{{$newDivision := or (dbGet 0 "NewDivision").Value sdict}}
 {{$settings := or (dbGet 0 "managementSettings").Value sdict}}
 {{$color := or $settings.Colour 0x231068}}
 {{if not .ExecData}}
