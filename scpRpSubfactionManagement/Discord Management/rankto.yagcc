@@ -93,8 +93,8 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 {{end}}
 
 {{$oldRank := sdict}}
-
-{{range $_, $rankData := $rankLookup}}
+{{range $rankName := ($ranksByDivision.Get $targetDivision)}}
+    {{$rankData := $rankLookup.Get $rankName}}
     {{if in $targetMember.Roles $rankData.RoleID}}
         {{$oldRank = $rankData}}
         {{break}}
@@ -121,7 +121,6 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 
 {{$rank := $rankLookup.Get $targetRank}}
 {{$echelon := $echelonLookup.Get $rank.Echelon}}
-{{$echelon}}
 
 {{giveRoleID $targetMember.User.ID $division.RoleID}}
 {{giveRoleID $targetMember.User.ID $echelon.RoleID}}
@@ -136,7 +135,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 		"color" $color
 		"components" (componentBuilder
 			"section" (sdict
-				"text" (printf "# Discord Role Updated\n>>> **Discord Account**: %s (%s)\n**New rank**: <@&%d>\n**Old Rank**: %s" $targetMember.User.Mention (reReplace ` \|.*` $targetMember.Nick "") $rank.RoleID (or (printf "<@&%d>" $oldRank.RoleID) "None"))
+				"text" (printf "# Discord Role Updated\n>>> **Discord Account**: %s (%s)\n**Division**: %s\n**New rank**: <@&%d>\n**Old Rank**: %s" $targetMember.User.Mention (reReplace ` \|.*` $targetMember.Nick "") $division.Name $rank.RoleID (or (printf "<@&%d>" $oldRank.RoleID) "None"))
 				"thumbnail" (sdict
 					"media" ($targetMember.AvatarURL "1024")
 				)
@@ -145,3 +144,5 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 	)
 )}}
 {{sendMessage 1384142646536048740 $notificationContainer}}
+
+{{sendMessage nil (printf "Successfully set %s's rank to <@&%d> (<@&%d>)." $targetMember.User.Mention $rank.RoleID $echelon.RoleID)}}
