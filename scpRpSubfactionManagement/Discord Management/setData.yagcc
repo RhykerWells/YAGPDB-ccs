@@ -740,6 +740,7 @@ This ordering is used when generating database data.
 		{{/* Echelon lookup */}}
 		{{$echelonLookup.Set $echelon.ShortName (sdict
 			"Name" $echelon.Name
+			"ShortName" $echelon.ShortName
 			"RoleID" $echelon.RoleID
 			"Division" $division.ShortName
 			"Ranks" $echelonRanks
@@ -763,6 +764,7 @@ This ordering is used when generating database data.
 	{{/* Division lookup */}}
 	{{$divisionLookup.Set $division.ShortName (sdict
 		"Name" $division.Name
+		"ShortName" $division.ShortName
 		"RoleID" $division.RoleID
 		"Echelons" $divisionEchelons
 		"HasMorphOverride" $division.MorphData
