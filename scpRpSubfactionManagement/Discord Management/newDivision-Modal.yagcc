@@ -50,7 +50,9 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{$newDivision.Set "MR1" (index .Values 0)}}
 	{{$newDivision.Set "MR2" (index .Values 1)}}
 	{{if gt (len .Values) 2}}
-		{{$newDivision.Set "MR3" (index .Values 2)}}
+		{{if ne (index .Values 2) ""}}
+			{{$newDivision.Set "MR3" (index .Values 2)}}
+		{{end}}
 	{{end}}
 	{{updateMessage (complexMessageEdit "content" "Continue creating subdivision: Low Ranks" "components" $components)}}
 {{end}}
@@ -59,7 +61,9 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{$newDivision.Set "LR1" (index .Values 0)}}
 	{{$newDivision.Set "LR2" (index .Values 1)}}
 	{{if gt (len .Values) 2}}
-		{{$newDivision.Set "LR3" (index .Values 2)}}
+		{{if ne (index .Values 2) ""}}
+			{{$newDivision.Set "LR3" (index .Values 2)}}
+		{{end}}
 	{{end}}
 	{{/* 
 	Create roles:
@@ -70,19 +74,30 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	Create channels:
 	*/}}
 	{{$E3 := createRole (sdict "name" (printf "%s %s" $newDivision.Designation $newDivision.E3))}}
+	{{$newDivision.Set "E3" $E3}}
 	{{$HR1 := createRole (sdict "name" $newDivision.HR1)}}
+	{{$newDivision.Set "HR1" $HR1}}
 	{{$HR2 := createRole (sdict "name" $newDivision.HR2)}}
+	{{$newDivision.Set "HR2" $HR2}}
 	{{$E2 := createRole (sdict "name" (printf "%s %s" $newDivision.Designation $newDivision.E2))}}
+	{{$newDivision.Set "E2" $E2}}
 	{{$MR1 := createRole (sdict "name" $newDivision.MR1)}}
+	{{$newDivision.Set "MR1" $MR1}}
 	{{$MR2 := createRole (sdict "name" $newDivision.MR2)}}
+	{{$newDivision.Set "MR2" $MR2}}
 	{{if $newDivision.HasKey "MR3"}}
-		{{$_ := createRole (sdict "name" $newDivision.MR3)}}
+		{{$MR3 := createRole (sdict "name" $newDivision.MR3)}}
+		{{$newDivision.Set "MR3" $MR3}}
 	{{end}}
 	{{$E1 := createRole (sdict "name" (printf "%s %s" $newDivision.Designation $newDivision.E1))}}
+	{{$newDivision.Set "E1" $E1}}
 	{{$LR1 := createRole (sdict "name" $newDivision.LR1)}}
+	{{$newDivision.Set "LR1" $LR1}}
 	{{$LR2 := createRole (sdict "name" $newDivision.LR2)}}
-	{{if $newDivision.HasKey "MT3"}}
-		{{$_ := createRole (sdict "name" $newDivision.LR3)}}
+	{{$newDivision.Set "LR2" $LR2}}
+	{{if $newDivision.HasKey "MR3"}}
+		{{$LR3 := createRole (sdict "name" $newDivision.LR3)}}
+		{{$newDivision.Set "LR3" $LR3}}
 	{{end}}
 	{{$accessRole := createRole (sdict "name" $newDivision.Designation "color" 0x010000)}}
 
@@ -134,7 +149,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	}}
 	{{$informationEmbed := cembed
 		"title" (printf "Task Force Iota-4 | %s Information" $newDivision.Name)
-		"description" (printf "# What is the %s?\nThe %s is a specialized unit within Iota-4 focused on %s.\n\n# Leadership team\n### Veil Command (VC)\n- <@&1375377194330755113>\n- <@&1375377873241772095>\n\n### Coordination Bureau (CB)\n- <@&1375377969492787220>\n- <@&1375378044767834133>\n- <@&1461894600422850714>\n\n### %s (%s)\n- <@&%d>\n- <@&%d>" $newDivision.Name $newDivision.Purpose $newDivision.E3 (printf "%s %s" $newDivision.Designation $newDivision.E3) (upper $E3Delim) $HR1.ID $HR2.ID)
+		"description" (printf "# What is the %s?\nThe %s is a specialized unit within Iota-4 focused on %s.\n\n# Leadership team\n### Veil Command (`VC`)\n- <@&1375377194330755113>\n- <@&1375377873241772095>\n\n### Coordination Bureau (`CB`)\n- <@&1375377969492787220>\n- <@&1375378044767834133>\n- <@&1461894600422850714>\n\n### %s (`%s`)\n- <@&%d>\n- <@&%d>" $newDivision.Name $newDivision.Purpose $newDivision.E3 (printf "%s %s" $newDivision.Designation $newDivision.E3) (upper $E3Delim) $HR1.ID $HR2.ID)
 		"color" $color
 	}}
 	{{$informationContEmbed := sdict
@@ -149,7 +164,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{$_ := createChannel (printf "%s Midrank Office" $newDivision.Designation) "text" $divCategory.ID $midrankOfficeOverwrites}}
 	{{$_ := createChannel (printf "%s General" $newDivision.Designation) "text" $divCategory.ID $generalOverwrites}}
 	{{$newDivision.Set "Links" (sdict "InfoMID" $x "InfoCID" $infoChannel.ID)}}
-	{{dbSet 0 $newDivision.Name $newDivision}}
+	{{dbSet 0 $newDivision.Designation $newDivision}}
 	{{dbSet 0 "NewDivision" sdict}}
 	{{return}}
 {{end}}
