@@ -440,12 +440,12 @@ This ordering is used when generating database data.
 			"Ranks" (cslice
 				(sdict
 					"Name" "Head Executive Of The COTV"
-					"shortName" "H.Exec"
+					"ShortName" "H.Exec"
 					"RoleID" 1458151830532915281
 				)
 				(sdict
 					"Name" "Executive Of The COTV"
-					"shortName" "Exec"
+					"ShortName" "Exec"
 					"RoleID" 1458151962293047326
 				)
 			)
@@ -460,17 +460,17 @@ This ordering is used when generating database data.
 			"Ranks" (cslice
 				(sdict
 					"Name" "Supreme Liason"
-					"shortName" "S.Liason"
+					"ShortName" "S.Liason"
 					"RoleID" 1511819412154355825
 				)
 				(sdict
 					"Name" "Liason"
-					"shortName" "Liason"
+					"ShortName" "Liason"
 					"RoleID" 1511819677620371566
 				)
 				(sdict
 					"Name" "Minister"
-					"shortName" "Minister"
+					"ShortName" "Minister"
 					"RoleID" 1458152811874488473
 				)
 			)
@@ -485,17 +485,17 @@ This ordering is used when generating database data.
 			"Ranks" (cslice
 				(sdict
 					"Name" "Delegate"
-					"shortName" "Delegate"
+					"ShortName" "Delegate"
 					"RoleID" 1458152955453767825
 				)
 				(sdict
 					"Name" "Councillor"
-					"shortName" "Councillor"
+					"ShortName" "Councillor"
 					"RoleID" 1458152093436350616
 				)
 				(sdict
 					"Name" "Aide"
-					"shortName" "Aide"
+					"ShortName" "Aide"
 					"RoleID" 1458152005343252571
 				)
 			)
@@ -742,7 +742,7 @@ This ordering is used when generating database data.
 			"Name" $echelon.Name
 			"Division" $division.ShortName
 			"Ranks" $echelonRanks
-			"HasMorphOverride" (ne (len $echelon.MorphData) 0)
+			"HasMorphOverride" $echelon.MorphData
 		)}}
 
 		{{/* Echelon rank lookup */}}
@@ -764,7 +764,7 @@ This ordering is used when generating database data.
 		"Name" $division.Name
 		"RoleID" $division.RoleID
 		"Echelons" $divisionEchelons
-		"HasMorphOverride" (ne (len $division.MorphData) 0)
+		"HasMorphOverride" $division.MorphData
 	)}}
 
 	{{$fullData = $fullData.Append $division}}
