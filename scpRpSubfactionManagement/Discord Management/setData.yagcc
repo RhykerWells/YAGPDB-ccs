@@ -772,7 +772,7 @@ This ordering is used when generating database data.
 {{end}}
 
 
-{{dbSet 0 "FactionData"
+{{dbSet 0 "FactionDataV2"
 	(sdict
 
 		"Settings" $baseData
