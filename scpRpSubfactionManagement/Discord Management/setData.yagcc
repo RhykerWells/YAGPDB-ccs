@@ -1,0 +1,799 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `setData`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{/*
+This is used to set ALL the data used within the system dynamically.
+This includes but is not limited to morph data, discord ranks, roblox ranks
+
+Changes here will not take affect until the command is re-run.
+*/}}
+
+{{/* Main subfaction data */}}
+{{$baseData := sdict
+	"EmbedColor" 4003205
+	"RobloxGroupID" 36098297
+	"NicknameRegex" "\\s\\|.*"
+}}
+
+{{/* Echelon, subdivision & rank role data */}}
+
+{{/* Base morph data */}}
+{{$baseMorphData := sdict
+	"Shirt" 9326560199
+	"Pants" 4607034531
+	"RTagColour" "61 21 133"
+	"StarterGear"  "bp-77,pistol"
+}}
+
+{{/*
+Division / Echelon / Rank Data Structure
+
+$data contains the complete organisational structure for
+the faction system.
+
+The hierarchy is stored directly instead of using separate
+division, echelon, and rank lists.
+
+Structure:
+
+$data (cslice)
+	|
+	+-- Division (sdict)
+		|
+		+-- Echelons (cslice)
+			|
+			+-- Echelon (sdict)
+				|
+				+-- Ranks (cslice)
+					|
+					+-- Rank (sdict)
+*/}}
+
+
+{{/*
+Division Definition
+
+Each division is represented as an sdict with:
+
+- "Name" (string)
+	Full name of the division.
+	Example: "Internal Cult Analysis Division"
+
+- "ShortName" (string)
+	Short identifier used internally.
+	Example: "ICAD"
+
+- "RoleID" (int)
+	Discord role ID assigned to the division.
+
+- "MorphData" (sdict, optional)
+	Default morph configuration inherited by all
+	child echelons and ranks.
+
+- "Echelons" (cslice)
+	Ordered list of echelon definitions belonging to
+	this division.
+*/}}
+
+{{/* 
+Echelon Definition
+
+Each echelon is represented as an sdict with:
+- "Name" (string)
+	Full name of the echelon.
+	Example: "Veil Command"
+
+- "ShortName" (string)
+	Internal identifier used by ranks and commands.
+	Example: "VC"
+
+- "RoleID" (int)
+	Discord role ID assigned to the echelon.
+
+- "MorphData" (sdict, optional)
+	Additional morph configuration.
+
+	Values override division-level MorphData.
+
+- "Ranks" (cslice)
+	Ordered list of rank definitions belonging to
+	this echelon.
+*/}}
+
+{{/*
+Rank Definition
+
+Each rank is represented as an sdict with:
+
+- "Name" (string)
+	Full name of the rank.
+	Example: "Warden Of The Veil"
+
+- "ShortName" (string)
+	Internal identifier used for rank commands
+	and tags.
+	Example: "Warden"
+
+- "RoleID" (int)
+	Discord role ID assigned to the rank.
+
+- "MorphData" (sdict, optional)
+	Additional morph configuration.
+
+	Values override both division and echelon
+	MorphData.
+
+- "PromotionData" (sdict, optional)
+	Defines automatic progression.
+
+	Contains:
+
+	- "DeploymentsRequired" (int)
+		Number of deployments/trainings required.
+
+	- "NextRankShortName" (string)
+		ShortName of the rank to promote to.
+*/}}
+
+{{/*
+Morph Inheritance
+
+MorphData is inherited down the hierarchy:
+
+Division MorphData
+		|
+		v
+Echelon MorphData
+		|
+		v
+Rank MorphData
+
+
+Lower levels override higher levels.
+
+Example:
+
+Division:
+	Shirt = A
+
+Echelon:
+	Hats = B
+
+Rank:
+	Health = 150
+
+Final result:
+	Shirt = A
+	Hats = B
+	Health = 150
+
+
+---------------------------------------------------------
+Ordering
+
+Because cslices preserve order:
+
+- Divisions should be listed in organisational order.
+- Echelons should be listed from highest to lowest.
+- Ranks should be listed according to progression order.
+
+This ordering is used when generating database data.
+*/}}
+
+{{$core := sdict
+	"Name" "Core"
+	"ShortName" "Core"
+	"RoleID" 1375381774204665917
+	"Echelons" (cslice
+		(sdict
+			"Name" "Veil Command"
+			"ShortName" "VC"
+			"RoleID" 1375379736297078864
+			"MorphData" (sdict
+				"Morph" "TV"
+				"Health" 150
+				"Hats" "11989323584,4420280348,14807833998,13368999418,4507911797,11515333598,109131663471317,18970779951,18970871297,12383357842,holster,exoskeleton"
+				"StarterGear" "spas"
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Warden Of The Veil"
+					"ShortName" "Warden"
+					"RoleID" 1375377194330755113
+				)
+				(sdict
+					"Name" "Echo Marshal"
+					"ShortName" "Marshal"
+					"RoleID" 1375377873241772095
+				)
+			)
+		)
+		(sdict
+			"Name" "Co-ordination Bureau"
+			"ShortName" "CB"
+			"RoleID" 1461895105676972176
+			"MorphData" (sdict
+				"Morph" "TV"
+				"Health" 150
+				"Hats" "11989323584,4420280348,14807833998,13368999418,4507911797,11515333598,109131663471317,18970779951,18970871297,12383357842,holster,exoskeleton"
+				"StarterGear" "spas"
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Drift Overseer"
+					"ShortName" "Overseer"
+					"RoleID" 1375377969492787220
+				)
+				(sdict
+					"Name" "Drift Controller"
+					"ShortName" "Controller"
+					"RoleID" 1375378044767834133
+				)
+				(sdict
+					"Name" "Drift Coordinator"
+					"ShortName" "Coordinator"
+					"RoleID" 1461894600422850714
+				)
+			)
+		)
+		(sdict
+			"Name" "Mission Control"
+			"ShortName" "MC"
+			"RoleID" 1375379607594991667
+			"MorphData" (sdict
+				"Morph" "TV"
+				"Health" 150
+				"Hats" "98125108280860,136400560428473,87971202003479,132105235960950,93420325044529,106394046428843,110105829778884,18970779951,18970871297,114307579023914,12497812780,110257366186328,13771308321,17430938152,holster,exoskeleton"
+				"StarterGear" "spas"
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Veer Executor"
+					"ShortName" "Executor"
+					"RoleID" 1461894911807852707
+				)
+				(sdict
+					"Name" "Veer Striker"
+					"ShortName" "Striker"
+					"RoleID" 1461894885794648218
+				)
+				(sdict
+					"Name" "Veer Threader"
+					"ShortName" "Threader"
+					"RoleID" 1375436353202032660
+				)
+			)
+		)
+		(sdict
+			"Name" "Execution Units"
+			"ShortName" "EU"
+			"RoleID" 1375379240165576764
+			"MorphData" (sdict
+				"Morph" "Remove"
+				"Health" 130
+				"Hats" "jqnvg 97 37 209,17172715247,13770147630,17430938152,111740885429679,106394046428843,96330760094289,110159178776472,98125108280860,18406147686,87197117800358,89079953984743,8263401404,77321284179231,kneepads,holster"
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Veil Piercer"
+					"ShortName" "Piercer"
+					"RoleID" 1467662671452045342
+				)
+				(sdict
+					"Name" "Veil Lance"
+					"ShortName" "Lance"
+					"RoleID" 1375435912116437073
+				)
+				(sdict
+					"Name" "Veil Seeker"
+					"ShortName" "Seeker"
+					"RoleID" 1375378431411228755 
+				)				
+			)
+		)
+		(sdict
+			"Name" "Field Assets"
+			"ShortName" "FA"
+			"RoleID" 1375379122926260264
+			"MorphData" (sdict
+				"Morph" "Remove"
+				"Health" 115
+				"Hats" "jnvg 97 37 209,17172715247,8928560917,13770147630,17430938152,90017702327547,87519388025322,106394046428843,92259957388280,18406147686,13495922328,98125108280860,holster"
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Rift Operative"
+					"ShortName" "Operative"
+					"RoleID" 1375378464336773142 
+					"PromotionData" (sdict
+						"DeploymentsRequired" 3
+						"NextRankShortName" "Seeker"
+					)
+					"MorphData" (sdict
+						"StarterGear" "shield"
+					)
+				)
+				(sdict
+					"Name" "Rift Chaser"
+					"ShortName" "Chaser"
+					"RoleID" 1375436671948165143 
+					"PromotionData" (sdict
+						"DeploymentsRequired" 2
+						"NextRankShortName" "Operative"
+					)
+				)
+				(sdict
+					"Name" "Riftling"
+					"ShortName" "Riftling"
+					"RoleID" 1375378503024902164
+					"PromotionData" (sdict
+						"DeploymentsRequired" 1
+						"NextRankShortName" "Chaser"
+					)
+				)
+			)
+		)
+	)
+}}
+
+{{$VG := sdict
+	"Name" "Veil Guard"
+	"ShortName" "VG"
+	"RoleID" 1442973306142589019
+	"Echelons" (cslice
+		(sdict
+			"Name" "Veil Guard Control"
+			"ShortName" "VG-C"
+			"RoleID" 1442973122260111401
+			"MorphData" (sdict
+				"Morph" "Remove"
+				"Hats" "100937792821551,120057304856295,17430938152,12201396170,14930656829,119942179790066,83608651542571,exoskeleton,10238081607,17820555197,87197117800358,14966535316,14966498838,18138576823"
+				"StarterGear" "arx,shield"
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Guardian Of The Veil"
+					"ShortName" "Guardian"
+					"RoleID" 1426604049138192395
+				)
+				(sdict
+					"Name" "Rift Crusader"
+					"ShortName" "Crusader"
+					"RoleID" 1458914879011295262
+				)
+			)
+		)
+		(sdict
+			"Name" "Veil Guard Lead"
+			"ShortName" "VG-L"
+			"RoleID" 1443192604329246810
+			"MorphData" (sdict
+				"Morph" "TV"
+				"Hats" "100937792821551,120057304856295,17430938152,12201396170,14930656829,119942179790066,83608651542571,exoskeleton,10238081607,17820555197,87197117800358,14966535316,14966498838,18138576823"
+				"StarterGear" "arx,shield"
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Sentinel"
+					"ShortName" "Sentinel"
+					"RoleID" 1429564916561346641
+				)
+			)
+		)
+		(sdict
+			"Name" "Veil Guard Foundation"
+			"ShortName" "VG-F"
+			"RoleID" 1443214825957363743 
+			"MorphData" (sdict
+				"Morph" "TV"
+				"Hats" "14844498416,18590004904,12497812780,102666754108288,109837221223070,109351528616197,108323112352845,14320195612,18846623970,90017702327547,17430938152,kneepads"
+				"StarterGear" "arx,shield"
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Paladin"
+					"ShortName" "Paladin"
+					"RoleID" 1510589691794296903
+				)
+				(sdict
+					"Name" "Knight"
+					"ShortName" "Knight"
+					"RoleID" 1510594915531489381
+				)
+			)
+		)
+	)
+}}
+
+{{$COTV := sdict
+	"Name" "Council Of The Veil"
+	"ShortName" "COTV"
+	"RoleID" 1458154557598072965
+	"MorphData" (sdict
+		"Morph" "Remove"
+		"Hats" "98125108280860,16962629976,13743108491,18776618574,90549233521058,127851695819151,92056584161411"
+		"Shirt" "16962629976"
+		"Pants" "6937192922"
+		"StarterGear" "pistol,clipboard,radio,l3,medkit black 0 "
+	)
+	"Echelons" (cslice
+		(sdict
+			"Name" "COTV Diplomats"
+			"ShortName" "COTV-D"
+			"RoleID" 1458151681626738792
+			"MorphData" (sdict
+				"Health" 150
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Head Executive Of The COTV"
+					"shortName" "H.Exec"
+					"RoleID" 1458151830532915281
+				)
+				(sdict
+					"Name" "Executive Of The COTV"
+					"shortName" "Exec"
+					"RoleID" 1458151962293047326
+				)
+			)
+		)
+		(sdict
+			"Name" "COTV Representatives"
+			"ShortName" "COTV-R"
+			"RoleID" 1458154762443685889
+			"MorphData" (sdict
+				"Health" 130
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Supreme Liason"
+					"shortName" "S.Liason"
+					"RoleID" 1511819412154355825
+				)
+				(sdict
+					"Name" "Liason"
+					"shortName" "Liason"
+					"RoleID" 1511819677620371566
+				)
+				(sdict
+					"Name" "Minister"
+					"shortName" "Minister"
+					"RoleID" 1458152811874488473
+				)
+			)
+		)
+		(sdict
+			"Name" "COTV Associates"
+			"ShortName" "COTV-A"
+			"RoleID" 1458154596865282130
+			"MorphData" (sdict
+				"Health" 120
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Delegate"
+					"shortName" "Delegate"
+					"RoleID" 1458152955453767825
+				)
+				(sdict
+					"Name" "Councillor"
+					"shortName" "Councillor"
+					"RoleID" 1458152093436350616
+				)
+				(sdict
+					"Name" "Aide"
+					"shortName" "Aide"
+					"RoleID" 1458152005343252571
+				)
+			)
+		)
+	)
+}}
+
+{{$IOD := sdict
+	"Name" "Internal Oversight Division"
+	"ShortName" "IOD"
+	"RoleID" 1531870973425487962
+	"MorphData" (sdict
+		"Morph" "Remove"
+		"Hats" "exoskeleton,4753644287,15836290347,15849611270,17172715247,91493685476560,15836241673,77747420289763,77321284179231,107943768121338,129773133501441,132105235960950,133981707084677,13152503251,15987961009,76556250471218"
+		"Shirt" "8177153613"
+		"Pants" "8054245366"
+		"StarterGear" "acr,evo,l3,radio,tracker,medkit black 0"
+	)
+	"Echelons" (cslice
+		(sdict
+			"Name" "IOD Control"
+			"ShortName" "IOD-C"
+			"RoleID" 1531870964202082498
+			"MorphData" (sdict
+				"Health" 150
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Director Of Internal Oversight"
+					"ShortName" "D.Oversight"
+					"RoleID" 1531870965372293192
+				)
+				(sdict
+					"Name" "Assistant Director Of Internal Oversight"
+					"ShortName" "A.D.Oversight"
+					"RoleID" 1531870966223863928
+				)
+			)
+		)
+		(sdict
+			"Name" "IOD Regulators"
+			"ShortName" "IOD-R"
+			"RoleID" 1531870966857207919
+			"MorphData" (sdict
+				"Health" 130
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Oversight Agent"
+					"ShortName" "O.Agent"
+					"RoleID" 1531870967884943431
+				)
+				(sdict
+					"Name" "Oversight Operative"
+					"ShortName" "O.Operative"
+					"RoleID" 1531870969084252273
+				)
+			)
+		)
+		(sdict
+			"Name" "IOD Observers"
+			"ShortName" "IOD-O"
+			"RoleID" 1531870970170839181
+			"MorphData" (sdict
+				"Health" 125
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Junior Oversight Operative"
+					"ShortName" "J.O.Operative"
+					"RoleID" 1531870971034861730
+				)
+				(sdict
+					"Name" "Oversight Trainee"
+					"ShortName" "O.Trainee"
+					"RoleID" 1531870972410466395
+				)
+			)
+		)
+	)
+}}
+
+{{$data := cslice
+	$core
+	$VG
+	$COTV
+	$IOD
+}}
+
+{{/* DO NOT EDIT BELOW */}}
+
+{{$fullData := cslice}}
+
+{{$rankLookup := sdict}}
+{{$divisionLookup := sdict}}
+{{$echelonLookup := sdict}}
+
+{{$allRanks := cslice}}
+{{$divisionRankLookup := sdict}}
+{{$echelonRankLookup := sdict}}
+
+{{$morphOverrides := cslice}}
+
+{{range $division := $data}}
+
+	{{$divisionEchelons := sdict}}
+	{{$divisionRanks := cslice}}
+
+
+	{{/* Division morph override tracking */}}
+	{{with $division.MorphData}}
+
+		{{range $k,$v := .}}
+
+			{{if eq $k "StarterGear"}}
+
+				{{$old := $division.MorphData.Get "StarterGear"}}
+
+				{{if $old}}
+					{{$division.MorphData.Set "StarterGear" (joinStr "," $old $v)}}
+				{{else}}
+					{{$division.MorphData.Set "StarterGear" $v}}
+				{{end}}
+
+			{{end}}
+
+		{{end}}
+
+		{{$morphOverrides = $morphOverrides.Append (sdict
+			"Type" "Division"
+			"Name" $division.ShortName
+			"MorphData" $division.MorphData
+		)}}
+
+	{{end}}
+
+	{{range $echelon := $division.Echelons}}
+
+		{{$echelonMorph := sdict}}
+		{{$echelonRanks := cslice}}
+
+		{{/* Inherit division morph */}}
+		{{with $division.MorphData}}
+			{{range $k,$v := .}}
+				{{$echelonMorph.Set $k $v}}
+			{{end}}
+		{{end}}
+
+		{{/* Echelon morph override tracking */}}
+		{{with $echelon.MorphData}}
+			{{range $k,$v := .}}
+
+				{{if eq $k "StarterGear"}}
+					{{$old := $echelonMorph.Get "StarterGear"}}
+
+					{{if $old}}
+						{{$echelonMorph.Set "StarterGear" (joinStr "," $old $v)}}
+					{{else}}
+						{{$echelonMorph.Set "StarterGear" $v}}
+					{{end}}
+
+				{{else}}
+
+					{{$echelonMorph.Set $k $v}}
+
+				{{end}}
+
+			{{end}}
+
+			{{$morphOverrides = $morphOverrides.Append (sdict
+				"Type" "Echelon"
+				"Name" $echelon.ShortName
+				"Division" $division.ShortName
+				"MorphData" .
+			)}}
+		{{end}}
+
+		{{range $rank := $echelon.Ranks}}
+
+			{{$finalMorph := sdict}}
+
+			{{/* Copy inherited morph */}}
+			{{range $k,$v := $echelonMorph}}
+				{{$finalMorph.Set $k $v}}
+			{{end}}
+
+			{{/* Rank overrides */}}
+			{{with $rank.MorphData}}
+
+				{{$morphOverrides = $morphOverrides.Append (sdict
+					"Type" "Rank"
+					"Name" $rank.ShortName
+					"Division" $division.ShortName
+					"Echelon" $echelon.ShortName
+					"MorphData" .
+				)}}
+
+				{{range $k,$v := .}}
+
+					{{if eq $k "StarterGear"}}
+						{{$old := $finalMorph.Get "StarterGear"}}
+
+						{{if $old}}
+							{{$finalMorph.Set "StarterGear" (joinStr "," $old $v)}}
+						{{else}}
+							{{$finalMorph.Set "StarterGear" $v}}
+						{{end}}
+
+					{{else}}
+
+						{{$finalMorph.Set $k $v}}
+
+					{{end}}
+
+				{{end}}
+
+			{{end}}
+
+			{{$rankData := sdict
+				"Name" $rank.Name
+				"ShortName" $rank.ShortName
+				"RoleID" $rank.RoleID
+				"Division" $division.ShortName
+				"Echelon" $echelon.ShortName
+				"MorphData" $finalMorph
+			}}
+
+			{{/* Rank lookup */}}
+			{{$rankLookup.Set $rank.ShortName $rankData}}
+
+			{{/* All ranks */}}
+			{{$allRanks = $allRanks.Append $rankData}}
+
+			{{/* Division rank ordering */}}
+			{{$divisionRanks = $divisionRanks.Append $rank.ShortName}}
+
+			{{/* Echelon rank ordering */}}
+			{{$echelonRanks = $echelonRanks.Append $rank.ShortName}}
+
+		{{end}}
+
+		{{/* Echelon lookup */}}
+		{{$echelonLookup.Set $echelon.ShortName (sdict
+			"Name" $echelon.Name
+			"Division" $division.ShortName
+			"Ranks" $echelonRanks
+			"HasMorphOverride" (ne (len $echelon.MorphData) 0)
+		)}}
+
+		{{/* Echelon rank lookup */}}
+		{{$echelonRankLookup.Set $echelon.ShortName $echelonRanks}}
+
+		{{/* Store echelon inside division */}}
+		{{$divisionEchelons.Set $echelon.ShortName (sdict
+			"Name" $echelon.Name
+			"Ranks" $echelonRanks
+		)}}
+
+	{{end}}
+
+	{{/* Division rank lookup */}}
+	{{$divisionRankLookup.Set $division.ShortName $divisionRanks}}
+
+	{{/* Division lookup */}}
+	{{$divisionLookup.Set $division.ShortName (sdict
+		"Name" $division.Name
+		"RoleID" $division.RoleID
+		"Echelons" $divisionEchelons
+		"HasMorphOverride" (ne (len $division.MorphData) 0)
+	)}}
+
+	{{$fullData = $fullData.Append $division}}
+{{end}}
+
+
+{{dbSet 0 "FactionData"
+	(sdict
+
+		"Settings" $baseData
+
+		"BaseMorphData" $baseMorphData
+
+		"Divisions" $fullData
+
+		"RankLookup" $rankLookup
+
+		"DivisionLookup" $divisionLookup
+
+		"EchelonLookup" $echelonLookup
+
+		"AllRanks" $allRanks
+
+		"RanksByDivision" $divisionRankLookup
+
+		"RanksByEchelon" $echelonRankLookup
+
+		"MorphOverrides" $morphOverrides
+	)
+}}
+
+{{sendMessage nil "Done!"}}
