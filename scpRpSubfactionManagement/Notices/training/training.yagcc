@@ -1,0 +1,162 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `tr(ain(ing)?)?`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{$factionData := dbGet 0 "FactionDataV2"}}
+{{if not $factionData}}
+	{{sendResponse "FactionData not set up, please modify and run `-setData`"}}
+	{{return}}
+{{end}}
+{{$data := $factionData.Value}}
+{{$ranksByDivision := $data.Get "RanksByDivision"}}
+{{$rankLookup := $data.Get "RankLookup"}}
+
+{{with .ExecData}}
+	{{$confirmed := (dbGet .TrainingMsg "trainingConfirmations").Value}}
+	{{$strConfirmed := cslice}}
+	{{range $confirmed.Users}}
+		{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
+	{{end}}
+	{{$buttonState := cslice
+		(cbutton
+			"label" "Toggle Confirmation"
+			"custom_id" (printf "iota_joinTraining-%d" .TrainingRole.RoleID)
+			"style" "success"
+			"disabled" true
+		)
+		(cbutton
+			"label" (printf "Confirmed: %s" (humanizeThousands (len $confirmed.Users)))
+			"custom_id" "iota_confirmedTraining"
+			"style" "secondary"
+			"disabled" true
+		)
+	}}
+	{{if lt (len $confirmed.Users) .MinimumConfirmations}}
+		{{$cancelledContainer := componentBuilder
+			"container" (sdict
+				"color" 0xFF0000
+				"components" (componentBuilder
+					"text" (printf "# %s Training Cancelled" .TrainingRole.Name)
+					"separator" true
+					"text" "Insufficient confirmations were received within the required timeframe."
+					"buttons" $buttonState
+				)
+			)
+		}}
+		{{editMessage 1391567531046863041 .TrainingMsg $cancelledContainer}}
+		{{$confirmedUsers := ""}}
+		{{if gt (len $strConfirmed) 0}}
+			{{$confirmedUsers = printf "\n\nThe following users confirmed the training session:\n%s" (joinStr "\n" $strConfirmed)}}
+		{{end}}
+		{{sendMessage nil (printf "Insufficient confirmations within the time frame for %s training.%s" .TrainingRole.Name $confirmedUsers)}}
+		{{return}}
+	{{end}}
+	{{$successContainer := componentBuilder
+		"container" (sdict
+			"color" 0x4b9a4e
+			"components" (componentBuilder
+				"text" (printf "# %s Training" .TrainingRole.Name)
+				"separator" true
+				"text" (printf "The training has enough confirmations and will proceed.\n\nThe host will provide the server name shortly.")
+				"buttons" $buttonState
+			)
+		)
+	}}
+	{{editMessage 1391567531046863041 .TrainingMsg $successContainer}}
+	{{$successContainer2 := componentBuilder
+		"container" (sdict
+			"components" (componentBuilder
+				"text" (joinStr ", " $strConfirmed)
+			)
+			"reply" (sdict
+				"message_id" .TrainingMsg
+			)
+		)
+	}}
+	{{sendMessageNoEscape 1391567531046863041 $successContainer2}}
+	{{return}}
+{{end}}
+
+{{$coreRanks := $ranksByDivision.Get "Core"}}
+{{$availableRanks := cslice}}
+{{range $coreRanks}}
+	{{$rank := $rankLookup.Get .}}
+	{{$availableRanks = $availableRanks.Append $rank.ShortName}}
+	{{if $rank.PromotionData}}
+	{{end}}
+{{end}}
+{{if not .CmdArgs}}
+	{{sendMessage nil (printf "Missing required arguments\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
+	{{return}}
+{{end}}
+{{$targetRank := index .CmdArgs 0}}
+{{if not (in $availableRanks $targetRank)}}
+	{{sendMessage nil (printf "Invalid `Rank` argument.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
+	{{return}}
+{{end}}
+{{$targetRank = $rankLookup.Get $targetRank}}
+{{if not (gt (len .CmdArgs) 1)}}
+	{{sendMessage nil (printf "No `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
+	{{return}}
+{{end}}
+{{$duration := index .CmdArgs 1}}
+{{if not (toDuration $duration)}}
+	{{sendMessage nil (printf "Invalid `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
+	{{return}}
+{{end}}
+{{if lt (toDuration $duration) (toDuration "6m")}}
+	{{sendMessage nil (printf "Invalid `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
+	{{return}}
+{{end}}
+{{$minimumConfirmations := 3}}
+{{if (gt (len .CmdArgs) 2)}}
+	{{$minimumConfirmations = index .CmdArgs 2 | toInt}}
+	{{if not $minimumConfirmations}}
+		{{sendMessage nil (printf "Invalid `Minimum confirmations` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nHow many confirmations do you want to require for the training? (must be at least `1`)")}}
+		{{return}}
+	{{end}}
+	{{if lt $minimumConfirmations 1}}
+		{{sendMessage nil (printf "Invalid `Minimum confirmations` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nHow many confirmations do you want to require for the training? (must be at least `1`)")}}
+		{{return}}
+	{{end}}
+{{end}}
+{{$details := sdict
+	"Host" .User.Mention
+	"Color" (getRoleID $targetRank.RoleID).Color
+	"Time"  (currentTime.Add (toDuration $duration)).Unix 
+	"Rank" $targetRank
+	"MinConfirms" $minimumConfirmations
+}}
+{{$notificationContainer := (componentBuilder
+	"allowed_mentions" (sdict
+		"roles" (cslice (toInt $targetRank.RoleID))
+	)
+	"container" (sdict
+		"color" $details.Color
+		"components" (componentBuilder
+			"text" (printf "# %s Training" $targetRank.Name)
+			"separator" true
+			"text" (printf "> **Host**: %s\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $details.Host $details.Time $details.Rank.RoleID $details.MinConfirms)
+			"buttons" (cslice
+				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_joinTraining-%d" $targetRank.RoleID) "style" "success")
+				(cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)
+			)
+		)
+	)
+)}}
+{{$x := sendMessageRetID 1391567531046863041 $notificationContainer}}
+{{sendMessage nil (printf "You've successfully started a(n) %s training notice for <t:%d:f>. View the message [here](https://discord.com/channels/1375370805575155782/1391567531046863041/%d)" $targetRank.Name (currentTime.Add (toDuration $duration)).Unix $x)}}
+{{dbSetExpire $x "trainingConfirmations" (sdict "Users" cslice "ContainerData" $details) (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
+{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "5m"))).Seconds (sdict "Host" .User.Mention "TrainingMsg" $x "TrainingRole" $targetRank "MinimumConfirmations" $minimumConfirmations)}}
