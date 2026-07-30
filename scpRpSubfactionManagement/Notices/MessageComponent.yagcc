@@ -87,7 +87,7 @@
 			{{deleteInteractionResponse .Interaction.Token $x}}
 			{{return}}
 		{{end}}
-		{{$db.Logged true}}
+		{{$db.Set "Logged" true}}
 		{{$logContainer := componentBuilder
 			"container" (sdict
 				"color" $db.Role.Color
