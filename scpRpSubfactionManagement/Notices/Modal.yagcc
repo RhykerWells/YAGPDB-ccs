@@ -1,0 +1,43 @@
+{{/*
+Made by ranger_4297 (765316548516380732)
+
+Trigger Type: `Modal`
+Trigger: `\A(?i)iota_join`
+
+©️ RhykerWells 2020-Present
+GNU, GPLV3 License
+Repository: https://github.com/RhykerWells/YAGPDB-ccs/
+*/}}
+
+{{$factionData := dbGet 0 "FactionDataV2"}}
+{{if not $factionData}}
+	{{sendResponse nil "FactionData not set up, please modify and run `-setData`"}}
+	{{return}}
+{{end}}
+
+{{if reFind `Outcome` .StrippedID}}
+	{{$trainingNotice := reReplace `[A-z]+-` .StrippedID "" | toInt}}
+	{{$db := (dbGet $trainingNotice "trainingData").Value}}
+    {{if not $db}}
+		{{sendResponse nil "Something went wrong"}}
+		{{return}}
+	{{end}}
+	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+    {{if reFind `Attendees` .StrippedID}}
+		{{with .ModalValues}}
+			{{$attended := cslice}}
+			{{range .confirmedUsersDropdown.value}}
+				{{$attended = $attended.Append (toInt .)}}
+			{{end}}
+			{{$db.Set "Attended" .confirmedUsersDropdown.value}}
+		{{end}}
+    {{else if reFind `Proof` .StrippedID}}
+		{{range $_, $v := .InteractionData.Resolved.Attachments}}
+			{{$url := reReplace "\u0026" $v.URL "&"}}
+			{{$db.Set "Proof" $url}}
+			{{break}}
+		{{end}}
+    {{end}}
+	{{dbSetExpire $db.ID "trainingData" $db (toInt ((dbGet $db.ID "trainingData").ExpiresAt.Sub currentTime).Seconds)}}
+	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+{{end}}

@@ -29,6 +29,24 @@
 	{{range $db.Confirmed}}
 		{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
 	{{end}}
+	{{if .ActiveCheck}}
+		{{if eq $db.Status 2}}
+			{{$notificationContainer := (componentBuilder
+				"container" (sdict
+					"color" 0xFFAA00
+					"components" (componentBuilder
+						"text" "# Training Still Active"
+						"separator" true
+						"text" (printf "> **Host**: @%s (<@%d>)\n> **Training Rank**: %s\n> **Link**: %s\n\nThis training has not been ended yet. Please press the **End** button once the training is complete." (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID (printf "<@&%d" $db.Rank.RoleID) (printf "https://discord.com/channels/1375370805575155782/1532346844712272003/%d" $db.TrainingMsg))
+					)
+				)
+			)}}
+			{{sendMessageNoEscape 1532358370433171628 $notificationContainer}}
+			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "10s").Seconds) "ActiveCheck" (sdict "Notice" .Notice "ActiveCheck" true)}}
+			{{/* scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) "ActiveCheck" (sdict "Notice" .Notice "ActiveCheck" true) */}}
+		{{end}}
+		{{return}}
+	{{end}}
 	{{if .MissingLog}}
 		{{if not $db.Logged}}
 			{{$notificationContainer := (componentBuilder
@@ -103,11 +121,15 @@
 			)
 		)
 	}}
+	{{$db.Set "Status" 2}}
+	{{dbSet $db.ID "trainingData" $db}}
 	{{$x := sendMessageNoEscapeRetID 1532346844712272003 $successContainer2}}
 	{{deleteMessage 1532346844712272003 $x (toInt (toDuration "10s").Seconds)}}
 	{{/* deleteMessage 1532346844712272003 $x (toInt (toDuration "15m").Seconds) */}}
 	{{scheduleUniqueCC $.CCID nil (toInt (toDuration "10s").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true)}}
-	{{/* scheduleUniqueCC $.CCID nil (toInt (toDuration "2h").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true) */}}
+	{{/* scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true) */}}
+	{{scheduleUniqueCC $.CCID nil (toInt (toDuration "10s").Seconds) "ActiveCheck" (sdict "Notice" .Notice "ActiveCheck" true)}}
+	{{/* scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) "ActiveCheck" (sdict "Notice" .Notice "ActiveCheck" true) */}}
 	{{return}}
 {{end}}
 
@@ -170,6 +192,7 @@
 	"Summary" ""
 
 	"Logged" false
+	"Status" 1
 
 	"TrainingMsg" 0
 
