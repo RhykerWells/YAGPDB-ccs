@@ -246,7 +246,7 @@
 		{{template "logPromotion" (sdict
 			"RobloxUserName" $member.RobloxMember.Username
 			"RobloxUserID" $member.RobloxMember.ID
-			"Mention" $discordMember.User.Mention
+			"DiscordMember" $discordMember
 			"Rank" $roleUpdate.Name
 			"Thumbnail" ($member.RobloxMember.GetUserThumbnailURI nil)
 		)}}
@@ -421,7 +421,7 @@
 		"container" (sdict
 			"components" (componentBuilder
 				"section" (sdict
-					"text" (printf "# Roblox Group Auto-rank\n>>> Roblox account: @%s (`%d`)\nDiscord Account: %s" .RobloxUserName (toInt .RobloxUserID) .Mention)
+					"text" (printf "# Roblox Group Auto-rank\n>>> **Roblox account**: @%s ([`%d`](https://www.roblox.com/users/%d/profile))\n**Discord Account**: %s (%s)" .RobloxUserName (toInt .RobloxUserID) (toInt .RobloxUserID) (reReplace ` \|.*` .DiscordMember.Nick "") .DiscordMember.User.Mention)
 					"thumbnail" (sdict
 						"media" .Thumbnail
 					)
