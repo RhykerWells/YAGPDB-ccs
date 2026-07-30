@@ -300,7 +300,12 @@ This ordering is used when generating database data.
 				(sdict
 					"Name" "Veil Seeker"
 					"ShortName" "Seeker"
-					"RoleID" 1375378431411228755 
+					"RoleID" 1375378431411228755
+					"PromotionData" (sdict
+						"TrainingRequired" true
+						"DeploymentsRequired" 3
+						"NextRankShortName" "Lance"
+					)
 				)				
 			)
 		)
@@ -319,6 +324,7 @@ This ordering is used when generating database data.
 					"ShortName" "Operative"
 					"RoleID" 1375378464336773142 
 					"PromotionData" (sdict
+						"TrainingRequired" true
 						"DeploymentsRequired" 3
 						"NextRankShortName" "Seeker"
 					)
@@ -331,6 +337,7 @@ This ordering is used when generating database data.
 					"ShortName" "Chaser"
 					"RoleID" 1375436671948165143 
 					"PromotionData" (sdict
+						"TrainingRequired" true
 						"DeploymentsRequired" 2
 						"NextRankShortName" "Operative"
 					)
@@ -340,6 +347,7 @@ This ordering is used when generating database data.
 					"ShortName" "Riftling"
 					"RoleID" 1375378503024902164
 					"PromotionData" (sdict
+						"TrainingRequired" true
 						"DeploymentsRequired" 1
 						"NextRankShortName" "Chaser"
 					)
@@ -721,6 +729,7 @@ This ordering is used when generating database data.
 				"Division" $division.ShortName
 				"Echelon" $echelon.ShortName
 				"MorphData" $finalMorph
+				"PromotionData" $rank.PromotionData
 			}}
 
 			{{/* Rank lookup */}}
