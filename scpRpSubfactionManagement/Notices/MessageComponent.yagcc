@@ -19,6 +19,34 @@
 
 {{$targetMember := .Member}}
 
+{{with .ExecData}}
+    {{$db := (dbGet .Notice "trainingData").Value}}
+    {{if not $db}}
+        {{return}}
+    {{end}}
+    {{$closedContainer := componentBuilder
+        "container" (sdict
+            "color" $db.Role.Color
+            "components" (componentBuilder
+                "section" (sdict
+                    "text" (printf "# %s Training Completed" $db.Rank.Name)
+                    "button" (cbutton
+                        "label" "Training Log Closed"
+                        "custom_id" "training_log_closed"
+                        "style" "secondary"
+                        "disabled" true
+                    )
+                )
+                "separator" true
+                "text" (printf "> **Host**: <@%d>\n\nThe training log submission period has ended." $db.Host.User.ID)
+            )
+        )
+    }}
+
+    {{editMessage 1532346844712272003 $db.TrainingMsg $closedContainer}}
+    {{return}}
+{{end}}
+
 {{/* Training button */}}
 {{if reFind `Training` .StrippedID}}
 	{{$trainingNotice := reReplace `[A-z]+-` .StrippedID "" | toInt}}
@@ -88,6 +116,7 @@
 			{{return}}
 		{{end}}
 		{{$db.Set "Logged" true}}
+		{{scheduleUniqueCC .CCID nil (toInt (toDuration "10s").Seconds) (printf "CloseLog-%d" $db.ID) (sdict "Notice" $db.ID "CloseLog" true)}}
 		{{$logContainer := componentBuilder
 			"container" (sdict
 				"color" $db.Role.Color
