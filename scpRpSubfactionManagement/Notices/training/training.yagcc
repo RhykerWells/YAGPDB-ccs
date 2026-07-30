@@ -1,12 +1,12 @@
 {{/*
-		Made by ranger_4297 (765316548516380732)
+	Made by ranger_4297 (765316548516380732)
 
 	Trigger Type: `Regex`
 	Trigger: `tr(ain(ing)?)?`
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
-	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 */}}
 
 {{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
@@ -17,7 +17,7 @@
 {{$factionData := dbGet 0 "FactionDataV2"}}
 {{if not $factionData}}
 	{{sendResponse "FactionData not set up, please modify and run `-setData`"}}
-	{{return}}
+	{{return}}\
 {{end}}
 {{$data := $factionData.Value}}
 {{$ranksByDivision := $data.Get "RanksByDivision"}}
@@ -28,6 +28,24 @@
 	{{$strConfirmed := cslice}}
 	{{range $db.Confirmed}}
 		{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
+	{{end}}
+	{{if .MissingLog}}
+		{{if not $db.Logged}}
+			{{$notificationContainer := (componentBuilder
+				"container" (sdict
+					"color" 0xFF0000
+					"components" (componentBuilder
+						"text" (printf "# Missing Training Outcome Report")
+						"separator" true
+						"text" (printf "> **Host**: @%s (<@%d>)\n> **Training Rank**: %s\n> **Link**: %s\n\nThe following users are waiting for the training outcome to be recorded:\n- %s" (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID (printf "<@&%d>" $db.Rank.RoleID) (printf "https://discord.com/channels/1375370805575155782/1532346844712272003/%d" $db.TrainingMsg) (joinStr "\n-" $strConfirmed))
+					)
+				)
+			)}}
+			{{sendMessage 1532358370433171628 $notificationContainer}}
+			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "10s").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true)}}
+			{{/* scheduleUniqueCC $.CCID nil (toInt (toDuration "2h").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true) */}}
+		{{end}}
+	{{return}}
 	{{end}}
 	{{$buttonState := cslice
 		(cbutton
@@ -43,47 +61,53 @@
 			"disabled" true
 		)
 	}}
-	{{if lt (len $strConfirmed) .MinConfirms}}
+	{{if lt (len $strConfirmed) $db.MinConfirms}}
 		{{$cancelledContainer := componentBuilder
 			"container" (sdict
 				"color" 0xFF0000
 				"components" (componentBuilder
-					"text" (printf "# %s Training Cancelled" .TrainingRole.Name)
+					"text" (printf "# %s Training Cancelled" $db.Rank.Name)
 					"separator" true
 					"text" "Insufficient confirmations were received within the required timeframe."
 					"buttons" $buttonState
 				)
 			)
 		}}
-		{{editMessage 1391567531046863041 .TrainingMsg $cancelledContainer}}
+		{{editMessage 1532346844712272003 $db.TrainingMsg $cancelledContainer}}
 		{{$confirmedUsers := ""}}
 		{{if gt (len $strConfirmed) 0}}
 			{{$confirmedUsers = printf "\n\nThe following users confirmed the training session:\n%s" (joinStr "\n" $strConfirmed)}}
 		{{end}}
-		{{sendMessage nil (printf "Insufficient confirmations within the time frame for %s training.%s" .TrainingRole.Name $confirmedUsers)}}
+		{{sendMessage nil (componentBuilder "allowed_mentions" (sdict "users" (cslice)) "text" (printf "Insufficient confirmations within the time frame for %s training.%s" $db.Rank.Name $confirmedUsers))}}
 		{{return}}
 	{{end}}
 	{{$successContainer := componentBuilder
 		"container" (sdict
 			"color" 0x4b9a4e
 			"components" (componentBuilder
-				"text" (printf "# %s Training" .TrainingRole.Name)
+				"section" (sdict
+					"text" (printf "# %s Training" $db.Rank.Name)
+					"button" (cbutton "label" "End" "custom_id" (printf "iota_joinTrainingEnd-%d" $db.ID) "style" "primary")
+				)
 				"separator" true
 				"text" (printf "The training has enough confirmations and will proceed.\n\nThe host will provide the server name shortly.")
-				"buttons" $buttonState
 			)
 		)
 	}}
-	{{editMessage 1391567531046863041 .TrainingMsg $successContainer}}
+	{{editMessage 1532346844712272003 $db.TrainingMsg $successContainer}}
 	{{$successContainer2 := componentBuilder
+		"reply" $db.TrainingMsg
 		"container" (sdict
 			"components" (componentBuilder
 				"text" (joinStr ", " $strConfirmed)
 			)
-			"reply" .TrainingMsg
 		)
 	}}
-	{{sendMessageNoEscape 1391567531046863041 $successContainer2}}
+	{{$x := sendMessageNoEscapeRetID 1532346844712272003 $successContainer2}}
+	{{deleteMessage 1532346844712272003 $x (toInt (toDuration "10s").Seconds)}}
+	{{/* deleteMessage 1532346844712272003 $x (toInt (toDuration "15m").Seconds) */}}
+	{{scheduleUniqueCC $.CCID nil (toInt (toDuration "10s").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true)}}
+	{{/* scheduleUniqueCC $.CCID nil (toInt (toDuration "2h").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true) */}}
 	{{return}}
 {{end}}
 
@@ -92,8 +116,9 @@
 {{range $coreRanks}}
 	{{$rank := $rankLookup.Get .}}
 	{{$availableRanks = $availableRanks.Append $rank.ShortName}}
-	{{if $rank.PromotionData}}
-	{{end}}
+	{{/* if $rank.PromotionData}}
+		{{$availableRanks = $availableRanks.Append $rank.ShortName}}
+	{{end */}}
 {{end}}
 {{if not .CmdArgs}}
 	{{sendMessage nil (printf "Missing required arguments\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
@@ -130,19 +155,23 @@
 		{{return}}
 	{{end}}
 {{end}}
-{{$ID := dbIncr 0 "trainingNotice"}}
+{{$ID := dbIncr 0 "trainingNotice" 1 | toInt}}
+
 {{$dbData := sdict
 	"ID" $ID
-	"Host" .User.Mention
+	"Host" .Member
 	"Rank" $targetRank
 	"Role" (getRoleID $targetRank.RoleID)
 	"Time"  (currentTime.Add (toDuration $duration)).Unix
-	"Status" "scheduled"
 
 	"Confirmed" cslice
 	"Attended" cslice
 
 	"Summary" ""
+
+	"Logged" false
+
+	"TrainingMsg" 0
 
 	"MinConfirms" $minimumConfirmations
 }}
@@ -155,7 +184,7 @@
 		"components" (componentBuilder
 			"text" (printf "# %s Training" $targetRank.Name)
 			"separator" true
-			"text" (printf "> **Host**: %s\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $dbData.Host $dbData.Time $dbData.Rank.RoleID $dbData.MinConfirms)
+			"text" (printf "> **Host**: @%s (%s)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." (reReplace ` \|.*` $dbData.Host.Nick "") $dbData.Host.User.Mention $dbData.Time $dbData.Rank.RoleID $dbData.MinConfirms)
 			"buttons" (cslice
 				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_joinTraining-%d" $dbData.ID) "style" "success")
 				(cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)
@@ -163,8 +192,8 @@
 		)
 	)
 )}}
-{{$x := sendMessageRetID 1391567531046863041 $notificationContainer}}
+{{$x := sendMessageRetID 1532346844712272003 $notificationContainer}}
 {{$dbData.Set "TrainingMsg" $x}}
-{{sendMessage nil (printf "You've successfully started a(n) %s training notice for <t:%d:f>. View the message [here](https://discord.com/channels/1375370805575155782/1391567531046863041/%d)" $targetRank.Name (currentTime.Add (toDuration $duration)).Unix $x)}}
-{{dbSetExpire $ID "trainingData" $dbData (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
+{{sendMessage nil (printf "You've successfully started a(n) %s training notice for <t:%d:f>. View the message [here](https://discord.com/channels/1375370805575155782/1532346844712272003/%d)" $targetRank.Name (currentTime.Add (toDuration $duration)).Unix $x)}}
+{{dbSetExpire $ID "trainingData" $dbData (toInt (toDuration "14d").Seconds)}}
 {{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "5m"))).Seconds (sdict "Notice" $ID)}}
