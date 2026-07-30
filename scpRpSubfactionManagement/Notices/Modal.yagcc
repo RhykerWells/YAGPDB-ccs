@@ -2,7 +2,7 @@
 Made by ranger_4297 (765316548516380732)
 
 Trigger Type: `Modal`
-Trigger: `\A(?i)iota_join`
+Trigger: `\A(?i)iota_training`
 
 ©️ RhykerWells 2020-Present
 GNU, GPLV3 License
@@ -15,13 +15,15 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{return}}
 {{end}}
 
+{{$trainingNotice := reReplace `[A-z]+-` .StrippedID "" | toInt}}
+{{$entry := dbGet $trainingNotice "trainingData"}}
+{{$db := $entry.Value}}
+{{if not $db}}
+	{{sendResponse nil "Something went wrong"}}
+	{{return}}
+{{end}}
+
 {{if reFind `Outcome` .StrippedID}}
-	{{$trainingNotice := reReplace `[A-z]+-` .StrippedID "" | toInt}}
-	{{$db := (dbGet $trainingNotice "trainingData").Value}}
-    {{if not $db}}
-		{{sendResponse nil "Something went wrong"}}
-		{{return}}
-	{{end}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
     {{if reFind `Attendees` .StrippedID}}
 		{{with .ModalValues}}
@@ -29,7 +31,15 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 			{{range .confirmedUsersDropdown.value}}
 				{{$attended = $attended.Append (toInt .)}}
 			{{end}}
-			{{$db.Set "Attended" .confirmedUsersDropdown.value}}
+			{{$db.Set "Attended" $attended}}
+		{{end}}
+	{{else if reFind `Passed` .StrippedID}}
+		{{with .ModalValues}}
+			{{$passed := cslice}}
+			{{range .confirmedUsersDropdown.value}}
+				{{$passed = $passed.Append (toInt .)}}
+			{{end}}
+			{{$db.Set "Passed" $passed}}
 		{{end}}
     {{else if reFind `Proof` .StrippedID}}
 		{{range $_, $v := .InteractionData.Resolved.Attachments}}
@@ -38,6 +48,97 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 			{{break}}
 		{{end}}
     {{end}}
-	{{dbSetExpire $db.ID "trainingData" $db (toInt ((dbGet $db.ID "trainingData").ExpiresAt.Sub currentTime).Seconds)}}
+	{{dbSetExpire $db.ID "trainingData" $db (toInt ($entry.ExpiresAt.Sub currentTime)).Seconds}}
 	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+{{end}}
+{{if reFind `SubmitLog` .StrippedID}}
+	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+	{{$trainingLog := sdict
+		"User" .User
+		"Roblox" (reReplace ` \|.*` .Member.Nick "")
+		"Time" (printf "<t:%d:f>" currentTime.Unix)
+		"Host" (sdict "ID" $db.Host.User.ID "Roblox" (reReplace ` \|.*` $db.Host.Nick ""))
+		"Type" $db.Rank.RoleID
+		"Approval" "Unknown"
+		"Summary" .ModalValues.trainingSummaryInput.value
+		"Result" "Unknown"
+		"Proof" $db.Proof
+	}}
+	{{if and (in $db.Attended .User.ID) (not (in $db.Passed .User.ID))}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "You did not pass this training." "ephemeral" true)}}
+		{{return}}
+	{{end}}
+	{{$needsApproval := not (in $db.Attended .User.ID)}}
+	{{if $needsApproval}}
+		{{$trainingLog.Set "Approval" "Pending"}}
+
+		{{$pending := (dbGet 0 "trainingLogsPending").Value}}
+		{{if not $pending}}
+			{{$pending = sdict}}
+		{{end}}
+
+		{{$pendingID := currentTime.UnixNano}}
+		{{$pending.Set (str $pendingID) $trainingLog}}
+
+		{{$fields := cslice 
+			(sdict "name" "__Training host__" "value" (printf "<@!%s> `(%s)`" $trainingLog.Host.ID $trainingLog.Host.Roblox) "inline" true)
+			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+			(sdict "name" "__Training summary__" "value" $trainingLog.Summary "inline" true)
+			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+			(sdict "name" "__Result__" "value" $trainingLog.Result "inline" true)
+		}}	
+		{{$embed := sdict "title" (printf "Pending Training log #%s" (humanizeThousands $pendingID)) "description" (printf "User: %s\nTime: %s\nTraining type: <@&%d>" $trainingLog.User.Mention $trainingLog.Time $trainingLog.Type) "fields" $fields "image" (sdict "url" $trainingLog.Proof) "color" 0x4b9a4e}}
+		{{$x := sendMessageRetID 1532502218341748856 (complexMessage "embed" (cembed $embed))}}
+
+		{{dbSet 0 "trainingLogsPending" $pending}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "Your log has been submitted for approval." "ephemeral" true)}}
+	{{else}}
+		{{$trainingLog.Set "Approval" "Approved"}}
+		{{$trainingLog.Set "Result" "Pass"}}
+		{{$logs := (dbGet 0 "trainingLogs").Value}}
+		{{dbSet 0 "trainingLogBackup" $logs}}
+		{{dbSet 0 "TlogBackup" (dbGet 0 "Tlog").Value}}
+		{{$ID := add (dbGet 0 "Tlog").Value 1}}
+		{{$trainingLog.Set "ID" $ID}}
+		{{$logChannel := false}}
+		{{range $_, $data := $logs}}
+			{{if not $data}}{{continue}}{{end}}
+			{{if eq $data.Roblox $trainingLog.Roblox}}
+				{{$clogData := sdict "Channel" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1) "ID" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 2)}}
+				{{$logChannel = $clogData.Channel}}
+				{{break}}
+			{{end}}
+		{{end}}
+		{{if $logChannel}}
+			{{openThread (toInt $logChannel)}}
+		{{else}}
+			{{try}}
+				{{$logChannel = (createForumPost 1383638051984773241 $trainingLog.Roblox (printf "%s's training log" .User.Mention)).ID}}
+			{{catch}}
+				{{if in .Error "unable to create forum post"}}
+					{{sendMessage nil (complexMessage "ephemeral" true "content" "Was not able to create a forum post channel for training log. Your log has not been saved.")}}
+				{{end}}
+				{{return}}
+			{{end}}
+		{{end}}
+		{{$fields := cslice 
+			(sdict "name" "__Training host__" "value" (printf "<@!%s> `(%s)`" $trainingLog.Host.ID $trainingLog.Host.Roblox) "inline" true)
+			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+			(sdict "name" "__Training summary__" "value" $trainingLog.Summary "inline" true)
+			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
+			(sdict "name" "__Result__" "value" $trainingLog.Result "inline" true)
+		}}	
+		{{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $trainingLog.ID)) "description" (printf "Time: %s\nTraining type: <@&%d>" $trainingLog.Time $trainingLog.Type) "fields" $fields "image" (sdict "url" $trainingLog.Proof) "color" 0x4b9a4e}}
+		{{if $logChannel}}
+			{{$x := sendMessageRetID $logChannel (complexMessage "embed" (cembed $embed))}}
+			{{$trainingLog.Set "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID (toInt $logChannel) $x)}}
+		{{end}}
+		{{$logs.Set (toInt $trainingLog.ID) $trainingLog}}
+		{{/* dbSet 0 "trainingLogs" $logs */}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+	{{end}}
 {{end}}

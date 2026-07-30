@@ -2,7 +2,7 @@
 		Made by ranger_4297 (765316548516380732)
 
 	Trigger Type: `Message Component`
-	Trigger: `\A(?i)iota_join`
+	Trigger: `\A(?i)iota_training`
 
 	Defer: Ephemeral Message Response
 
@@ -47,120 +47,179 @@
     {{return}}
 {{end}}
 
-{{/* Training button */}}
-{{if reFind `Training` .StrippedID}}
-	{{$trainingNotice := reReplace `[A-z]+-` .StrippedID "" | toInt}}
-	{{$db := (dbGet $trainingNotice "trainingData").Value}}
-	{{if not $db}}
-		{{sendResponse nil "Something went wrong"}}
-		{{return}}
-	{{end}}
-	{{if reFind `OutcomeEdit` .StrippedID}}
-		{{if reFind `Attendees` .StrippedID}}
-			{{$confirmedUsersSlice := cslice}}
-			{{range $db.Confirmed}}
-				{{$member := getMember .}}
-				{{$rblxName := reReplace ` \|.*` $member.Nick ""}}
-				{{$selected := false}}{{if in $db.Attended (str $member.User.ID)}}{{$selected = true}}{{end}}
-				{{$confirmedUsersSlice = $confirmedUsersSlice.Append (sdict "value" (str $member.User.ID) "label" $rblxName "default" $selected)}}
-			{{end}}
-			{{$confirmedUsersDropdown := ccheckboxGroup
-				"custom_id" "confirmedUsersDropdown"
-				"options" $confirmedUsersSlice
-				"min_values" 0
-				"required" false
-			}}
-			{{$attendingLabel := clabel "label" "Attendees" "description" "Which of the confirmed users attended the training?" "component" $confirmedUsersDropdown}}
-			{{$modal := modalBuilder (printf "iota_joinTrainingOutcomeAttendees-%d" $db.ID) "Iota-4 | Training Outcome Form" $attendingLabel}}
-			{{sendModal $modal}}
-		{{else if (reFind `Proof` .StrippedID)}}
-			{{$proofLabel := clabel "label" "Proof" "description" "Screenshot of training" "component" (cfileUpload "custom_id" "uploadForm" "required" true)}}
-			{{$modal := modalBuilder (printf "iota_joinTrainingOutcomeProof-%d" $db.ID) "Iota-4 | Training Outcome Form" $proofLabel}}
-			{{sendModal $modal}}
+{{$trainingNotice := reReplace `[A-z]+-` .StrippedID "" | toInt}}
+{{$db := (dbGet $trainingNotice "trainingData").Value}}
+{{if not $db}}
+	{{sendResponse nil "Something went wrong"}}
+	{{return}}
+{{end}}
+{{if reFind `SubmitLog`}}
+	{{$logs := (dbGet 0 "trainingLogs").Value}}
+	{{$userLogs := dict}}
+	{{range $ID, $log := $logs}}
+		{{if not $log}}
+			{{continue}}
 		{{end}}
-		{{return}}
-	{{end}}
-	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
-	{{if reFind `OutcomeManage` .StrippedID}}
-		{{if ne $db.Host.User.ID .User.ID}}
-			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this training as you are not the host." "ephemeral" true)}}
-			{{deleteInteractionResponse .Interaction.Token $x}}
-			{{return}}
+		{{if ne $log.User.ID $targetMember.User.ID}}
+			{{continue}}
 		{{end}}
-		{{$confirmContainer := componentBuilder
-			"container" (sdict
-				"components" (componentBuilder
-					"section" (sdict
-						"text" "# Manage Outcome Report "
-						"button" (cbutton "label" "Finish Training" "custom_id" (printf "iota_joinTrainingOutcomeSubmit-%d" $db.ID) "style" "success")
-					)
-					"section" (sdict
-						"text" "Attendees"
-						"button" (cbutton "label" "Edit" "custom_id" (printf "iota_joinTrainingOutcomeEditAttendees-%d" $db.ID) "style" "primary")
-					)
-					"section" (sdict
-						"text" "Proof"
-						"button" (cbutton "label" "Edit" "custom_id" (printf "iota_joinTrainingOutcomeEditProof-%d" $db.ID) "style" "primary")
-					)
-				)
-			)
-		}}
-		{{editResponse .Interaction.Token $x $confirmContainer}}
+		{{$userLogs.Set $ID $log}}
+	{{end}}
+	{{range $_, $log := $userLogs}}
+		{{if ne $log.Type $db.Rank.Role}}
+			{{continue}}
+		{{end}}
+		{{$x := sendResponseRetID nil (complexMessage "content" "You have already submit a training for this rank." "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
-	{{if reFind `OutcomeSubmit` .StrippedID}}
-		{{if ne $db.Host.User.ID .User.ID}}
-			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot submit this training outcome as you are not the host." "ephemeral" true)}}
+	{{$attended := in $db.Attended (str $targetMember.User.ID)}}
+	{{if $attended}}
+		{{if not (in $db.Passed (str $targetMember.User.ID))}}
+			{{$x := sendResponseRetID nil (complexMessage "content" "You can not submit a log for this training as you did not pass this training." "ephemeral" true)}}
 			{{deleteInteractionResponse .Interaction.Token $x}}
 			{{return}}
 		{{end}}
-		{{$db.Set "Logged" true}}
-		{{scheduleUniqueCC .CCID nil (toInt (toDuration "10s").Seconds) (printf "CloseLog-%d" $db.ID) (sdict "Notice" $db.ID "CloseLog" true)}}
-		{{$logContainer := componentBuilder
-			"container" (sdict
-				"color" $db.Role.Color
-				"components" (componentBuilder
-					"section" (sdict
-						"text" (printf "# %s Training Completed" $db.Rank.Name)
-						"button" (cbutton "label" "Submit Training Log" "custom_id" (printf "iota_submitTrainingLog-%d" $db.ID) "style" "success")
-					)
-					"separator" true
-					"text" (printf "> **Host**: <@%d>\n\nThis training has been completed.\n\nAttendees may now submit their training logs using the button above." $db.Host.User.ID)
-				)
-			)
+	{{end}}
+	{{$trainingSummaryInput := ctextInput
+		"custom_id" "trainingSummaryInput"
+		"min_length" 10
+		"max_length" 200
+		"style" 2
+		"required" true
+	}}
+	{{$trainingSummaryLabel := clabel "label" "Training summary" "description" "What did you accomplish during your training? What did you learn?" "component" $trainingSummaryInput}}
+	{{$modal := modalBuilder "iota_trainingSubmitLog" "Iota-4 | Training log form" $trainingSummaryLabel}}
+	{{sendModal $modal}}
+{{end}}
+{{if reFind `OutcomeEdit` .StrippedID}}
+	{{if reFind `Attendees` .StrippedID}}
+		{{$confirmedUsersSlice := cslice}}
+		{{range $db.Confirmed}}
+			{{$member := getMember .}}
+			{{$rblxName := reReplace ` \|.*` $member.Nick ""}}
+			{{$selected := false}}{{if in $db.Attended (str $member.User.ID)}}{{$selected = true}}{{end}}
+			{{$confirmedUsersSlice = $confirmedUsersSlice.Append (sdict "value" (str $member.User.ID) "label" $rblxName "default" $selected)}}
+		{{end}}
+		{{$confirmedUsersDropdown := ccheckboxGroup
+			"custom_id" "confirmedUsersDropdown"
+			"options" $confirmedUsersSlice
+			"min_values" 0
+			"required" false
 		}}
-		{{editMessage 1532346844712272003 $db.TrainingMsg $logContainer}}
-		{{dbSetExpire $db.ID "trainingData" $db (toInt ((dbGet $db.ID "trainingData").ExpiresAt.Sub currentTime).Seconds)}}
-		{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+		{{$attendingLabel := clabel "label" "Attendees" "description" "Which of the confirmed users attended the training?" "component" $confirmedUsersDropdown}}
+		{{$modal := modalBuilder (printf "iota_trainingOutcomeAttendees-%d" $db.ID) "Iota-4 | Training Outcome Form" $attendingLabel}}
+		{{sendModal $modal}}
+	{{else if (reFind `Passed` .StrippedID)}}
+		{{$confirmedUsersSlice := cslice}}
+		{{range $db.Confirmed}}
+			{{$member := getMember .}}
+			{{$rblxName := reReplace ` \|.*` $member.Nick ""}}
+			{{$selected := false}}{{if in $db.Passed (str $member.User.ID)}}{{$selected = true}}{{end}}
+			{{$confirmedUsersSlice = $confirmedUsersSlice.Append (sdict "value" (str $member.User.ID) "label" $rblxName "default" $selected)}}
+		{{end}}
+		{{$confirmedUsersDropdown := ccheckboxGroup
+			"custom_id" "confirmedUsersDropdown"
+			"options" $confirmedUsersSlice
+			"min_values" 0
+			"required" false
+		}}
+		{{$attendingLabel := clabel "label" "Passed" "description" "Which of the confirmed users passed the training?" "component" $confirmedUsersDropdown}}
+		{{$modal := modalBuilder (printf "iota_trainingOutcomePassed-%d" $db.ID) "Iota-4 | Training Outcome Form" $attendingLabel}}
+		{{sendModal $modal}}
+	{{else if (reFind `Proof` .StrippedID)}}
+		{{$proofLabel := clabel "label" "Proof" "description" "Screenshot of training" "component" (cfileUpload "custom_id" "uploadForm" "required" true)}}
+		{{$modal := modalBuilder (printf "iota_trainingOutcomeProof-%d" $db.ID) "Iota-4 | Training Outcome Form" $proofLabel}}
+		{{sendModal $modal}}
+	{{end}}
+	{{return}}
+{{end}}
+{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+{{if reFind `OutcomeManage` .StrippedID}}
+	{{if ne $db.Host.User.ID .User.ID}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this training as you are not the host." "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
-	{{if reFind `End` .StrippedID}}
-		{{if ne $db.Host.User.ID .User.ID}}
-			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this training as you are not the host." "ephemeral" true)}}
-			{{deleteInteractionResponse .Interaction.Token $x}}
-			{{return}}
-		{{end}}
-		{{$db.Set "Status" 0}}
-		{{$closedContainer := componentBuilder
-			"container" (sdict
-				"color" 0xFF0000
-				"components" (componentBuilder
-					"section" (sdict
-						"text" (printf "# %s Training Closed" $db.Rank.Name)
-						"button" (cbutton "label" "Manage Outcome Report" "custom_id" (printf "iota_joinTrainingOutcomeManage-%d" $db.ID) "style" "success")
-					)
-					"separator" true
-					"text" "This training session has officially closed.\n\nStaff may now manage the outcome report using the button above."
+	{{$confirmContainer := componentBuilder
+		"container" (sdict
+			"components" (componentBuilder
+				"section" (sdict
+					"text" "# Manage Outcome Report "
+					"button" (cbutton "label" "Finish Training" "custom_id" (printf "iota_trainingOutcomeSubmit-%d" $db.ID) "style" "success")
+				)
+				"section" (sdict
+					"text" "Attendees"
+					"button" (cbutton "label" "Edit" "custom_id" (printf "iota_trainingOutcomeEditAttendees-%d" $db.ID) "style" "primary")
+				)
+				"section" (sdict
+					"text" "Passed"
+					"button" (cbutton "label" "Edit" "custom_id" (printf "iota_trainingOutcomeEditPassed-%d" $db.ID) "style" "primary")
+				)
+				"section" (sdict
+					"text" "Proof"
+					"button" (cbutton "label" "Edit" "custom_id" (printf "iota_trainingOutcomeEditProof-%d" $db.ID) "style" "primary")
 				)
 			)
-		}}
-		{{editMessage 1532346844712272003 $db.TrainingMsg $closedContainer}}
-		{{dbSetExpire $db.ID "trainingData" $db (toInt ((dbGet $db.ID "trainingData").ExpiresAt.Sub currentTime).Seconds)}}
-		{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+		)
+	}}
+	{{editResponse .Interaction.Token $x $confirmContainer}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{return}}
+{{end}}
+{{if reFind `OutcomeSubmit` .StrippedID}}
+	{{if ne $db.Host.User.ID .User.ID}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot submit this training outcome as you are not the host." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
+	{{$db.Set "Logged" true}}
+	{{scheduleUniqueCC .CCID nil (toInt (toDuration "10s").Seconds) (printf "CloseLog-%d" $db.ID) (sdict "Notice" $db.ID "CloseLog" true)}}
+	{{$logContainer := componentBuilder
+		"container" (sdict
+			"color" $db.Role.Color
+			"components" (componentBuilder
+				"section" (sdict
+					"text" (printf "# %s Training Completed" $db.Rank.Name)
+					"button" (cbutton "label" "Submit Training Log" "custom_id" (printf "iota_trainingSubmitLog-%d" $db.ID) "style" "success")
+				)
+				"separator" true
+				"text" (printf "> **Host**: <@%d>\n\nThis training has been completed.\n\nAttendees may now submit their training logs using the button above." $db.Host.User.ID)
+			)
+		)
+	}}
+	{{editMessage 1532346844712272003 $db.TrainingMsg $logContainer}}
+	{{dbSetExpire $db.ID "trainingData" $db (toInt ((dbGet $db.ID "trainingData").ExpiresAt.Sub currentTime).Seconds)}}
+	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{return}}
+{{end}}
+{{if reFind `End` .StrippedID}}
+	{{if ne $db.Host.User.ID .User.ID}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this training as you are not the host." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+		{{return}}
+	{{end}}
+	{{$db.Set "Status" 0}}
+	{{$closedContainer := componentBuilder
+		"container" (sdict
+			"color" 0xFF0000
+			"components" (componentBuilder
+				"section" (sdict
+					"text" (printf "# %s Training Closed" $db.Rank.Name)
+					"button" (cbutton "label" "Manage Outcome Report" "custom_id" (printf "iota_trainingOutcomeManage-%d" $db.ID) "style" "success")
+				)
+				"separator" true
+				"text" "This training session has officially closed.\n\nStaff may now manage the outcome report using the button above."
+			)
+		)
+	}}
+	{{editMessage 1532346844712272003 $db.TrainingMsg $closedContainer}}
+	{{dbSetExpire $db.ID "trainingData" $db (toInt ((dbGet $db.ID "trainingData").ExpiresAt.Sub currentTime).Seconds)}}
+	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+	{{return}}
+{{end}}
+{{if reFind `Join` .StrippedID}}
 	{{if not (hasRoleID $db.Rank.RoleID)}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" (printf "You cannot join this training as you are not a <@&%s>." $db.Rank.RoleID) "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
@@ -212,8 +271,8 @@
 				"separator" true
 				"text" (printf "> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID $db.Time $db.Rank.RoleID $db.MinConfirms)
 				"buttons" (cslice
-					(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_joinTraining-%d" $db.ID) "style" "success")
-					(cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed))) "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)
+					(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_trainingJoin-%d" $db.ID) "style" "success")
+					(cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed))) "custom_id" "iota_trainingConfirm" "style" "secondary" "disabled" true)
 				)
 			)
 		)

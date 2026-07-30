@@ -68,13 +68,13 @@
 	{{$buttonState := cslice
 		(cbutton
 			"label" "Toggle Confirmation"
-			"custom_id" (printf "iota_joinTraining-%d" $db.ID)
+			"custom_id" (printf "iota_trainingJoin-%d" $db.ID)
 			"style" "success"
 			"disabled" true
 		)
 		(cbutton
 			"label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed)))
-			"custom_id" "iota_confirmedTraining"
+			"custom_id" "iota_trainingConfirm"
 			"style" "secondary"
 			"disabled" true
 		)
@@ -105,7 +105,7 @@
 			"components" (componentBuilder
 				"section" (sdict
 					"text" (printf "# %s Training" $db.Rank.Name)
-					"button" (cbutton "label" "End" "custom_id" (printf "iota_joinTrainingEnd-%d" $db.ID) "style" "primary")
+					"button" (cbutton "label" "End" "custom_id" (printf "iota_trainingEnd-%d" $db.ID) "style" "primary")
 				)
 				"separator" true
 				"text" (printf "The training has enough confirmations and will proceed.\n\nThe host will provide the server name shortly.")
@@ -188,6 +188,7 @@
 
 	"Confirmed" cslice
 	"Attended" cslice
+	"Passed" cslice
 
 	"Summary" ""
 
@@ -209,8 +210,8 @@
 			"separator" true
 			"text" (printf "> **Host**: @%s (%s)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." (reReplace ` \|.*` $dbData.Host.Nick "") $dbData.Host.User.Mention $dbData.Time $dbData.Rank.RoleID $dbData.MinConfirms)
 			"buttons" (cslice
-				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_joinTraining-%d" $dbData.ID) "style" "success")
-				(cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)
+				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_trainingJoin-%d" $dbData.ID) "style" "success")
+				(cbutton "label" "Confirmed: 0" "custom_id" "iota_trainingConfirm" "style" "secondary" "disabled" true)
 			)
 		)
 	)
