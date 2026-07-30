@@ -24,26 +24,26 @@
 {{$rankLookup := $data.Get "RankLookup"}}
 
 {{with .ExecData}}
-	{{$confirmed := (dbGet .TrainingMsg "trainingConfirmations").Value}}
+	{{$db := (dbGet .Notice "trainingData").Value}}
 	{{$strConfirmed := cslice}}
-	{{range $confirmed.Users}}
+	{{range $db.Confirmed}}
 		{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
 	{{end}}
 	{{$buttonState := cslice
 		(cbutton
 			"label" "Toggle Confirmation"
-			"custom_id" (printf "iota_joinTraining-%d" .TrainingRole.RoleID)
+			"custom_id" (printf "iota_joinTraining-%d" $db.ID)
 			"style" "success"
 			"disabled" true
 		)
 		(cbutton
-			"label" (printf "Confirmed: %s" (humanizeThousands (len $confirmed.Users)))
+			"label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed)))
 			"custom_id" "iota_confirmedTraining"
 			"style" "secondary"
 			"disabled" true
 		)
 	}}
-	{{if lt (len $confirmed.Users) .MinimumConfirmations}}
+	{{if lt (len $strConfirmed) .MinConfirms}}
 		{{$cancelledContainer := componentBuilder
 			"container" (sdict
 				"color" 0xFF0000
@@ -80,9 +80,7 @@
 			"components" (componentBuilder
 				"text" (joinStr ", " $strConfirmed)
 			)
-			"reply" (sdict
-				"message_id" .TrainingMsg
-			)
+			"reply" .TrainingMsg
 		)
 	}}
 	{{sendMessageNoEscape 1391567531046863041 $successContainer2}}
@@ -132,11 +130,20 @@
 		{{return}}
 	{{end}}
 {{end}}
-{{$details := sdict
+{{$ID := dbIncr 0 "trainingNotice"}}
+{{$dbData := sdict
+	"ID" $ID
 	"Host" .User.Mention
-	"Color" (getRoleID $targetRank.RoleID).Color
-	"Time"  (currentTime.Add (toDuration $duration)).Unix 
 	"Rank" $targetRank
+	"Role" (getRoleID $targetRank.RoleID)
+	"Time"  (currentTime.Add (toDuration $duration)).Unix
+	"Status" "scheduled"
+
+	"Confirmed" cslice
+	"Attended" cslice
+
+	"Summary" ""
+
 	"MinConfirms" $minimumConfirmations
 }}
 {{$notificationContainer := (componentBuilder
@@ -144,19 +151,20 @@
 		"roles" (cslice (toInt $targetRank.RoleID))
 	)
 	"container" (sdict
-		"color" $details.Color
+		"color" $dbData.Role.Color
 		"components" (componentBuilder
 			"text" (printf "# %s Training" $targetRank.Name)
 			"separator" true
-			"text" (printf "> **Host**: %s\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $details.Host $details.Time $details.Rank.RoleID $details.MinConfirms)
+			"text" (printf "> **Host**: %s\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $dbData.Host $dbData.Time $dbData.Rank.RoleID $dbData.MinConfirms)
 			"buttons" (cslice
-				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_joinTraining-%d" $targetRank.RoleID) "style" "success")
+				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_joinTraining-%d" $dbData.ID) "style" "success")
 				(cbutton "label" "Confirmed: 0" "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)
 			)
 		)
 	)
 )}}
 {{$x := sendMessageRetID 1391567531046863041 $notificationContainer}}
+{{$dbData.Set "TrainingMsg" $x}}
 {{sendMessage nil (printf "You've successfully started a(n) %s training notice for <t:%d:f>. View the message [here](https://discord.com/channels/1375370805575155782/1391567531046863041/%d)" $targetRank.Name (currentTime.Add (toDuration $duration)).Unix $x)}}
-{{dbSetExpire $x "trainingConfirmations" (sdict "Users" cslice "ContainerData" $details) (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
-{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "5m"))).Seconds (sdict "Host" .User.Mention "TrainingMsg" $x "TrainingRole" $targetRank "MinimumConfirmations" $minimumConfirmations)}}
+{{dbSetExpire $ID "trainingData" $dbData (add (toDuration $duration).Seconds (toDuration "2m").Seconds | toInt)}}
+{{execCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "5m"))).Seconds (sdict "Notice" $ID)}}

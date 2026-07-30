@@ -22,22 +22,22 @@
 {{/* Training button */}}
 {{if reFind `Training` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
-	{{$trainingRole := reReplace `[A-z]+-` .StrippedID ""}}
-	{{if not (hasRoleID $trainingRole)}}
-		{{editResponse .Interaction.Token $x (componentBuilder "text" (printf "You cannot join this training as you are not a <@&%s>." $trainingRole) "ephemeral" true)}}
+	{{$trainingNotice := reReplace `[A-z]+-` .StrippedID ""}}
+	{{$db := (dbGet $trainingNotice "trainingData").Value}}
+	{{if not (hasRoleID $db.Rank.RoleID)}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" (printf "You cannot join this training as you are not a <@&%s>." $db.Rank.RoleID) "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
-	{{$currentTraining := (dbGet .Message.ID "trainingConfirmations").Value}}
-	{{if in $currentTraining.Users $targetMember.User.ID}}
+	{{if in $db.Confirmed $targetMember.User.ID}}
 		{{$newTraining := cslice}}
-		{{range $currentTraining.Users}}
+		{{range $db.Confirmed.Users}}
 			{{if eq . $targetMember.User.ID}}
 				{{continue}}
 			{{end}}
 			{{$newTraining = $newTraining.Append .}}
 		{{end}}
-		{{$currentTraining.Set "Users" $newTraining}}
+		{{$db.Set "Confirmed" $newTraining}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" (printf "You've removed your confirmation from this training") "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{else}}
@@ -50,7 +50,7 @@
 			{{if ne $log.User.ID $targetMember.User.ID}}
 				{{continue}}
 			{{end}}
-			{{if eq $log.Type $trainingRole}}
+			{{if eq $log.Type $db.Rank.RoleID}}
 				{{$hasTraining = true}}
 				{{break}}
 			{{end}}
@@ -60,27 +60,27 @@
 			{{deleteInteractionResponse .Interaction.Token $x}}
 			{{return}}
 		{{end}}
-		{{$currentTraining.Set "Users" ($currentTraining.Users.Append .User.ID)}}
+		{{$db.Set "Confirmed" ($db.Confirmed.Append .User.ID)}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" (printf "You've added your confirmation to this training") "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{end}}
 	{{$notificationContainer := (componentBuilder
 		"allowed_mentions" (sdict
-			"roles" (cslice $currentTraining.ContainerData.Rank.RoleID)
+			"roles" (cslice $db.Rank.RoleID)
 		)
 		"container" (sdict
-			"color" $currentTraining.ContainerData.Color
+			"color" $db.Role.Color
 			"components" (componentBuilder
-				"text" (printf "# %s Training" $currentTraining.ContainerData.Rank.Name)
+				"text" (printf "# %s Training" $db.Rank.Name)
 				"separator" true
-				"text" (printf "> **Host**: %s\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $currentTraining.ContainerData.Host $currentTraining.ContainerData.Time $currentTraining.ContainerData.Rank.RoleID $currentTraining.ContainerData.MinConfirms)
+				"text" (printf "> **Host**: %s\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $db.Host $db.Time $db.Rank.RoleID $db.MinConfirms)
 				"buttons" (cslice
-					(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_joinTraining-%d" $currentTraining.ContainerData.Rank.RoleID) "style" "success")
-					(cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $currentTraining.Users))) "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)
+					(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_joinTraining-%d" $db.ID) "style" "success")
+					(cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed))) "custom_id" "iota_confirmedTraining" "style" "secondary" "disabled" true)
 				)
 			)
 		)
 	)}}
-	{{dbSetExpire .Message.ID "trainingConfirmations" $currentTraining (toInt ((dbGet .Message.ID "trainingConfirmations").ExpiresAt.Sub currentTime).Seconds)}}
+	{{dbSetExpire $db.ID "trainingData" $db (toInt ((dbGet $db.ID "trainingData").ExpiresAt.Sub currentTime).Seconds)}}
 	{{editMessage nil .Message.ID $notificationContainer}}
 {{end}}
