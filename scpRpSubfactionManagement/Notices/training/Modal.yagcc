@@ -48,8 +48,9 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 			{{break}}
 		{{end}}
     {{end}}
-	{{dbSetExpire $db.ID "trainingData" $db (toInt ($entry.ExpiresAt.Sub currentTime)).Seconds}}
+	{{dbSetExpire $db.ID "trainingData" $db (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
 	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
 {{end}}
 {{if reFind `SubmitLog` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
@@ -66,6 +67,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	}}
 	{{if and (in $db.Attended .User.ID) (not (in $db.Passed .User.ID))}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" "You did not pass this training." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
 	{{$needsApproval := not (in $db.Attended .User.ID)}}
@@ -90,10 +92,11 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 			(sdict "name" "__Result__" "value" $trainingLog.Result "inline" true)
 		}}	
 		{{$embed := sdict "title" (printf "Pending Training log #%s" (humanizeThousands $pendingID)) "description" (printf "User: %s\nTime: %s\nTraining type: <@&%d>" $trainingLog.User.Mention $trainingLog.Time $trainingLog.Type) "fields" $fields "image" (sdict "url" $trainingLog.Proof) "color" 0x4b9a4e}}
-		{{$x := sendMessageRetID 1532502218341748856 (complexMessage "embed" (cembed $embed))}}
+		{{sendMessage 1532502218341748856 (complexMessage "embed" (cembed $embed))}}
 
 		{{dbSet 0 "trainingLogsPending" $pending}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" "Your log has been submitted for approval." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{else}}
 		{{$trainingLog.Set "Approval" "Approved"}}
 		{{$trainingLog.Set "Result" "Pass"}}
