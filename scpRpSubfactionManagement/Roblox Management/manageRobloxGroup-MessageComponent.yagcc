@@ -282,7 +282,7 @@
 			"options" $menuOptions
 			"max_values" 1
 		}}
-		{{$x = editMessage nil $x (componentBuilder
+		{{editMessage nil $x (componentBuilder
 			"container" (sdict
 				"components" (componentBuilder
 					"text" "# Roblox Group Requests"
