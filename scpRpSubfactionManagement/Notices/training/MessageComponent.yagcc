@@ -20,7 +20,7 @@
 {{$targetMember := .Member}}
 
 {{with .ExecData}}
-    {{$db := (dbGet .Notice "trainingData").Value}}
+    {{$db := (dbGet (toInt .Notice) "trainingData").Value}}
     {{if not $db}}
         {{return}}
     {{end}}
@@ -82,15 +82,47 @@
 			{{return}}
 		{{end}}
 	{{end}}
-	{{$trainingSummaryInput := ctextInput
-		"custom_id" "trainingSummaryInput"
-		"min_length" 10
-		"max_length" 200
-		"style" 2
-		"required" true
+	{{$trainingConfidenceLabel := clabel 
+		"label" "Training Self-Assessment"
+		"description" "How confident are you performing this rank's duties following this training session"
+		"component" (cradioGroup
+			"custom_id" "trainingConfidenceInput"
+			"options" (cslice
+				(sdict
+					"label" "Very Confident"
+					"value" "Very Confident"
+					"description" "I could confidently perform this role."
+				)
+				(sdict
+					"label" "Confident"
+					"value" "Confident"
+					"description" "I'm comfortable, but could use more practice."
+				)
+				(sdict
+					"label" "Somewhat Confident"
+					"value" "Somewhat Confident"
+					"description" "I understand the basics but need guidance."
+				)
+				(sdict
+					"label" "Need More Practice"
+					"value" "Need More Practice"
+					"description" "I don't yet feel ready."
+				)
+			)
+		)
 	}}
-	{{$trainingSummaryLabel := clabel "label" "Training summary" "description" "What did you accomplish during your training? What did you learn?" "component" $trainingSummaryInput}}
-	{{$modal := modalBuilder (printf "iota_trainingSubmitLog-%d" $db.ID) "Iota-4 | Training Log Form" $trainingSummaryLabel}}
+	{{$feedbackLabel := clabel
+		"label" "Trainer Feedback"
+		"description" "Summarise the most important feedback or advice your trainer gave you during this session."
+		"component" (ctextInput
+			"custom_id" "trainingFeedbackInput"
+			"style" 2
+			"min_length" 20
+			"max_length" 250
+			"placeholder" "What feedback or advice did your trainer give you?"
+		)
+	}}
+	{{$modal := modalBuilder (printf "iota_trainingSubmitLog-%d" $db.ID) "Iota-4 | Training Log Form" $trainingConfidenceLabel $feedbackLabel}}
 	{{sendModal $modal}}
 	{{return}}
 {{end}}
@@ -241,6 +273,7 @@
 		)
 	}}
 	{{editMessage 1532346844712272003 $db.TrainingMsg $closedContainer}}
+	{{scheduleUniqueCC $db.CCID nil (toInt (toDuration "45m").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true)}}
 	{{dbSetExpire $db.ID "trainingData" $db (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
 	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
 	{{deleteInteractionResponse .Interaction.Token $x}}
