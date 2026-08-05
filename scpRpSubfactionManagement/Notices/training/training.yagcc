@@ -43,8 +43,8 @@
 			)}}
 			{{sendMessageNoEscape 1532358370433171628 $notificationContainer}}
 			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) "ActiveCheck" (sdict "Notice" .Notice "ActiveCheck" true)}}
+			{{return}}
 		{{end}}
-		{{return}}
 	{{end}}
 	{{if .MissingLog}}
 		{{if not $db.Logged}}
@@ -60,8 +60,8 @@
 			)}}
 			{{sendMessage 1532358370433171628 $notificationContainer}}
 			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "2h").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true)}}
+			{{return}}
 		{{end}}
-		{{return}}
 	{{end}}
 	{{$buttonState := cslice
 		(cbutton
@@ -123,7 +123,7 @@
 	{{$db.Set "Status" 2}}
 	{{dbSet $db.ID "trainingData" $db}}
 	{{$x := sendMessageNoEscapeRetID 1532346844712272003 $successContainer2}}
-	{{deleteMessage 1532346844712272003 $x (toInt (toDuration "15m").Seconds)}}
+	{{deleteMessage 1532346844712272003 $x (toInt (toDuration "5m").Seconds)}}
 	{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) "ActiveCheck" (sdict "Notice" .Notice "ActiveCheck" true)}}
 	{{return}}
 {{end}}
@@ -263,7 +263,7 @@
 		"components" (componentBuilder
 			"text" (printf "# %s Training" $targetRank.Name)
 			"separator" true
-			"text" (printf "> **ID**: #%d\n> **Host**: @%s (%s)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $dbData.ID (reReplace ` \|.*` $dbData.Host.Nick "") $dbData.Host.User.Mention $dbData.Time $dbData.Rank.RoleID $dbData.MinConfirms)
+			"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%s>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $dbData.ID (reReplace ` \|.*` $dbData.Host.Nick "") $dbData.Host.User.ID $dbData.Time $dbData.Rank.RoleID $dbData.MinConfirms)
 			"buttons" (cslice
 				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_trainingJoin-%d" $dbData.ID) "style" "success")
 				(cbutton "label" "Confirmed: 0" "custom_id" "iota_trainingConfirm" "style" "secondary" "disabled" true)
