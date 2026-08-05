@@ -405,7 +405,7 @@
 						)
 					)
 					"separator" false
-					"text" (printf "%s by %s (%s)" (title $type) .User.Mention (reReplace ` \|.*` .Member.Nick ""))
+					"text" (printf "%s by %s (@%s)" (title $type) .User.Mention (reReplace ` \|.*` .Member.Nick ""))
 				)
 			)
 		)}}

@@ -139,13 +139,13 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 		"color" $color
 		"components" (componentBuilder
 			"section" (sdict
-				"text" (printf "# Discord Role Updated\n>>> **Discord Account**: %s (%s)\n**Division**: %s\n**New rank**: <@&%d>\n**Old Rank**\n: %s" $targetMember.User.Mention (reReplace ` \|.*` $targetMember.Nick "") $division.Name $rank.RoleID $oldRankDisplay)
+				"text" (printf "# Discord Role Updated\n>>> **Discord Account**: %s\n**Division**: `%s`\n**New rank**: <@&%d>\n**Old Rank**: %s" $targetMember.User.Mention $division.Name $rank.RoleID $oldRankDisplay)
 				"thumbnail" (sdict
 					"media" ($targetMember.AvatarURL "1024")
 				)
 			)
 			"separator" false
-			"text" (printf "Updated by %s (%s)" .User.Mention (reReplace ` \|.*` .Member.Nick ""))
+			"text" (printf "Updated by @%s (%s)" (reReplace ` \|.*` .Member.Nick "") .User.Mention)
 		)
 	)
 )}}
