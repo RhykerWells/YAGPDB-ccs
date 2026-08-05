@@ -13,7 +13,7 @@
 
 {{$factionData := dbGet 0 "FactionDataV2"}}
 {{if not $factionData}}
-	{{sendResponse nil "FactionData not set up, please modify and run `-setData`"}}
+	{{sendResponse nil (componentBuilder "text" "FactionData not set up, please modify and run `-setData`" "ephemeral" true)}}
 	{{return}}
 {{end}}
 
@@ -47,34 +47,121 @@
     {{return}}
 {{end}}
 
+{{/* Pending log management */}}
+{{if reFind `Pending` .StrippedID}}
+	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
+	{{$IDMatches := reFindAllSubmatches `\d+` .StrippedID}}
+	{{$logData := sdict
+		"User" (sdict "ID" (index (index $IDMatches 0) 0 | toInt))
+		"Type" (index (index $IDMatches 1) 0 | toInt)
+	}}
+	{{$db := dbGet $logData.User.ID (printf "trainingLog:%d" $logData.Type)}}
+	{{if not $db}}
+		{{editResponse .InteractionToken $x (componentBuilder "text" (printf "This log doesn't exist."))}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+		{{return}}
+	{{end}}
+	{{$db = $db.Value}}
+	{{$type := ""}}
+	{{$color := ""}}
+	{{if reFind `Approve` .StrippedID}}
+		{{$type = "Approved"}}
+		{{$color = 0x00ff7b}}
+		{{$db.Set "Approval" $type}}
+		{{$logID := dbIncr 0 "NewTlog" 1 | toInt}}
+		{{$db.Set "ID" $logID}}
+		{{$threads := (dbGet 0 "trainingLogThreads").Value}}
+		{{if not $threads}}
+			{{$threads = sdict}}
+		{{end}}
+		{{$logChannel := $threads.Get $db.User.RobloxName}}
+		{{if $logChannel}}
+			{{openThread (toInt $logChannel)}}
+		{{else}}
+			{{try}}
+				{{$logChannel = (createForumPost 1534322694302990406 $db.User.RobloxName (printf "%s's training log" .User.Mention)).ID}}
+			{{catch}}
+				{{editResponse .InteractionToken $x (componentBuilder "text" "Was not able to create a forum post channel for the training log. Your log has not been saved: %s" .Error)}}
+				{{deleteInteractionResponse .Interaction.Token $x}}
+				{{return}}
+			{{end}}
+			{{$threads.Set $db.User.RobloxName $logChannel}}
+			{{dbSet 0 "trainingLogThreads" $threads}}
+		{{end}}
+		{{$logRank := getRoleID $db.Type}}
+		{{$logContainer := (componentBuilder
+			"allowed_mentions" (sdict "users" cslice)
+			"container" (sdict
+				"color" $logRank.Color
+				"components" (componentBuilder
+					"text" (printf "# Training Log #%d" $db.ID)
+					"separator" true
+					"text" (printf "> **User**: @%s (<@%d>)\n> **Training Rank**: <@&%d>\n> **Training Host**: @%s <@%d>\n> **Self-Confidence**: %s. (%s)\n> **Trainer Feedback**: %s" $db.User.RobloxName $db.User.ID $db.Type $db.Host.RobloxName $db.Host.ID $db.Confidence.Short $db.Confidence.Long $db.Feedback)
+					"separator" false
+					"gallery" (cslice
+						(sdict "media" (or $db.Proof "https://iota-4.org/missingProof.png"))
+					)
+				)
+			)
+		)}}
+		{{$tLogID := sendMessageRetID $logChannel $logContainer}}
+		{{$db.Set "MsgID" $tLogID}}
+		{{dbSet $db.User.ID (printf "trainingLog:%d" $db.Type) $db}}
+	{{else}}
+		{{$type = "Denied"}}
+		{{$color = 0xFF0000}}
+		{{dbDel $db.User.ID (printf "trainingLog:%d" $db.Type)}}
+	{{end}}
+	{{$pendingContainer := (componentBuilder
+		"allowed_mentions" (sdict "users" cslice)
+		"container" (sdict
+			"color" $color
+			"components" (componentBuilder
+				"text" "# Pending Training Log"
+				"separator" true
+				"text" (printf "> **User**: @%s (<@%d>)\n> **Training Rank**: <@&%d>\n> **Training Host**: @%s <@%d>\n> **Self-Confidence**: %s. (%s)\n> **Trainer Feedback**: %s" $db.User.RobloxName $db.User.ID $db.Type $db.Host.RobloxName $db.Host.ID $db.Confidence.Short $db.Confidence.Long $db.Feedback)
+				"separator" false
+				"gallery" (cslice
+					(sdict "media" (or $db.Proof "https://iota-4.org/missingProof.png"))
+				)
+				"separator" false
+				"text" (printf "%s by @%s (%s)" $type (reReplace ` \|.*` .Member.Nick "") .User.Mention)
+			)
+		)
+	)}}
+	{{editMessage .Channel.ID .Message.ID $pendingContainer}}
+	{{editResponse .InteractionToken $x (componentBuilder "text" "Done!")}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{return}}
+{{end}}
+
+{{/* Training Log Submission & Notice Management */}}
 {{$trainingNotice := reReplace `[A-z]+-` .StrippedID "" | toInt}}
 {{$entry := (dbGet $trainingNotice "trainingData")}}
 {{$db := $entry.Value}}
 {{if not $db}}
-	{{sendResponse nil "Something went wrong"}}
+	{{sendResponse nil (componentBuilder "text" "Something went wrong" "ephemeral" true)}}
 	{{return}}
 {{end}}
 {{if reFind `SubmitLog` .StrippedID}}
-	{{$logs := (dbGet 0 "trainingLogs").Value}}
-	{{$userLogs := dict}}
-	{{range $ID, $log := $logs}}
-		{{if not $log}}
-			{{continue}}
-		{{end}}
-		{{if ne $log.User.ID $targetMember.User.ID}}
-			{{continue}}
-		{{end}}
-		{{$userLogs.Set $ID $log}}
+	{{$existingLog := false}}
+	{{$currentLogDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $db.Role.ID)}}
+	{{if $currentLogDB}}
+		{{$existingLog = true}}
 	{{end}}
-	{{range $_, $log := $userLogs}}
-		{{if ne $log.Type $db.Rank.Role}}
-			{{continue}}
-		{{end}}
-		{{$x := sendResponseRetID nil (complexMessage "content" "You have already submit a training for this rank." "ephemeral" true)}}
+	{{if $existingLog}}
+		{{$x := sendResponseRetID nil (complexMessage "content" "You have already submit a training for this rank.\nIf you can't see it, it may still be pending. Ask one of our Mission Control+ to accept it." "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
 	{{$attended := in $db.Attended $targetMember.User.ID}}
+	{{if (in $db.Confirmed $targetMember.User.ID)}}
+		{{if not $attended}}
+			{{$x := sendResponseRetID nil (complexMessage "content" "You can not submit a log for this training as you did not attend this training." "ephemeral" true)}}
+			{{deleteInteractionResponse .Interaction.Token $x}}
+			{{return}}
+		{{end}}
+	{{end}}
 	{{if $attended}}
 		{{if not (in $db.Passed $targetMember.User.ID)}}
 			{{$x := sendResponseRetID nil (complexMessage "content" "You can not submit a log for this training as you did not pass this training." "ephemeral" true)}}
@@ -185,10 +272,12 @@
 					"gallery" (cslice
 						(sdict "media" (or $db.Proof "https://iota-4.org/missingProof.png"))
 					)
+					"text" "-# If the image does not load, please edit the log."
 				)
 			)
 		}}
 		{{editResponse .Interaction.Token $x $confirmContainer}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{end}}
 	{{return}}
 {{end}}
@@ -231,6 +320,11 @@
 		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
+	{{if eq $db.Proof "" "https://iota-4.org/missingProof.png"}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot submit this training outcome as the proof image is missing." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+		{{return}}
+	{{end}}
 	{{$db.Set "Logged" true}}
 	{{scheduleUniqueCC .CCID nil (toInt (toDuration "72h").Seconds) (printf "CloseLog-%d" $db.ID) (sdict "Notice" $db.ID "CloseLog" true)}}
 	{{$logContainer := componentBuilder
@@ -242,7 +336,7 @@
 					"button" (cbutton "label" "Submit Training Log" "custom_id" (printf "iota_trainingSubmitLog-%d" $db.ID) "style" "success")
 				)
 				"separator" true
-				"text" (printf "> **Host**: <@%d>\n\nThis training has been completed.\n\nAttendees may now submit their training logs using the button above." $db.Host.User.ID)
+				"text" (printf "> **Host**: @%s (<@%d>)\n\nAttendees may now submit their training logs using the button above." (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID)
 			)
 		)
 	}}
@@ -329,7 +423,7 @@
 			"components" (componentBuilder
 				"text" (printf "# %s Training" $db.Rank.Name)
 				"separator" true
-				"text" (printf "> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID $db.Time $db.Rank.RoleID $db.MinConfirms)
+				"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $db.ID (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID $db.Time $db.Rank.RoleID $db.MinConfirms)
 				"buttons" (cslice
 					(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_trainingJoin-%d" $db.ID) "style" "success")
 					(cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed))) "custom_id" "iota_trainingConfirm" "style" "secondary" "disabled" true)

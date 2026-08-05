@@ -54,15 +54,25 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 {{end}}
 {{if reFind `SubmitLog` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+	{{$confidence := sdict "Short" .ModalValues.trainingConfidenceInput.value}}
+	{{if eq $confidence.Short "Very Confident"}}
+		{{$confidence.Set "Long" "I could confidently perform this role."}}
+	{{else if eq $confidence.Short "Confident"}}
+		{{$confidence.Set "Long" "I'm comfortable, but could use more practice."}}
+	{{else if eq $confidence.Short "Somewhat Confident"}}
+		{{$confidence.Set "Long" "I understand the basics but need guidance."}}
+	{{else if eq $confidence.Short "Need More Practice"}}
+		{{$confidence.Set "Long" "I don't yet feel ready."}}
+	{{end}}
 	{{$trainingLog := sdict
-		"User" .User
-		"Roblox" (reReplace ` \|.*` .Member.Nick "")
-		"Time" (printf "<t:%d:f>" currentTime.Unix)
-		"Host" (sdict "ID" $db.Host.User.ID "Roblox" (reReplace ` \|.*` $db.Host.Nick ""))
+		"ID" 0
+		"MsgID" 0
+		"User" (sdict "ID" .User.ID "RobloxName" (reReplace ` \|.*` .Member.Nick ""))
+		"Host" (sdict "ID" $db.Host.User.ID "RobloxName" (reReplace ` \|.*` $db.Host.Nick ""))
 		"Type" $db.Rank.RoleID
-		"Approval" "Unknown"
-		"Summary" .ModalValues.trainingSummaryInput.value
-		"Result" "Unknown"
+		"Approval" ""
+		"Confidence" $confidence
+		"Feedback" (or "None" .ModalValues.trainingFeedbackInput.value)
 		"Proof" $db.Proof
 	}}
 	{{if and (in $db.Attended .User.ID) (not (in $db.Passed .User.ID))}}
@@ -73,75 +83,70 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{$needsApproval := not (in $db.Attended .User.ID)}}
 	{{if $needsApproval}}
 		{{$trainingLog.Set "Approval" "Pending"}}
-
-		{{$pending := (dbGet 0 "trainingLogsPending").Value}}
-		{{if not $pending}}
-			{{$pending = sdict}}
-		{{end}}
-
-		{{$pendingID := currentTime.UnixNano}}
-		{{$pending.Set (str $pendingID) $trainingLog}}
-
-		{{$fields := cslice 
-			(sdict "name" "__Training host__" "value" (printf "<@!%s> `(%s)`" $trainingLog.Host.ID $trainingLog.Host.Roblox) "inline" true)
-			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "__Training summary__" "value" $trainingLog.Summary "inline" true)
-			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "__Result__" "value" $trainingLog.Result "inline" true)
-		}}	
-		{{$embed := sdict "title" (printf "Pending Training log #%s" (humanizeThousands $pendingID)) "description" (printf "User: %s\nTime: %s\nTraining type: <@&%d>" $trainingLog.User.Mention $trainingLog.Time $trainingLog.Type) "fields" $fields "image" (sdict "url" $trainingLog.Proof) "color" 0x4b9a4e}}
-		{{sendMessage 1532502218341748856 (complexMessage "embed" (cembed $embed))}}
-
-		{{dbSet 0 "trainingLogsPending" $pending}}
+		{{$pendingContainer := (componentBuilder
+			"allowed_mentions" (sdict "users" cslice)
+			"container" (sdict
+				"color" 0xFFAA00
+				"components" (componentBuilder
+					"text" "# Pending Training Log"
+					"separator" true
+					"text" (printf "> **User**: @%s (<@%d>)\n> **Training Rank**: <@&%d>\n> **Training Host**: @%s <@%d>\n> **Self-Confidence**: %s. (%s)\n> **Trainer Feedback**: %s" $trainingLog.User.RobloxName $trainingLog.User.ID $trainingLog.Type $trainingLog.Host.RobloxName $trainingLog.Host.ID $trainingLog.Confidence.Short $trainingLog.Confidence.Long $trainingLog.Feedback)
+					"separator" false
+					"gallery" (cslice
+						(sdict "media" (or $db.Proof "https://iota-4.org/missingProof.png"))
+					)
+					"text" "-# If the proof image is unavailable, deny the submission and ask the attendee to resubmit with valid proof."
+					"separator" false
+					"buttons" (cslice
+						(cbutton "label" "Approve" "custom_id" (printf "iota_trainingPendingApprove-%d-%d" $trainingLog.User.ID $trainingLog.Type) "style" "success")
+						(cbutton "label" "Deny" "custom_id" (printf "iota_trainingPendingDeny-%d-%d" $trainingLog.User.ID $trainingLog.Type) "style" "danger")
+					)
+				)
+			)
+		)}}
+		{{sendMessage 1532502218341748856 $pendingContainer}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" "Your log has been submitted for approval." "ephemeral" true)}}
-		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{else}}
 		{{$trainingLog.Set "Approval" "Approved"}}
-		{{$trainingLog.Set "Result" "Pass"}}
-		{{$logs := (dbGet 0 "trainingLogs").Value}}
-		{{dbSet 0 "trainingLogBackup" $logs}}
-		{{dbSet 0 "TlogBackup" (dbGet 0 "Tlog").Value}}
-		{{$ID := add (dbGet 0 "Tlog").Value 1}}
-		{{$trainingLog.Set "ID" $ID}}
-		{{$logChannel := false}}
-		{{range $_, $data := $logs}}
-			{{if not $data}}{{continue}}{{end}}
-			{{if eq $data.Roblox $trainingLog.Roblox}}
-				{{$clogData := sdict "Channel" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 1) "ID" (index (slice (index (reFindAllSubmatches `https://discord.com/channels\/(\d+)\/(\d+)\/(\d+)` $data.Link) 0) 1) 2)}}
-				{{$logChannel = $clogData.Channel}}
-				{{break}}
-			{{end}}
+		{{$logID := dbIncr 0 "NewTlog" 1 | toInt}}
+		{{$trainingLog.Set "ID" $logID}}
+		{{$trainingLog.Set "Session" $db.ID}}
+		{{$threads := (dbGet 0 "trainingLogThreads").Value}}
+		{{if not $threads}}
+			{{$threads = sdict}}
 		{{end}}
+		{{$logChannel := $threads.Get $trainingLog.User.RobloxName}}
 		{{if $logChannel}}
 			{{openThread (toInt $logChannel)}}
 		{{else}}
 			{{try}}
-				{{$logChannel = (createForumPost 1383638051984773241 $trainingLog.Roblox (printf "%s's training log" .User.Mention)).ID}}
+				{{$logChannel = (createForumPost 1534322694302990406 $trainingLog.RobloxName (printf "%s's training log" .User.Mention)).ID}}
 			{{catch}}
-				{{if in .Error "unable to create forum post"}}
-					{{sendMessage nil (complexMessage "ephemeral" true "content" "Was not able to create a forum post channel for training log. Your log has not been saved.")}}
-				{{end}}
+				{{sendMessage nil (complexMessage "ephemeral" true "content" "Was not able to create a forum post channel for training log. Your log has not been saved.")}}
 				{{return}}
 			{{end}}
+			{{$threads.Set $trainingLog.User.RobloxName $logChannel}}
+			{{dbSet 0 "trainingLogThreads" $threads}}
 		{{end}}
-		{{$fields := cslice 
-			(sdict "name" "__Training host__" "value" (printf "<@!%s> `(%s)`" $trainingLog.Host.ID $trainingLog.Host.Roblox) "inline" true)
-			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "__Training summary__" "value" $trainingLog.Summary "inline" true)
-			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "\uFEFF" "value" "\uFEFF" "inline" true)
-			(sdict "name" "__Result__" "value" $trainingLog.Result "inline" true)
-		}}	
-		{{$embed := sdict "title" (printf "Log #%s" (humanizeThousands $trainingLog.ID)) "description" (printf "Time: %s\nTraining type: <@&%d>" $trainingLog.Time $trainingLog.Type) "fields" $fields "image" (sdict "url" $trainingLog.Proof) "color" 0x4b9a4e}}
-		{{if $logChannel}}
-			{{$x := sendMessageRetID $logChannel (complexMessage "embed" (cembed $embed))}}
-			{{$trainingLog.Set "Link" (printf "https://discord.com/channels/%d/%d/%d" .Guild.ID (toInt $logChannel) $x)}}
-		{{end}}
-		{{$logs.Set (toInt $trainingLog.ID) $trainingLog}}
-		{{/* dbSet 0 "trainingLogs" $logs */}}
+		{{$logContainer := (componentBuilder
+			"allowed_mentions" (sdict "users" cslice)
+			"container" (sdict
+				"color" $db.Role.Color
+				"components" (componentBuilder
+					"text" (printf "# Training Log #%d" $trainingLog.ID)
+					"separator" true
+					"text" (printf "> **User**: @%s (<@%d>)\n> **Training Rank**: <@&%d>\n> **Training Host**: @%s <@%d>\n> **Self-Confidence**: %s. (%s)\n> **Trainer Feedback**: %s" $trainingLog.User.RobloxName $trainingLog.User.ID $trainingLog.Type $trainingLog.Host.RobloxName $trainingLog.Host.ID $trainingLog.Confidence.Short $trainingLog.Confidence.Long $trainingLog.Feedback)
+					"separator" false
+					"gallery" (cslice
+						(sdict "media" (or $trainingLog.Proof "https://iota-4.org/missingProof.png"))
+					)
+				)
+			)
+		)}}
+		{{$tLogID := sendMessageRetID $logChannel $logContainer}}
+		{{$trainingLog.Set "MsgID" $tLogID}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
 	{{end}}
+	{{dbSet $trainingLog.User.ID (printf "trainingLog:%d" $trainingLog.Type) $trainingLog}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
 {{end}}
