@@ -321,7 +321,7 @@
 			"container" (sdict
 				"components" (componentBuilder
 					"section" (sdict
-						"text" (printf "# Roblox Group Join Request\n>>> Submitted by: @%s (`%d`)\n%s" $robloxMember.Username (toInt $robloxMember.ID) $discord)
+						"text" (printf "# Roblox Group Join Request\n>>> Submitted by: @%s ([`%d`](https://www.roblox.com/users/%d/profile))\n%s" $robloxMember.Username (toInt $robloxMember.ID) (toInt $robloxMember.ID) $discord)
 						"thumbnail" (sdict
 							"media" ($robloxMember.GetUserThumbnailURI nil)
 						)
