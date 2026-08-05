@@ -205,27 +205,27 @@
 {{end}}
 {{$targetRank = $rankLookup.Get $targetRank}}
 {{if not (gt (len .CmdArgs) 1)}}
-	{{sendMessage nil (printf "No `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
+	{{sendMessage nil "No `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`."}}
 	{{return}}
 {{end}}
 {{$duration := index .CmdArgs 1}}
 {{if not (toDuration $duration)}}
-	{{sendMessage nil (printf "Invalid `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
+	{{sendMessage nil "Invalid `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`."}}
 	{{return}}
 {{end}}
 {{if lt (toDuration $duration) (toDuration "10m")}}
-	{{sendMessage nil (printf "Invalid `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
+	{{sendMessage nil "Invalid `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`."}}
 	{{return}}
 {{end}}
 {{$minimumConfirmations := 3}}
 {{if (gt (len .CmdArgs) 2)}}
 	{{$minimumConfirmations = index .CmdArgs 2 | toInt}}
 	{{if not $minimumConfirmations}}
-		{{sendMessage nil (printf "Invalid `Minimum confirmations` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nHow many confirmations do you want to require for the training? (must be at least `1`)")}}
+		{{sendMessage nil "Invalid `Minimum confirmations` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nHow many confirmations do you want to require for the training? (must be at least `1`)"}}
 		{{return}}
 	{{end}}
 	{{if lt $minimumConfirmations 1}}
-		{{sendMessage nil (printf "Invalid `Minimum confirmations` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nHow many confirmations do you want to require for the training? (must be at least `1`)")}}
+		{{sendMessage nil "Invalid `Minimum confirmations` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nHow many confirmations do you want to require for the training? (must be at least `1`)"}}
 		{{return}}
 	{{end}}
 {{end}}
