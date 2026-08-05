@@ -190,7 +190,6 @@
 {{$availableRanks := cslice}}
 {{range $coreRanks}}
 	{{$rank := $rankLookup.Get .}}
-	{{$availableRanks = $availableRanks.Append $rank.ShortName}}
 	{{if $rank.PromotionData}}
 		{{$availableRanks = $availableRanks.Append $rank.ShortName}}
 	{{end}}
