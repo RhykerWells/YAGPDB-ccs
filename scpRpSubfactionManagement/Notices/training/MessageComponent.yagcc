@@ -42,7 +42,6 @@
             )
         )
     }}
-
     {{editMessage 1532346844712272003 $db.TrainingMsg $closedContainer}}
     {{return}}
 {{end}}
@@ -352,7 +351,7 @@
 		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
 	{{end}}
-	{{$db.Set "Status" 0}}
+	{{$db.Set "Status" 3}}
 	{{$closedContainer := componentBuilder
 		"container" (sdict
 			"color" 0xFF0000
