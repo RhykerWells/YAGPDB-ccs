@@ -130,17 +130,17 @@
 
 {{if reFind `cancel-?` .Cmd}}
 	{{if not .CmdArgs}}
-		{{sendMessage nil (printf "Missing required arguments\n\n```cancel-training <Training:ID>```")}}
+		{{sendMessage nil (printf "Missing required arguments\n\n```cancel-training <ID>```")}}
 		{{return}}
 	{{end}}
-	{{$mID := index .CmdArgs 0}}
-	{{if not (toInt $mID)}}
-		{{sendMessage nil (printf "Invalid `Training` argument.\n\n```cancel-training <Training:ID>```")}}
+	{{$ID := index .CmdArgs 0}}
+	{{if not (toInt $ID)}}
+		{{sendMessage nil (printf "Invalid `Training` argument.\n\n```cancel-training <ID>```")}}
 		{{return}}
 	{{end}}
-	{{$db := dbGet (toInt $mID) "trainingData"}}
+	{{$db := dbGet (toInt $ID) "trainingData"}}
 	{{if not $db}}
-		{{sendMessage nil (printf "Invalid `Training` argument.\n\n```cancel-training <Training:ID>```")}}
+		{{sendMessage nil (printf "Invalid `Training` argument.\n\n```cancel-training <ID>```")}}
 		{{return}}
 	{{end}}
 	{{$db = $db.Value}}
