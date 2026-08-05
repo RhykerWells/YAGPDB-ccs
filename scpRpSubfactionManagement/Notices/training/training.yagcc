@@ -191,9 +191,9 @@
 {{range $coreRanks}}
 	{{$rank := $rankLookup.Get .}}
 	{{$availableRanks = $availableRanks.Append $rank.ShortName}}
-	{{/* if $rank.PromotionData}}
+	{{if $rank.PromotionData}}
 		{{$availableRanks = $availableRanks.Append $rank.ShortName}}
-	{{end */}}
+	{{end}}
 {{end}}
 {{if not .CmdArgs}}
 	{{sendMessage nil (printf "Missing required arguments\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
@@ -214,7 +214,7 @@
 	{{sendMessage nil (printf "Invalid `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
 	{{return}}
 {{end}}
-{{if lt (toDuration $duration) (toDuration "6m")}}
+{{if lt (toDuration $duration) (toDuration "10m")}}
 	{{sendMessage nil (printf "Invalid `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`.")}}
 	{{return}}
 {{end}}
@@ -254,6 +254,7 @@
 
 	"MinConfirms" $minimumConfirmations
 }}
+
 {{$notificationContainer := (componentBuilder
 	"allowed_mentions" (sdict
 		"roles" (cslice (toInt $targetRank.RoleID))
@@ -271,6 +272,7 @@
 		)
 	)
 )}}
+
 {{$x := sendMessageRetID 1532346844712272003 $notificationContainer}}
 {{$dbData.Set "TrainingMsg" $x}}
 {{sendMessage nil (printf "You've successfully started a(n) %s training notice for <t:%d:f>. [View #%d here](https://discord.com/channels/1375370805575155782/1532346844712272003/%d)" $targetRank.Name (currentTime.Add (toDuration $duration)).Unix $ID $x)}}

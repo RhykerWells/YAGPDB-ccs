@@ -38,7 +38,7 @@
                     )
                 )
                 "separator" true
-                "text" (printf "> **Host**: <@%d>\n\nThe training log submission period has ended." $db.Host.User.ID)
+                "text" (printf "> **Host**: @%s <@%d>\n\nThe training log submission period has ended." (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID)
             )
         )
     }}
