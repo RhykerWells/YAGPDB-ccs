@@ -16,7 +16,7 @@
 
 {{$factionData := dbGet 0 "FactionDataV2"}}
 {{if not $factionData}}
-	{{sendResponse "FactionData not set up, please modify and run `-setData`"}}
+	{{sendResponse (componentBuilder "text" "FactionData not set up, please modify and run `-setData`" "ephemeral" true)}}
 	{{return}}
 {{end}}
 {{$data := $factionData.Value}}
