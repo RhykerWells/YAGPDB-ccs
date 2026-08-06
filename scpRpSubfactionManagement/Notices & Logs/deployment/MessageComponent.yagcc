@@ -92,6 +92,7 @@
 	{{editMessage nil .Message.ID $notificationContainer}}
 	{{return}}
 {{end}}
+
 {{if reFind `End` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
 	{{if ne $db.Host.User.ID .User.ID}}
@@ -120,6 +121,7 @@
 	{{deleteInteractionResponse .Interaction.Token $x}}
 	{{return}}
 {{end}}
+
 {{if reFind `Outcome` .StrippedID}}
 	{{if reFind `Manage` .StrippedID}}
 		{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
@@ -194,7 +196,7 @@
 				"components" (componentBuilder
 					"section" (sdict
 						"text" "# Deployment Completed"
-						"button" (cbutton "label" "Submit Deployment Log" "custom_id" (printf "iota_deploymentSubmitLog-%d" $db.ID) "style" "success")
+						"button" (cbutton "label" "Submit Deployment Log" "custom_id" (printf "iota_deploymentLogSubmit-%d" $db.ID) "style" "success")
 					)
 					"separator" true
 					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above." $db.ID (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID $db.Time)
@@ -202,12 +204,14 @@
 			)
 		}}
 		{{editMessage 1532346772578373864 $db.DeployMsg $logContainer}}
+		{{scheduleUniqueCC $db.CCID nil (toInt (toDuration "45m").Seconds) (printf "MissingLog-%d" $db.ID) (sdict "Notice" .Notice "MissingLog" true)}}
 		{{dbSetExpire $db.ID "deploymentData" $db (toInt ($entry.ExpiresAt.Sub currentTime).Seconds)}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{end}}
 	{{return}}
 {{end}}
+
 {{if reFind `Log` .StrippedID}}
 	{{if reFind `Submit` .StrippedID}}
 		{{$memberRanks := cslice}}
@@ -289,33 +293,33 @@
 			{{return}}
 		{{end}}
 		{{$dutiesLabel := clabel
-		"label" "Primary Duties"
-		"description" "What duties did you perform during this deployment?"
-		"component" (ctextInput
-			"custom_id" "deploymentDutiesInput"
-			"style" 2
-			"min_length" 30
-			"max_length" 300
-			"placeholder" "e.g. Patrolled designated sectors, responded to player requests, assisted with traffic control..."
-			"required" true
-		)
-	}}
+			"label" "Primary Duties"
+			"description" "What duties did you perform during this deployment?"
+			"component" (ctextInput
+				"custom_id" "deploymentDutiesInput"
+				"style" 2
+				"min_length" 30
+				"max_length" 300
+				"placeholder" "e.g. Patrolled designated sectors, responded to player requests, assisted with traffic control..."
+				"required" true
+			)
+		}}
 
-	{{$incidentLabel := clabel
-		"label" "Most Significant Incident"
-		"description" "Describe the most significant incident you dealt with. If nothing notable occurred, enter 'None'."
-		"component" (ctextInput
-			"custom_id" "deploymentIncidentInput"
-			"style" 2
-			"min_length" 4
-			"max_length" 300
-			"placeholder" "Describe the most notable event from your deployment."
-			"required" true
-		)
-	}}
+		{{$incidentLabel := clabel
+			"label" "Most Significant Incident"
+			"description" "Describe the most significant incident you dealt with. If nothing notable occurred, enter 'None'."
+			"component" (ctextInput
+				"custom_id" "deploymentIncidentInput"
+				"style" 2
+				"min_length" 4
+				"max_length" 300
+				"placeholder" "Describe the most notable event from your deployment."
+				"required" true
+			)
+		}}
 
-	{{$modal := modalBuilder (printf "iota_deploymentSubmitLog-%d-%d" $db.ID $memberDeployedAs.RoleID) "Iota-4 | Deployment Log Form" $dutiesLabel $incidentLabel}}
+		{{$modal := modalBuilder (printf "iota_deploymentSubmitLog-%d-%d" $db.ID $memberDeployedAs.RoleID) "Iota-4 | Deployment Log Form" $dutiesLabel $incidentLabel}}
 
-	{{sendModal $modal}}
+		{{sendModal $modal}}
 	{{end}}
 {{end}}

@@ -15,8 +15,8 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{return}}
 {{end}}
 
-{{$trainingNotice := reReplace `[A-z]+-` .StrippedID "" | toInt}}
-{{$entry := dbGet $trainingNotice "trainingData"}}
+{{$trainingID := reReplace `[A-z]+-` .StrippedID "" | toInt}}
+{{$entry := dbGet $trainingID "trainingData"}}
 {{$db := $entry.Value}}
 {{if not $db}}
 	{{sendResponse nil "Something went wrong"}}
@@ -52,6 +52,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
 	{{deleteInteractionResponse .Interaction.Token $x}}
 {{end}}
+
 {{if reFind `SubmitLog` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
 	{{$confidence := sdict "Short" .ModalValues.trainingConfidenceInput.value}}

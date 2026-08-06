@@ -2,7 +2,7 @@
 	Made by ranger_4297 (765316548516380732)
 
 	Trigger Type: `Regex`
-	Trigger: `((cancel)-?)?tr(ain(ing)?)?`
+	Trigger: `(c(ancel)?-?tr(ain(ing)?)?`
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
@@ -42,7 +42,7 @@
 				)
 			)}}
 			{{sendMessageNoEscape 1532358370433171628 $notificationContainer}}
-			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) "ActiveCheck" (sdict "Notice" .Notice "ActiveCheck" true)}}
+			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) (printf "ActiveCheck-%d" .Notice) (sdict "Notice" .Notice "ActiveCheck" true)}}
 			{{return}}
 		{{end}}
 	{{end}}
@@ -59,7 +59,7 @@
 				)
 			)}}
 			{{sendMessage 1532358370433171628 $notificationContainer}}
-			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "2h").Seconds) "MissingLog" (sdict "Notice" .Notice "MissingLog" true)}}
+			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "2h").Seconds) (printf "MissingLog-%d" .Notice) (sdict "Notice" .Notice "MissingLog" true)}}
 			{{return}}
 		{{end}}
 	{{end}}
@@ -124,11 +124,11 @@
 	{{dbSet $db.ID "trainingData" $db}}
 	{{$x := sendMessageNoEscapeRetID 1532346844712272003 $successContainer2}}
 	{{deleteMessage 1532346844712272003 $x (toInt (toDuration "5m").Seconds)}}
-	{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) "ActiveCheck" (sdict "Notice" .Notice "ActiveCheck" true)}}
+	{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) (printf "ActiveCheck-%d" .Notice) (sdict "Notice" .Notice "ActiveCheck" true)}}
 	{{return}}
 {{end}}
 
-{{if reFind `cancel-?` .Cmd}}
+{{if reFind `^-(?:c|cancel)-?` .Cmd}}
 	{{if not .CmdArgs}}
 		{{sendMessage nil (printf "Missing required arguments\n\n```cancel-training <ID>```")}}
 		{{return}}
@@ -194,6 +194,7 @@
 		{{$availableRanks = $availableRanks.Append $rank.ShortName}}
 	{{end}}
 {{end}}
+
 {{if not .CmdArgs}}
 	{{sendMessage nil (printf "Missing required arguments\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
 	{{return}}
@@ -276,4 +277,4 @@
 {{$dbData.Set "TrainingMsg" $x}}
 {{sendMessage nil (printf "You've successfully started a(n) %s training notice for <t:%d:f>. [View #%d here](https://discord.com/channels/1375370805575155782/1532346844712272003/%d)" $targetRank.Name (currentTime.Add (toDuration $duration)).Unix $ID $x)}}
 {{dbSetExpire $ID "trainingData" $dbData (toInt (toDuration "14d").Seconds)}}
-{{scheduleUniqueCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "5m"))).Seconds "start" (sdict "Notice" $ID)}}
+{{scheduleUniqueCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "5m"))).Seconds (printf "Start-%d" $ID) (sdict "Notice" $ID)}}
