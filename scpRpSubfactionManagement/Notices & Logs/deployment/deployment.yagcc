@@ -224,7 +224,7 @@
 	{{sendMessage nil "Invalid `Duration` argument provided.\n\n```deploy <Duration> [Minimum Confirmations]```\nIn how long do you want to host the deployment (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`."}}
 	{{return}}
 {{end}}
-{{if lt (toDuration $duration) (toDuration "5m")}}
+{{if lt (toDuration $duration) (toDuration "10m")}}
 	{{sendMessage nil "Invalid `Duration` argument provided.\n\n```deploy <Duration> [Minimum Confirmations]```\nIn how long do you want to host the deployment (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`."}}
 	{{return}}
 {{end}}
