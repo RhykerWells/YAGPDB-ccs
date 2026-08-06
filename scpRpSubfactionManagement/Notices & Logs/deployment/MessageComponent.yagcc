@@ -1,0 +1,321 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Message Component`
+	Trigger: `\A(?i)iota_deployment`
+
+	Defer: Ephemeral Message Response
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/
+*/}}
+
+{{$factionData := dbGet 0 "FactionDataV2"}}
+{{if not $factionData}}
+	{{sendResponse nil (componentBuilder "text" "FactionData not set up, please modify and run `-setData`" "ephemeral" true)}}
+	{{return}}
+{{end}}
+{{$factionData = $factionData.Value}}
+
+{{$targetMember := .Member}}
+
+{{with .ExecData}}
+	{{$db := (dbGet (toInt .Notice) "deploymentData").Value}}
+	{{if not $db}}
+		{{return}}
+	{{end}}
+	{{$closedContainer := componentBuilder
+		"container" (sdict
+			"components" (componentBuilder
+				"section" (sdict
+					"text" "# Deployment Completed"
+					"button" (cbutton
+						"label" "Deployment Log Closed"
+						"custom_id" "deployment_log_closed"
+						"style" "secondary"
+						"disabled" true
+					)
+				)
+				"separator" true
+				"text" (printf "> **Host**: @%s <@%d>\n\nThe deployment log submission period has ended." (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID)
+			)
+		)
+	}}
+	{{editMessage 1532346844712272003 $db.DeployMsg $closedContainer}}
+	{{return}}
+{{end}}
+
+{{$deploymentID := reReplace `[A-z]+-` .StrippedID "" | toInt}}
+{{$entry := (dbGet $deploymentID "deploymentData")}}
+{{$db := $entry.Value}}
+{{if not $db}}
+	{{sendResponse nil (componentBuilder "text" "Something went wrong" "ephemeral" true)}}
+	{{return}}
+{{end}}
+
+{{if reFind `Join` .StrippedID}}
+	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+	{{if in $db.Confirmed $targetMember.User.ID}}
+		{{$newDeployment := cslice}}
+		{{range $db.Confirmed}}
+			{{if eq . $targetMember.User.ID}}
+				{{continue}}
+			{{end}}
+			{{$newDeployment = $newDeployment.Append .}}
+		{{end}}
+		{{$db.Set "Confirmed" $newDeployment}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "You've removed your confirmation from this deployment." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{else}}
+		{{$db.Set "Confirmed" ($db.Confirmed.Append $targetMember.User.ID)}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "You've added your confirmation to this deployment." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{end}}
+	{{$notificationContainer := (componentBuilder
+		"allowed_mentions" (sdict
+			"roles" (cslice 1375381774204665917)
+		)
+		"container" (sdict
+			"components" (componentBuilder
+				"text" "# Deployment Scheduled"
+				"separator" true
+				"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You cannot log this deployment if you have not PASSED a deployment for your role**.\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before if there are sufficient confirmations." $db.ID (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID $db.Time $db.MinConfirms)
+				"buttons" (cslice
+					(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_deploymentJoin-%d" $db.ID) "style" "success")
+					(cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed))) "custom_id" "iota_deploymentConfirm" "style" "secondary" "disabled" true)
+				)
+			)
+		)
+	)}}
+	{{dbSetExpire $db.ID "deploymentData" $db (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
+	{{editMessage nil .Message.ID $notificationContainer}}
+	{{return}}
+{{end}}
+{{if reFind `End` .StrippedID}}
+	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
+	{{if ne $db.Host.User.ID .User.ID}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+		{{return}}
+	{{end}}
+	{{$db.Set "Status" 3}}
+	{{$closedContainer := componentBuilder
+		"container" (sdict
+			"color" 0xFF0000
+			"components" (componentBuilder
+				"section" (sdict
+					"text" "# Deployment Over"
+					"button" (cbutton "label" "Manage Outcome Report" "custom_id" (printf "iota_deploymentOutcomeManage-%d" $db.ID) "style" "success")
+				)
+				"separator" true
+				"text" "This deployment session has officially ended.\n\nStaff may now manage the outcome report using the button above."
+			)
+		)
+	}}
+	{{editMessage 1532346772578373864 $db.DeployMsg $closedContainer}}
+	{{scheduleUniqueCC $db.CCID nil (toInt (toDuration "45m").Seconds) "MissingLog" (sdict "Notice" $db.ID "MissingLog" true)}}
+	{{dbSetExpire $db.ID "deploymentData" $db (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
+	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{return}}
+{{end}}
+{{if reFind `Outcome` .StrippedID}}
+	{{if reFind `Manage` .StrippedID}}
+		{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
+		{{if ne $db.Host.User.ID .User.ID}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
+			{{deleteInteractionResponse .Interaction.Token $x}}
+			{{return}}
+		{{end}}
+		{{$manageContainer := componentBuilder
+			"container" (sdict
+				"components" (componentBuilder
+					"section" (sdict
+						"text" "# Manage Deployment Report"
+						"button" (cbutton "label" "Finish Deployment" "custom_id" (printf "iota_deploymentOutcomeSubmit-%d" $db.ID) "style" "success")
+					)
+					"separator" false
+					"section" (sdict
+						"text" "### Proof"
+						"button" (cbutton "label" "Edit & View" "custom_id" (printf "iota_deploymentOutcomeEditProof-%d" $db.ID) "style" "primary")
+					)
+				)
+			)
+		}}
+		{{editResponse .Interaction.Token $x $manageContainer}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{else if reFind `Edit` .StrippedID}}
+		{{if reFind `ProofEdit` .StrippedID}}
+			{{if ne $db.Host.User.ID .User.ID}}
+				{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
+				{{deleteInteractionResponse .Interaction.Token $x}}
+				{{return}}
+			{{end}}
+			{{$proofLabel := clabel "label" "Proof" "description" "Screenshot of deployment" "component" (cfileUpload "custom_id" "uploadForm" "required" true)}}
+			{{$modal := modalBuilder (printf "iota_deploymentOutcomeProof-%d" $db.ID) "Iota-4 | Deployment Outcome Form" $proofLabel}}
+			{{sendModal $modal}}
+			{{return}}
+		{{end}}
+		{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
+		{{$confirmContainer := componentBuilder
+			"container" (sdict
+				"components" (componentBuilder
+					"section" (sdict
+						"text" "# Manage Deployment Report Proof"
+						"button" (cbutton "label" "Edit" "custom_id" (printf "iota_deploymentOutcomeEditProofEdit-%d" $db.ID) "style" "success")
+					)
+					"separator" false
+					"gallery" (cslice
+						(sdict "media" (or $db.Proof "https://iota-4.org/missingProof.png"))
+					)
+					"text" "-# If the image does not load, please edit the log."
+				)
+			)
+		}}
+		{{editResponse .Interaction.Token $x $confirmContainer}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{else}}
+		{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
+		{{if ne $db.Host.User.ID .User.ID}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
+			{{deleteInteractionResponse .Interaction.Token $x}}
+			{{return}}
+		{{end}}
+		{{if eq $db.Proof "" "https://iota-4.org/missingProof.png"}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot submit this deployment outcome as the proof image is missing." "ephemeral" true)}}
+			{{deleteInteractionResponse .Interaction.Token $x}}
+			{{return}}
+		{{end}}
+		{{$db.Set "Logged" true}}
+		{{scheduleUniqueCC .CCID nil (toInt (toDuration "72h").Seconds) (printf "CloseLog-%d" $db.ID) (sdict "Notice" $db.ID "CloseLog" true)}}
+		{{$logContainer := componentBuilder
+			"container" (sdict
+				"components" (componentBuilder
+					"section" (sdict
+						"text" "# Deployment Completed"
+						"button" (cbutton "label" "Submit Deployment Log" "custom_id" (printf "iota_deploymentSubmitLog-%d" $db.ID) "style" "success")
+					)
+					"separator" true
+					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above." $db.ID (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID $db.Time)
+				)
+			)
+		}}
+		{{editMessage 1532346772578373864 $db.DeployMsg $logContainer}}
+		{{dbSetExpire $db.ID "deploymentData" $db (toInt ($entry.ExpiresAt.Sub currentTime).Seconds)}}
+		{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+		{{deleteInteractionResponse .Interaction.Token $x}}
+	{{end}}
+	{{return}}
+{{end}}
+{{if reFind `Log` .StrippedID}}
+	{{if reFind `Submit` .StrippedID}}
+		{{$memberRanks := cslice}}
+		{{$memberDeployedAs := sdict}}
+		{{range $factionData.AllRanks}}
+			{{if hasRoleID .RoleID}}
+				{{$memberRanks = $memberRanks.Append .}}
+			{{end}}
+		{{end}}
+
+		{{if eq (len $memberRanks) 2}}
+			{{if reFind `SelectRank` .StrippedID}}
+				{{$v := .Values}}
+				{{range $memberRanks}}
+					{{if eq .RoleID (index $v 0 | toInt)}}
+						{{$memberDeployedAs = .}}
+						{{break}}
+					{{end}}
+				{{end}}
+			{{else}}
+				{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+				{{$options := cslice}}
+				{{range $memberRanks}}
+					{{if hasRoleID .RoleID}}
+						{{$division := $factionData.DivisionLookup.Get .Division}}
+						{{$options = $options.Append (sdict
+							"label" .Name
+							"value" (printf "%d" .RoleID)
+							"description" (printf "Submit deployment log (%s)" $division.Name)
+						)}}
+					{{end}}
+				{{end}}
+				{{$menu := cmenu
+					"type" "text"
+					"placeholder" "Select which rank to submit this deployment for"
+					"custom_id" (printf "iota_deploymentLogSubmitSelectRank-%d" $db.ID)
+					"options" $options
+					"min_values" 1
+					"max_values" 1
+				}}
+
+				{{$container := componentBuilder
+					"container" (sdict
+						"components" (componentBuilder
+							"text" "# Deployment Log"
+							"separator" true
+							"text" "You have multiple eligible ranks. Please choose which one this deployment should count towards."
+							"menus" $menu
+						)
+					)
+				}}
+
+				{{editResponse .Interaction.Token $x $container}}
+				{{deleteInteractionResponse .Interaction.Token $x}}
+				{{return}}
+			{{end}}
+		{{else}}
+			{{$memberDeployedAs = (index $memberRanks 0)}}
+		{{end}}
+
+		{{$trainingDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $memberDeployedAs.RoleID)}}
+		{{if and $memberDeployedAs.PromotionData (not $trainingDB)}}
+			{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot submit a log for this rank as you have not completed the required training" "ephemeral" true)}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot submit this  as the proof image is missing." "ephemeral" true)}}
+			{{deleteInteractionResponse .Interaction.Token $x}}
+			{{return}}
+		{{end}}
+		{{$userData := or (dbGet $targetMember.User.ID "deploymentData").Value (sdict "Logs" cslice "LogsByRank" dict)}}
+		{{$alreadyLogged := false}}
+		{{range $userData.Logs}}
+			{{if and (eq .Session $db.ID) (eq .DeployedAs $memberDeployedAs.RoleID)}}
+				{{$alreadyLogged = true}}
+				{{break}}
+			{{end}}
+		{{end}}
+		{{if $alreadyLogged}}
+			{{$x := sendResponseRetID nil (componentBuilder "text" "You have already submitted a deployment log for this deployment session." "ephemeral" true)}}
+			{{deleteInteractionResponse .Interaction.Token $x}}
+			{{return}}
+		{{end}}
+		{{$dutiesLabel := clabel
+		"label" "Primary Duties"
+		"description" "What duties did you perform during this deployment?"
+		"component" (ctextInput
+			"custom_id" "deploymentDutiesInput"
+			"style" 2
+			"min_length" 30
+			"max_length" 300
+			"placeholder" "e.g. Patrolled designated sectors, responded to player requests, assisted with traffic control..."
+			"required" true
+		)
+	}}
+
+	{{$incidentLabel := clabel
+		"label" "Most Significant Incident"
+		"description" "Describe the most significant incident you dealt with. If nothing notable occurred, enter 'None'."
+		"component" (ctextInput
+			"custom_id" "deploymentIncidentInput"
+			"style" 2
+			"min_length" 4
+			"max_length" 300
+			"placeholder" "Describe the most notable event from your deployment."
+			"required" true
+		)
+	}}
+
+	{{$modal := modalBuilder (printf "iota_deploymentSubmitLog-%d-%d" $db.ID $memberDeployedAs.RoleID) "Iota-4 | Deployment Log Form" $dutiesLabel $incidentLabel}}
+
+	{{sendModal $modal}}
+	{{end}}
+{{end}}
