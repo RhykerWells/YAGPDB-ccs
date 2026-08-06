@@ -120,7 +120,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 			{{openThread (toInt $logChannel)}}
 		{{else}}
 			{{try}}
-				{{$logChannel = (createForumPost 1534322694302990406 $trainingLog.RobloxName (printf "%s's training log" .User.Mention)).ID}}
+				{{$logChannel = (createForumPost 1534322694302990406 $trainingLog.User.RobloxName (printf "%s's training log" .User.Mention)).ID}}
 			{{catch}}
 				{{sendMessage nil (complexMessage "ephemeral" true "content" "Was not able to create a forum post channel for training log. Your log has not been saved.")}}
 				{{return}}
