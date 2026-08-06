@@ -31,13 +31,13 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 
 {{if reFind `Outcome` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
-    {{if reFind `Proof` .StrippedID}}
+	{{if reFind `Proof` .StrippedID}}
 		{{range $_, $v := .InteractionData.Resolved.Attachments}}
 			{{$url := reReplace "\u0026" $v.URL "&"}}
 			{{$db.Set "Proof" $url}}
 			{{break}}
 		{{end}}
-    {{end}}
+	{{end}}
 	{{dbSetExpire $db.ID "deploymentData" $db (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
 	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
 	{{deleteInteractionResponse .Interaction.Token $x}}
@@ -93,10 +93,69 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{$deploymentLog.Set "MsgID" $dLogID}}
 	{{$userData := or (dbGet $deploymentLog.User.ID "deploymentData").Value (sdict "Logs" cslice "LogsByRank" dict)}}
 	{{$userData.Set "Logs" ($userData.Logs.Append $deploymentLog)}}
-	{{$LogsByRank := or ($userData.LogsByRank.Get $deploymentLog.DeployedAs) cslice}}
-	{{$LogsByRank = $LogsByRank.Append $deploymentLog.ID}}
-	{{$userData.LogsByRank.Set $deploymentLog.DeployedAs $LogsByRank}}
+	{{$logsByRank := or ($userData.LogsByRank.Get $deploymentLog.DeployedAs) cslice}}
+	{{$logsByRank = $logsByRank.Append $deploymentLog.ID}}
+	{{$userData.LogsByRank.Set $deploymentLog.DeployedAs $logsByRank}}
 	{{dbSet $deploymentLog.User.ID "deploymentData" $userData}}
 	{{editResponse .Interaction.Token $x (componentBuilder "text" (printf "Done!\nLog created [here](https://discord.com/channels/%d/%d/%d)" .Guild.ID $logChannel $dLogID) "ephemeral" true)}}
+	{{template "checkRequestPromotion" (sdict "UserID" $deploymentLog.User.ID "RankID" $deploymentLog.DeployedAs "UserData" $userData "LogChannel" $logChannel "FactionData" $factionData.Value)}}
 	{{deleteInteractionResponse .Interaction.Token $x}}
+{{end}}
+
+{{define "checkRequestPromotion"}}
+	{{$member := getMember .UserID}}
+	{{$currentRank := sdict}}
+	{{range .FactionData.AllRanks}}
+		{{if eq .RoleID $.RankID}}
+			{{$currentRank = .}}
+			{{break}}
+		{{end}}
+	{{end}}
+
+	{{if not $currentRank.PromotionData}}
+		{{return}}
+	{{end}}
+
+	{{if lt (len .UserData.LogsByRank) $currentRank.PromotionData.DeploymentsRequired}}
+		{{return}}
+	{{end}}
+
+	{{$nextRank := .FactionData.RankLookup.Get $currentRank.PromotionData.NextRankShortName}}
+
+	{{$links := cslice}}
+	{{range .UserData.LogsByRank}}
+		{{range .}}
+			{{$logID := .}}
+			{{range $.UserData.Logs}}
+				{{if eq .ID $logID}}
+					{{$links = $links.Append (printf "- [#%d](https://discord.com/channels/%d/%d/%d)" .ID $.Guild.ID $.LogChannel .MsgID)}}
+					{{break}}
+				{{end}}
+			{{end}}
+		{{end}}
+	{{end}}
+
+	{{$promotionContainer := (componentBuilder
+		"allowed_mentions" (sdict
+			"parse" cslice
+		)
+		"container" (sdict
+			"color" 0xFFAA00
+			"components" (componentBuilder
+				"section" (sdict
+					"text" (printf "# Promotion Requirements Met\n>>> **User**: @%s (%s)\n**Promotion**: <@&%d>\n**Status**: Pending review" (index .UserData.Logs 0).User.RobloxName $member.User.Mention $nextRank.RoleID)
+					"thumbnail" (sdict
+						"media" ($member.User.AvatarURL "1024")
+					)
+				)
+				"text" (printf "## Logs at current rank\n%s" (joinStr "\n" $links))
+				"buttons" (cslice
+					(cbutton "label" "Confirm promotion" "custom_id" (printf "iota_deploymentsPromotionConfirm-%d-%d" $member.User.ID $currentRank.RoleID) "style" "success")
+					(cbutton "label" "Deny promotion" "custom_id" (printf "iota_deploymentsPromotionDeny-%d-%d" $member.User.ID $currentRank.RoleID) "style" "danger")
+				)
+			)
+		)
+	)}}
+
+	{{sendMessage 1384142646536048740 $promotionContainer}}
 {{end}}

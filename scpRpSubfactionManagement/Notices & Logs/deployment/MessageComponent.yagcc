@@ -46,6 +46,97 @@
 	{{return}}
 {{end}}
 
+
+{{if reFind `Promotion` .StrippedID}}
+	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+	{{$parts := split .StrippedID "-"}}
+	{{$userID := toInt (index $parts 1)}}
+	{{$currentRank := toInt (index $parts 2)}}
+	{{$userData := or (dbGet $userID "deploymentData").Value (sdict "Logs" cslice "LogsByRank" dict)}}
+	{{$member := getMember $userID}}
+	{{$threads := (dbGet 0 "deploymentLogThreads").Value}}
+	{{$memberRobloxUsername := (reReplace ` \|.*` $member.Nick "")}}
+	{{$logChannel := $threads.Get $memberRobloxUsername}}
+
+	{{range $factionData.AllRanks}}
+		{{if eq .RoleID $currentRank}}
+			{{$currentRank = .}}
+			{{break}}
+		{{end}}
+	{{end}}
+	{{$currentEchelon := $factionData.EchelonLookup.Get $currentRank.Echelon}}
+
+	{{$nextRank := $factionData.RankLookup.Get $currentRank.PromotionData.NextRankShortName}}
+	{{$nextEchelon := $factionData.EchelonLookup.Get $nextRank.Echelon}}
+
+	{{$action := "Confirmed"}}
+	{{$color := 0x00ff7b}}
+	{{if reFind `Confirm` .StrippedID}}
+		{{takeRoleID $member.User.ID $currentRank.RoleID}}
+		{{takeRoleID $member.User.ID $currentEchelon.RoleID}}
+		{{giveRoleID $member.User.ID $nextRank.RoleID}}
+		{{giveRoleID $member.User.ID $nextEchelon.RoleID}}
+		{{$robloxGroup := getRobloxGroupByID 36098297}}
+		{{$nextRankRoblox := sdict}}
+		{{range $robloxGroup.GetRoles}}
+			{{if in .Name $nextRank.ShortName}}
+				{{$nextRankRoblox = sdict
+					"ID" (str .ID)
+					"Name" (str .Name)
+					"Rank" (str .Rank)
+				}}
+				{{break}}
+			{{end}}
+		{{end}}
+		{{$robloxMember := getRobloxUserByUsername $memberRobloxUsername}}
+		{{$roleUpdate := updateMemberRole (str $robloxGroup.ID) (str $robloxMember.ID) (str $nextRankRoblox.ID)}}
+		{{if not $roleUpdate}}
+			{{template "logRobloxGroupRankChange" (sdict "Failed" true "RobloxMember" $robloxMember "Role" $nextRankRoblox.Name)}}
+		{{end}}
+		{{template "logRobloxGroupRankChange" (sdict "RobloxMember" $robloxMember "Role" $nextRankRoblox.Name)}}
+	{{else}}
+		{{$action = "Denied"}}
+		{{$color = 0xFF0000}}
+	{{end}}
+
+	{{$links := cslice}}
+	{{range $userData.LogsByRank}}
+		{{range .}}
+			{{$logID := .}}
+			{{range $userData.Logs}}
+				{{if eq .ID $logID}}
+					{{$links = $links.Append (printf "- [#%d](https://discord.com/channels/%d/%d/%d)" .ID $.Guild.ID $logChannel .MsgID)}}
+					{{break}}
+				{{end}}
+			{{end}}
+		{{end}}
+	{{end}}
+
+	{{$promotionContainer := (componentBuilder
+		"allowed_mentions" (sdict
+			"parse" cslice
+		)
+		"container" (sdict
+			"color" $color
+			"components" (componentBuilder
+				"section" (sdict
+					"text" (printf "# Promotion %s\n>>> **User**: @%s (%s)\n**Promotion %s**: <@&%d> (<@&%d>)" $action (index $userData.Logs 0).User.RobloxName $member.User.Mention $action $nextRank.RoleID $nextEchelon.RoleID)
+					"thumbnail" (sdict
+						"media" ($member.User.AvatarURL "1024")
+					)
+				)
+				"text" (printf "## Logs at current rank\n%s" (joinStr "\n" $links))
+				"separator" false
+				"text" (printf "%s by @%s (%s)" $action (reReplace ` \|.*` .Member.Nick "") .User.Mention)
+			)
+		)
+	)}}
+	{{editMessage nil .Interaction.Message.ID $promotionContainer}}
+	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{return}}
+{{end}}
+
 {{$deploymentID := reReplace `[A-z]+-` .StrippedID "" | toInt}}
 {{$entry := (dbGet $deploymentID "deploymentData")}}
 {{$db := $entry.Value}}
@@ -273,12 +364,11 @@
 		{{end}}
 
 		{{$trainingDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $memberDeployedAs.RoleID)}}
-		{{if and $memberDeployedAs.PromotionData (not $trainingDB)}}
+		{{/* if and $memberDeployedAs.PromotionData (not $trainingDB)}}
 			{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot submit a log for this rank as you have not completed the required training" "ephemeral" true)}}
-			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot submit this  as the proof image is missing." "ephemeral" true)}}
 			{{deleteInteractionResponse .Interaction.Token $x}}
 			{{return}}
-		{{end}}
+		{{end */}}
 		{{$userData := or (dbGet $targetMember.User.ID "deploymentData").Value (sdict "Logs" cslice "LogsByRank" dict)}}
 		{{$alreadyLogged := false}}
 		{{range $userData.Logs}}
@@ -322,4 +412,40 @@
 
 		{{sendModal $modal}}
 	{{end}}
+{{end}}
+
+{{define "logRobloxGroupRankChange"}}
+	{{$errorColor := 0xFF0000}}
+	{{$successColor := 0x00ff7b}}
+
+	{{$color := $errorColor}}
+	{{$title := "Roblox Group Rank Update Failed"}}
+	{{$status := "Failed to update rank"}}
+
+	{{if not .Failed}}
+		{{$color = $successColor}}
+		{{$title = "Roblox Group Rank Updated"}}
+		{{$status = "Rank updated successfully"}}
+	{{end}}
+
+	{{$notificationContainer := (componentBuilder
+		"allowed_mentions" (sdict
+			"parse" cslice
+		)
+		"container" (sdict
+			"color" $color
+			"components" (componentBuilder
+				"section" (sdict
+					"text" (printf "# %s\n>>> **Roblox Account**: @%s ([`%d`](https://www.roblox.com/users/%d/profile))\n**Status**: %s" $title .RobloxMember.Username (toInt .RobloxMember.ID) (toInt .RobloxMember.ID) $status)
+					"thumbnail" (sdict
+						"media" (.RobloxMember.GetUserThumbnailURI nil)
+					)
+				)
+				"separator" false
+				"text" (printf "New rank: `%s`" (or .Role "none"))
+			)
+		)
+	)}}
+
+	{{sendMessage 1393462324920057886 $notificationContainer}}
 {{end}}
