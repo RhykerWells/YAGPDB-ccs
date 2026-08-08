@@ -265,9 +265,15 @@
 {{else}}
 	{{if eq .StrippedID "ViewRequests"}}
 		{{$x := sendResponseRetID nil "Loading ..."}}
-		{{$requests := $robloxGroup.GetJoinRequests}}
+		{{$requests := false}}
+		{{try}}
+			{{$requests = $robloxGroup.GetJoinRequests}}
+		{{catch}}
+			{{editResponse .Interaction.Token $x nil "There was an issue retrieving the requests"}}
+			{{return}}
+		{{end}}
 		{{if not $requests}}
-			{{$x := sendResponseRetID nil "There were no join requests at this time."}}
+			{{editResponse .Interaction.Token $x nil "There were no join requests at this time."}}
 			{{scheduleUniqueCC .CCID nil 20 (print $x "-start") (sdict "Token" .Interaction.Token "ID" $x)}}
 			{{return}}
 		{{end}}
