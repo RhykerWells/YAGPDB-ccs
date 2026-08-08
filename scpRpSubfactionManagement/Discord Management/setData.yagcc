@@ -622,20 +622,10 @@ This ordering is used when generating database data.
 
 	{{/* Division morph override tracking */}}
 	{{with $division.MorphData}}
-		{{range $k,$v := .}}
-			{{if eq $k "StarterGear"}}
-				{{$old := $division.MorphData.Get "StarterGear"}}
-				{{if $old}}
-					{{$division.MorphData.Set "StarterGear" (joinStr "," $old $v)}}
-				{{else}}
-					{{$division.MorphData.Set "StarterGear" $v}}
-				{{end}}
-			{{end}}
-		{{end}}
 		{{$morphOverrides = $morphOverrides.Append (sdict
 			"Type" "Division"
 			"Name" $division.ShortName
-			"MorphData" $division.MorphData
+			"MorphData" .
 		)}}
 	{{end}}
 
