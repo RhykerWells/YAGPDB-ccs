@@ -1,0 +1,161 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `getMorph`
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+*/}}
+
+{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
+{{if not (reFind $trigger .Message.Content)}}
+	{{return}}
+{{end}}
+
+{{with .ExecData}}
+	{{$menu := cmenu
+		"type" "text"
+		"placeholder" "Select which rank to retrieve the morph for"
+		"custom_id" "iota_morphsSelectMemberMorph-disabled"
+		"options" (cslice
+			(sdict "label" "disabled" "value" "disabled")
+		)
+		"min_values" 1
+		"max_values" 1
+		"disabled" true
+	}}
+	{{$container := componentBuilder
+		"container" (sdict
+			"components" (componentBuilder
+				"text" "# Retrieve Morph"
+				"separator" true
+				"text" .Text
+				"menus" $menu
+			)
+		)
+	}}
+	{{editMessage nil .MID $container}}
+	{{return}}
+{{end}}
+
+{{$factionDataEntry := dbGet 0 "FactionDataV2"}}
+{{if not $factionDataEntry}}
+	{{sendMessage nil "FactionData not set up, please modify and run `-setData`"}}
+	{{return}}
+{{end}}
+{{$db := $factionDataEntry.Value}}
+
+{{/* Checks for a user argument */}}
+{{$targetMember := .Member}}
+{{if .CmdArgs}}
+	{{$target := index .CmdArgs 0}}
+	{{if not (getMember $target)}}
+		{{sendMessage nil (print "Invalid `User` argument provided.\n\n```getMorph [User:Mention/ID]```\nDefault to your own morph.")}}
+		{{return}}
+	{{end}}
+	{{$targetMember = getMember $target}}
+{{end}}
+{{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
+
+{{$memberRanks := cslice}}
+{{$targetRank := sdict}}
+{{range $db.AllRanks}}
+	{{if in $targetMember.Roles .RoleID}}
+		{{$memberRanks = $memberRanks.Append .}}
+	{{end}}
+{{end}}
+
+{{if eq (len $memberRanks) 1}}
+	{{$targetRank = (index $memberRanks 0)}}
+	{{$targetEchelon := $db.EchelonLookup.Get $targetRank.Echelon}}
+	{{$morphData := $targetRank.MorphData}}
+	{{$morphKeys := sdict
+		"permmorph" "Morph"
+		"permshirt" "Shirt"
+		"permpants" "Pants"
+		"permhat" "Hats"
+		"permrtag" "RTag"
+		"startergear" "StarterGear"
+		"permmaxhealth" "Health"
+	}}
+	{{$orderedKeys := cslice
+		"permmorph"
+		"permshirt"
+		"permpants"
+		"permhat"
+		"permrtag"
+		"startergear"
+		"permmaxhealth"
+	}}
+	{{$morphParts := cslice}}
+	{{range $_, $key := $orderedKeys}}
+		{{$dataKey := $morphKeys.Get $key}}
+		{{$value := $morphData.Get $dataKey}}
+		{{if $value}}
+			{{if eq $key "permrtag"}}
+				{{$value = $value.Text}}
+			{{end}}
+			{{$morphParts = $morphParts.Append (printf "%s %s %v" $key $rblxName $value)}}
+		{{end}}
+	{{end}}
+	{{$fullMorphViaRun := print "run " (joinStr " & " $morphParts)}}
+	{{$morphContainer := (componentBuilder
+		"allowed_mentions" (sdict
+			"parse" (cslice)
+		)
+		"container" (sdict
+			"color" 0x3D1585
+			"components" (componentBuilder
+				"text" (printf "# Iota-4 Veilrunners Morph\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
+				"separator" true
+				"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $morphData.Health $morphData.StarterGear $morphData.RTag.Text)
+				"separator" true
+				"text" (printf "```%s```" $fullMorphViaRun)
+			)
+		)
+	)}}
+	{{sendMessage nil $morphContainer}}
+{{else}}
+	{{$x := sendMessageRetID nil (componentBuilder "text" "Loading...")}}
+	{{$options := cslice}}
+	{{range $memberRanks}}
+		{{if (in $targetMember.Roles .RoleID)}}
+			{{$division := $db.DivisionLookup.Get .Division}}
+			{{$options = $options.Append (sdict
+				"label" .Name
+				"value" (printf "%d" .RoleID)
+				"description" (printf "(%s)" $division.Name)
+			)}}
+		{{end}}
+	{{end}}
+	{{$menu := cmenu
+		"type" "text"
+		"placeholder" "Select which rank to retrieve the morph for"
+		"custom_id" (printf "iota_morphsSelectMemberMorph-%d" $targetMember.User.ID)
+		"options" $options
+		"min_values" 1
+		"max_values" 1
+	}}
+
+	{{$pronoun := "You have"}}
+	{{if ne $targetMember.User.ID .User.ID}}
+		{{$pronoun = printf "@%s (%s) has" $rblxName $targetMember.User.Mention}}
+	{{end}}
+	{{$text := (printf "%s multiple eligible ranks. Please choose which one to retrieve the morph for." $pronoun)}}
+	{{$container := componentBuilder
+		"container" (sdict
+			"components" (componentBuilder
+				"text" "# Retrieve Morph"
+				"separator" true
+				"text" $text
+				"menus" $menu
+			)
+		)
+	}}
+
+	{{editMessage nil $x $container}}
+	{{scheduleUniqueCC .CCID nil (toInt (toDuration "10s").Seconds) (printf "messageDelete:%d" $x) (sdict "MID" $x "Txt" $text)}}
+	{{return}}
+{{end}}
