@@ -313,7 +313,7 @@
 			{{end}}
 		{{end}}
 
-		{{if eq (len $memberRanks) 2}}
+		{{if gt (len $memberRanks) 1}}
 			{{if reFind `SelectRank` .StrippedID}}
 				{{$v := .Values}}
 				{{range $memberRanks}}
@@ -364,11 +364,11 @@
 		{{end}}
 
 		{{$trainingDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $memberDeployedAs.RoleID)}}
-		{{/* if and $memberDeployedAs.PromotionData (not $trainingDB)}}
+		{{if and $memberDeployedAs.PromotionData (not $trainingDB)}}
 			{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot submit a log for this rank as you have not completed the required training" "ephemeral" true)}}
 			{{deleteInteractionResponse .Interaction.Token $x}}
 			{{return}}
-		{{end */}}
+		{{end}}
 		{{$userData := or (dbGet $targetMember.User.ID "deploymentData").Value (sdict "Logs" cslice "LogsByRank" dict)}}
 		{{$alreadyLogged := false}}
 		{{range $userData.Logs}}
