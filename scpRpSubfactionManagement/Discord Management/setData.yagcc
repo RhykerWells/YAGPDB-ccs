@@ -687,7 +687,15 @@ This ordering is used when generating database data.
 
 			{{/* Copy inherited morph */}}
 			{{range $k,$v := $echelonMorph}}
-				{{$finalMorph.Set $k $v}}
+				{{if eq $k "RTag"}}
+					{{$newRTag := sdict}}
+					{{range $rk,$rv := $v}}
+						{{$newRTag.Set $rk $rv}}
+					{{end}}
+					{{$finalMorph.Set "RTag" $newRTag}}
+				{{else}}
+					{{$finalMorph.Set $k $v}}
+				{{end}}
 			{{end}}
 
 			{{/* Rank overrides */}}
@@ -725,7 +733,9 @@ This ordering is used when generating database data.
 			{{if not $rtag}}
 				{{$rtag = sdict}}
 			{{end}}
-			{{$rtag.Set "Text" (printf "[%s] Iota-4 | \"Veilrunners\" | %s" $echelon.ShortName $rank.Name)}}
+			{{if not ($rtag.Get "Text")}}
+				{{$rtag.Set "Text" (printf "[%s] Iota-4 | \"Veilrunners\" | %s" $echelon.ShortName $rank.Name)}}
+			{{end}}
 			{{if not ($rtag.Get "Colour")}}
 				{{$rtag.Set "Colour" "61 21 133"}}
 			{{end}}
