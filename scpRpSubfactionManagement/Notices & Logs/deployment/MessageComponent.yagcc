@@ -4,7 +4,7 @@
 	Trigger Type: `Message Component`
 	Trigger: `\A(?i)iota_deployment`
 
-	Defer: Ephemeral Message Response
+	Defer: None
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
@@ -313,7 +313,7 @@
 			{{end}}
 		{{end}}
 
-		{{if gt (len $memberRanks) 1}}
+		{{if eq (len $memberRanks) 1}}
 			{{if reFind `SelectRank` .StrippedID}}
 				{{$v := .Values}}
 				{{range $memberRanks}}
