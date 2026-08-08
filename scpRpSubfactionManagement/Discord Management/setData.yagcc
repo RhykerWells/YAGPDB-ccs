@@ -34,7 +34,11 @@ Changes here will not take affect until the command is re-run.
 {{$baseMorphData := sdict
 	"Shirt" 9326560199
 	"Pants" 4607034531
-	"RTagColour" "61 21 133"
+	"RTag" (sdict
+		"Colour" "61 21 133"
+		"Text" ""
+		"Font" ""
+	)
 	"StarterGear"  "bp-77,pistol"
 }}
 
@@ -607,72 +611,69 @@ This ordering is used when generating database data.
 
 {{$morphOverrides := cslice}}
 
-{{range $division := $data}}
+{{$baseMorph := sdict}}
+{{range $k,$v := $baseMorphData}}
+	{{$baseMorph.Set $k $v}}
+{{end}}
 
+{{range $division := $data}}
 	{{$divisionEchelons := sdict}}
 	{{$divisionRanks := cslice}}
 
-
 	{{/* Division morph override tracking */}}
 	{{with $division.MorphData}}
-
 		{{range $k,$v := .}}
-
 			{{if eq $k "StarterGear"}}
-
 				{{$old := $division.MorphData.Get "StarterGear"}}
-
 				{{if $old}}
 					{{$division.MorphData.Set "StarterGear" (joinStr "," $old $v)}}
 				{{else}}
 					{{$division.MorphData.Set "StarterGear" $v}}
 				{{end}}
-
 			{{end}}
-
 		{{end}}
-
 		{{$morphOverrides = $morphOverrides.Append (sdict
 			"Type" "Division"
 			"Name" $division.ShortName
 			"MorphData" $division.MorphData
 		)}}
-
 	{{end}}
 
 	{{range $echelon := $division.Echelons}}
-
 		{{$echelonMorph := sdict}}
 		{{$echelonRanks := cslice}}
+
+		{{/* Inherit base morph */}}
+		{{range $k,$v := $baseMorph}}
+			{{$echelonMorph.Set $k $v}}
+		{{end}}
 
 		{{/* Inherit division morph */}}
 		{{with $division.MorphData}}
 			{{range $k,$v := .}}
-				{{$echelonMorph.Set $k $v}}
+				{{if eq $k "StarterGear"}}
+					{{$old := $echelonMorph.Get "StarterGear"}}
+					{{$echelonMorph.Set "StarterGear" (joinStr "," $old $v)}}
+				{{else}}
+					{{$echelonMorph.Set $k $v}}
+				{{end}}
 			{{end}}
 		{{end}}
 
 		{{/* Echelon morph override tracking */}}
 		{{with $echelon.MorphData}}
 			{{range $k,$v := .}}
-
 				{{if eq $k "StarterGear"}}
 					{{$old := $echelonMorph.Get "StarterGear"}}
-
 					{{if $old}}
 						{{$echelonMorph.Set "StarterGear" (joinStr "," $old $v)}}
 					{{else}}
 						{{$echelonMorph.Set "StarterGear" $v}}
 					{{end}}
-
 				{{else}}
-
 					{{$echelonMorph.Set $k $v}}
-
 				{{end}}
-
 			{{end}}
-
 			{{$morphOverrides = $morphOverrides.Append (sdict
 				"Type" "Echelon"
 				"Name" $echelon.ShortName
@@ -682,7 +683,6 @@ This ordering is used when generating database data.
 		{{end}}
 
 		{{range $rank := $echelon.Ranks}}
-
 			{{$finalMorph := sdict}}
 
 			{{/* Copy inherited morph */}}
@@ -692,7 +692,6 @@ This ordering is used when generating database data.
 
 			{{/* Rank overrides */}}
 			{{with $rank.MorphData}}
-
 				{{$morphOverrides = $morphOverrides.Append (sdict
 					"Type" "Rank"
 					"Name" $rank.ShortName
@@ -700,28 +699,40 @@ This ordering is used when generating database data.
 					"Echelon" $echelon.ShortName
 					"MorphData" .
 				)}}
-
 				{{range $k,$v := .}}
-
 					{{if eq $k "StarterGear"}}
 						{{$old := $finalMorph.Get "StarterGear"}}
-
 						{{if $old}}
 							{{$finalMorph.Set "StarterGear" (joinStr "," $old $v)}}
 						{{else}}
 							{{$finalMorph.Set "StarterGear" $v}}
 						{{end}}
-
-					{{else}}
-
-						{{$finalMorph.Set $k $v}}
-
+						{{else if eq $k "RTag"}}
+							{{$rtag := $finalMorph.Get "RTag"}}
+							{{if not $rtag}}
+								{{$rtag = sdict}}
+							{{end}}
+							{{range $rk,$rv := $v}}
+								{{$rtag.Set $rk $rv}}
+							{{end}}
+							{{$finalMorph.Set "RTag" $rtag}}
+						{{else}}
+							{{$finalMorph.Set $k $v}}
+						{{end}}
 					{{end}}
-
 				{{end}}
-
+			{{$rtag := $finalMorph.Get "RTag"}}
+			{{if not $rtag}}
+				{{$rtag = sdict}}
 			{{end}}
-
+			{{$rtag.Set "Text" (printf "[%s] Iota-4 | \"Veilrunners\" | %s" $echelon.ShortName $rank.Name)}}
+			{{if not ($rtag.Get "Colour")}}
+				{{$rtag.Set "Colour" "61 21 133"}}
+			{{end}}
+			{{if not ($rtag.Get "Font")}}
+				{{$rtag.Set "Font" ""}}
+			{{end}}
+			{{$finalMorph.Set "RTag" $rtag}}
 			{{$rankData := sdict
 				"Name" $rank.Name
 				"ShortName" $rank.ShortName
@@ -743,7 +754,6 @@ This ordering is used when generating database data.
 
 			{{/* Echelon rank ordering */}}
 			{{$echelonRanks = $echelonRanks.Append $rank.ShortName}}
-
 		{{end}}
 
 		{{/* Echelon lookup */}}
@@ -764,7 +774,6 @@ This ordering is used when generating database data.
 			"Name" $echelon.Name
 			"Ranks" $echelonRanks
 		)}}
-
 	{{end}}
 
 	{{/* Division rank lookup */}}
