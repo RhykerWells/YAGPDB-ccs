@@ -437,9 +437,9 @@ This ordering is used when generating database data.
 	"MorphData" (sdict
 		"Morph" "Remove"
 		"Hats" "98125108280860,16962629976,13743108491,18776618574,90549233521058,127851695819151,92056584161411"
-		"Shirt" "16962629976"
-		"Pants" "6937192922"
-		"StarterGear" "pistol,clipboard,radio,l3,medkit black 0 "
+		"Shirt" 16962629976
+		"Pants" 6937192922
+		"StarterGear" "pistol,clipboard,radio,l3,medkit black 0"
 	)
 	"Echelons" (cslice
 		(sdict
@@ -522,8 +522,8 @@ This ordering is used when generating database data.
 	"MorphData" (sdict
 		"Morph" "Remove"
 		"Hats" "exoskeleton,4753644287,15836290347,15849611270,17172715247,91493685476560,15836241673,77747420289763,77321284179231,107943768121338,129773133501441,132105235960950,133981707084677,13152503251,15987961009,76556250471218"
-		"Shirt" "8177153613"
-		"Pants" "8054245366"
+		"Shirt" 8177153613
+		"Pants" 8054245366
 		"StarterGear" "acr,evo,l3,radio,tracker,medkit black 0"
 	)
 	"Echelons" (cslice
