@@ -108,7 +108,7 @@
 		"container" (sdict
 			"color" 0x3D1585
 			"components" (componentBuilder
-				"text" (printf "# Iota-4 Veilrunners Morph\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
+				"text" (printf "# Iota-4 Veilrunners Morph Retrieved\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
 				"separator" true
 				"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $morphData.Health $morphData.StarterGear $morphData.RTag.Text)
 				"separator" true

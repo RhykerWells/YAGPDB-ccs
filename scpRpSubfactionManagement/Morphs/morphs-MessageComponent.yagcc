@@ -16,6 +16,107 @@
 {{end}}
 {{$db := $factionDataEntry.Value}}
 
+{{if reFind `GetMorph` .StrippedID}}
+	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+	{{$targetMember := .Member}}
+	{{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
+	{{$memberRanks := cslice}}
+	{{$targetRank := sdict}}
+	{{range $db.AllRanks}}
+		{{if in $targetMember.Roles .RoleID}}
+			{{$memberRanks = $memberRanks.Append .}}
+		{{end}}
+	{{end}}
+	{{if eq (len $memberRanks) 1}}
+		{{$targetRank = (index $memberRanks 0)}}
+		{{$targetEchelon := $db.EchelonLookup.Get $targetRank.Echelon}}
+		{{$morphData := $targetRank.MorphData}}
+		{{$morphKeys := sdict
+			"permmorph" "Morph"
+			"permshirt" "Shirt"
+			"permpants" "Pants"
+			"permhat" "Hats"
+			"permrtag" "RTag"
+			"startergear" "StarterGear"
+			"permmaxhealth" "Health"
+		}}
+		{{$orderedKeys := cslice
+			"permmorph"
+			"permshirt"
+			"permpants"
+			"permhat"
+			"permrtag"
+			"startergear"
+			"permmaxhealth"
+		}}
+		{{$morphParts := cslice}}
+		{{range $_, $key := $orderedKeys}}
+			{{$dataKey := $morphKeys.Get $key}}
+			{{$value := $morphData.Get $dataKey}}
+			{{if $value}}
+				{{if eq $key "permrtag"}}
+					{{$value = $value.Text}}
+				{{end}}
+				{{$morphParts = $morphParts.Append (printf "%s %s %v" $key $rblxName $value)}}
+			{{end}}
+		{{end}}
+		{{$fullMorphViaRun := print "run " (joinStr " & " $morphParts)}}
+		{{$morphContainer := (componentBuilder
+			"allowed_mentions" (sdict
+				"parse" (cslice)
+			)
+			"container" (sdict
+				"color" 0x3D1585
+				"components" (componentBuilder
+					"text" (printf "# Iota-4 Veilrunners Morph Retrieved\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
+					"separator" true
+					"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $morphData.Health $morphData.StarterGear $morphData.RTag.Text)
+					"separator" true
+					"text" (printf "```%s```" $fullMorphViaRun)
+				)
+			)
+		)}}
+		{{try}}
+			{{sendTargetDM $targetMember.User.ID $morphContainer}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "Done! (Sent you a DM)" "ephemeral" true)}}
+		{{catch}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "Was unable to send you a DM with your morph, please contact our Coordination Bureau" "ephemeral" true)}}
+		{{end}}
+	{{else}}
+		{{$options := cslice}}
+	{{range $memberRanks}}
+		{{if (in $targetMember.Roles .RoleID)}}
+			{{$division := $db.DivisionLookup.Get .Division}}
+			{{$options = $options.Append (sdict
+				"label" .Name
+				"value" (printf "%d" .RoleID)
+				"description" (printf "(%s)" $division.Name)
+			)}}
+		{{end}}
+	{{end}}
+	{{$menu := cmenu
+		"type" "text"
+		"placeholder" "Select which rank to retrieve the morph for"
+		"custom_id" (printf "iota_morphsSelectMemberMorph-%d-true" $targetMember.User.ID)
+		"options" $options
+		"min_values" 1
+		"max_values" 1
+	}}
+	{{$container := componentBuilder
+		"container" (sdict
+			"components" (componentBuilder
+				"text" "# Retrieve Morph"
+				"separator" true
+				"text" "You have multiple eligible ranks. Please choose which one to retrieve the morph for."
+				"menus" $menu
+			)
+		)
+	}}
+	{{editResponse .Interaction.Token $x $container}}
+	{{deleteInteractionResponse .Interaction.Token $x}}
+	{{end}}
+{{end}}
+
 {{if reFind `SelectMemberMorph` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
 	{{$memberID := reFind `\d+` .StrippedID}}
@@ -82,6 +183,15 @@
 			)
 		)
 	)}}
-	{{deleteInteractionResponse .ExecData.Token .ExecData.ID 0}}
-	{{sendMessage nil $morphContainer}}
+	{{if not (reFind `true` .StrippedID)}}
+		{{deleteInteractionResponse .Interaction.Token $x 0}}
+		{{sendMessage nil $morphContainer}}
+	{{else}}
+		{{try}}
+			{{sendTargetDM $targetMember.User.ID $morphContainer}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "Done! (Sent you a DM)" "ephemeral" true)}}
+		{{catch}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "Was unable to send you a DM with your morph, please contact our Coordination Bureau" "ephemeral" true)}}
+		{{end}}
+	{{end}}
 {{end}}
