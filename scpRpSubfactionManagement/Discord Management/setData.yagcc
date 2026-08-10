@@ -148,8 +148,8 @@ Each rank is represented as an sdict with:
 	- "DeploymentsRequired" (int)
 		Number of deployments/trainings required.
 
-	- "NextRankShortName" (string)
-		ShortName of the rank to promote to.
+	- "NextRankID" (string)
+		A unique identifier of the rank to promote to. Follows the format Echelon:Rank. I.e. EU:Operative
 */}}
 
 {{/*
@@ -308,7 +308,7 @@ This ordering is used when generating database data.
 					"PromotionData" (sdict
 						"TrainingRequired" true
 						"DeploymentsRequired" 3
-						"NextRankShortName" "Lance"
+						"NextRankID" "EU:Lance"
 					)
 				)				
 			)
@@ -330,7 +330,7 @@ This ordering is used when generating database data.
 					"PromotionData" (sdict
 						"TrainingRequired" true
 						"DeploymentsRequired" 3
-						"NextRankShortName" "Seeker"
+						"NextRankID" "EU:Seeker"
 					)
 					"MorphData" (sdict
 						"StarterGear" "shield"
@@ -343,7 +343,7 @@ This ordering is used when generating database data.
 					"PromotionData" (sdict
 						"TrainingRequired" true
 						"DeploymentsRequired" 2
-						"NextRankShortName" "Operative"
+						"NextRankID" "FA:Operative"
 					)
 				)
 				(sdict
@@ -353,7 +353,7 @@ This ordering is used when generating database data.
 					"PromotionData" (sdict
 						"TrainingRequired" true
 						"DeploymentsRequired" 1
-						"NextRankShortName" "Chaser"
+						"NextRankID" "FA:Chaser"
 					)
 				)
 			)
@@ -374,6 +374,7 @@ This ordering is used when generating database data.
 				"Morph" "Remove"
 				"Hats" "100937792821551,120057304856295,17430938152,12201396170,14930656829,119942179790066,83608651542571,exoskeleton,10238081607,17820555197,87197117800358,14966535316,14966498838,18138576823"
 				"StarterGear" "arx,shield"
+				"Health" 160
 			)
 			"Ranks" (cslice
 				(sdict
@@ -396,6 +397,7 @@ This ordering is used when generating database data.
 				"Morph" "TV"
 				"Hats" "100937792821551,120057304856295,17430938152,12201396170,14930656829,119942179790066,83608651542571,exoskeleton,10238081607,17820555197,87197117800358,14966535316,14966498838,18138576823"
 				"StarterGear" "arx,shield"
+				"Health" 140
 			)
 			"Ranks" (cslice
 				(sdict
@@ -413,6 +415,7 @@ This ordering is used when generating database data.
 				"Morph" "TV"
 				"Hats" "14844498416,18590004904,12497812780,102666754108288,109837221223070,109351528616197,108323112352845,14320195612,18846623970,90017702327547,17430938152,kneepads"
 				"StarterGear" "arx,shield"
+				"Health" 120
 			)
 			"Ranks" (cslice
 				(sdict
@@ -424,6 +427,32 @@ This ordering is used when generating database data.
 					"Name" "Veil Knight"
 					"ShortName" "Knight"
 					"RoleID" 1510594915531489381
+				)
+			)
+		)
+		(sdict
+			"Name" "The Hidden Hand"
+			"ShortName" "THH"
+			"RoleID" 1536113661108551730
+			"MorphData" (sdict
+				"Morph" "Remove"
+				"Hats" "88767255243883,97297936377196,12497812780,12497817183,13834560407,85843052258319,99852547995142,89681744566929,131583651105982,97570378450606,135912092791008,89079953984743,70619313746315,86705661152462,17558534652,6869988715,106263101497279,129515898246543,exoskeleton"
+				"Shirt" 14674599302
+				"Pants" 14672303122
+				"StarterGear" "xm"
+				"DamageMult" 0.9
+				"Scale" 1.1
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "The Hidden Hand Operative"
+					"ShortName" "Operative"
+					"RoleID" 1536242563751616542
+				)
+				(sdict
+					"Name" "The Hidden Hand Recruit"
+					"ShortName" "Recruit"
+					"RoleID" 1536113330379427871
 				)
 			)
 		)
@@ -587,6 +616,33 @@ This ordering is used when generating database data.
 				)
 			)
 		)
+		(sdict
+			"Name" "The Veilwatch"
+			"ShortName" "TV"
+			"RoleID" 1536119508089970698
+			"MorphData" (sdict
+				"Morph" "Remove"
+				"Hats" "17172715247,112489813995805,17430938152,71963062246007,131583651105982,124522897344575,89079953984743,96330760094289,103957080734351,118130965973100,76969957521485,118856525121000,97718104555805,kneepads"
+				"Shirt" 135940531996633
+				"Pants" 75626749620299
+				"StarterGear" "m110"
+				"Health" 70
+				"DamageMult" 1.6
+				"Scale" 0.95
+			)
+			"Ranks" (cslice
+				(sdict
+					"Name" "Veilwatch Operative"
+					"ShortName" "Operative"
+					"RoleID" 1536246816864206878
+				)
+				(sdict
+					"Name" "Veilwatch Recruit"
+					"ShortName" "Recruit"
+					"RoleID" 1536113429004292108
+				)
+			)
+		)
 	)
 }}
 
@@ -606,6 +662,7 @@ This ordering is used when generating database data.
 {{$echelonLookup := sdict}}
 
 {{$allRanks := cslice}}
+
 {{$divisionRankLookup := sdict}}
 {{$echelonRankLookup := sdict}}
 
@@ -630,8 +687,8 @@ This ordering is used when generating database data.
 	{{end}}
 
 	{{range $echelon := $division.Echelons}}
-		{{$echelonMorph := sdict}}
 		{{$echelonRanks := cslice}}
+		{{$echelonMorph := sdict}}
 
 		{{/* Inherit base morph */}}
 		{{range $k,$v := $baseMorph}}
@@ -652,6 +709,12 @@ This ordering is used when generating database data.
 
 		{{/* Echelon morph override tracking */}}
 		{{with $echelon.MorphData}}
+			{{$morphOverrides = $morphOverrides.Append (sdict
+				"Type" "Echelon"
+				"Name" $echelon.ShortName
+				"Division" $division.ShortName
+				"MorphData" .
+			)}}
 			{{range $k,$v := .}}
 				{{if eq $k "StarterGear"}}
 					{{$old := $echelonMorph.Get "StarterGear"}}
@@ -664,12 +727,6 @@ This ordering is used when generating database data.
 					{{$echelonMorph.Set $k $v}}
 				{{end}}
 			{{end}}
-			{{$morphOverrides = $morphOverrides.Append (sdict
-				"Type" "Echelon"
-				"Name" $echelon.ShortName
-				"Division" $division.ShortName
-				"MorphData" .
-			)}}
 		{{end}}
 
 		{{range $rank := $echelon.Ranks}}
@@ -705,55 +762,69 @@ This ordering is used when generating database data.
 						{{else}}
 							{{$finalMorph.Set "StarterGear" $v}}
 						{{end}}
-						{{else if eq $k "RTag"}}
-							{{$rtag := $finalMorph.Get "RTag"}}
-							{{if not $rtag}}
-								{{$rtag = sdict}}
-							{{end}}
-							{{range $rk,$rv := $v}}
-								{{$rtag.Set $rk $rv}}
-							{{end}}
-							{{$finalMorph.Set "RTag" $rtag}}
-						{{else}}
-							{{$finalMorph.Set $k $v}}
+					{{else if eq $k "RTag"}}
+						{{$rtag := $finalMorph.Get "RTag"}}
+						{{if not $rtag}}
+							{{$rtag = sdict}}
 						{{end}}
+						{{range $rk,$rv := $v}}
+							{{$rtag.Set $rk $rv}}
+						{{end}}
+						{{$finalMorph.Set "RTag" $rtag}}
+					{{else}}
+						{{$finalMorph.Set $k $v}}
 					{{end}}
 				{{end}}
+			{{end}}
 			{{$rtag := $finalMorph.Get "RTag"}}
 			{{if not $rtag}}
 				{{$rtag = sdict}}
 			{{end}}
-			{{if not ($rtag.Get "Text")}}
-				{{$rtag.Set "Text" (printf "[%s] Iota-4 | \"Veilrunners\" | %s" $echelon.ShortName $rank.Name)}}
-			{{end}}
-			{{if not ($rtag.Get "Colour")}}
-				{{$rtag.Set "Colour" "61 21 133"}}
-			{{end}}
-			{{if not ($rtag.Get "Font")}}
-				{{$rtag.Set "Font" ""}}
+			{{with $rtag}}
+				{{if not .Text}}
+					{{.Set "Text" (printf "[%s] Iota-4 | \"Veilrunners\" | %s" $echelon.ShortName $rank.Name)}}
+				{{end}}
+				{{if not .Colour}}
+					{{.Set "Colour" "61 21 133"}}
+				{{end}}
+				{{if not .Font }}
+					{{.Set "Font" ""}}
+				{{end}}
 			{{end}}
 			{{$finalMorph.Set "RTag" $rtag}}
+
+			{{/* Build the unique rank ID from the hierarchy */}}
+			{{$rankID := printf "%s:%s" $echelon.ShortName $rank.ShortName}}
+
+			{{$promotionData := sdict}}
+			{{with $rank.PromotionData}}
+				{{range $k, $v := .}}
+					{{$promotionData.Set $k $v}}
+				{{end}}
+			{{end}}
+
 			{{$rankData := sdict
+				"ID" $rankID
 				"Name" $rank.Name
 				"ShortName" $rank.ShortName
 				"RoleID" $rank.RoleID
 				"Division" $division.ShortName
 				"Echelon" $echelon.ShortName
 				"MorphData" $finalMorph
-				"PromotionData" $rank.PromotionData
+				"PromotionData" $promotionData
 			}}
 
 			{{/* Rank lookup */}}
-			{{$rankLookup.Set $rank.ShortName $rankData}}
+			{{$rankLookup.Set $rankData.ID $rankData}}
 
 			{{/* All ranks */}}
 			{{$allRanks = $allRanks.Append $rankData}}
 
 			{{/* Division rank ordering */}}
-			{{$divisionRanks = $divisionRanks.Append $rank.ShortName}}
+			{{$divisionRanks = $divisionRanks.Append $rankData.ID}}
 
 			{{/* Echelon rank ordering */}}
-			{{$echelonRanks = $echelonRanks.Append $rank.ShortName}}
+			{{$echelonRanks = $echelonRanks.Append $rankData.ID}}
 		{{end}}
 
 		{{/* Echelon lookup */}}
@@ -772,6 +843,7 @@ This ordering is used when generating database data.
 		{{/* Store echelon inside division */}}
 		{{$divisionEchelons.Set $echelon.ShortName (sdict
 			"Name" $echelon.Name
+			"ShortName" $echelon.ShortName
 			"Ranks" $echelonRanks
 		)}}
 	{{end}}

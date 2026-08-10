@@ -28,54 +28,7 @@
 		{{end}}
 	{{end}}
 	{{if eq (len $memberRanks) 1}}
-		{{$targetRank = (index $memberRanks 0)}}
-		{{$targetEchelon := $db.EchelonLookup.Get $targetRank.Echelon}}
-		{{$morphData := $targetRank.MorphData}}
-		{{$morphKeys := sdict
-			"permmorph" "Morph"
-			"permshirt" "Shirt"
-			"permpants" "Pants"
-			"permhat" "Hats"
-			"permrtag" "RTag"
-			"startergear" "StarterGear"
-			"permmaxhealth" "Health"
-		}}
-		{{$orderedKeys := cslice
-			"permmorph"
-			"permshirt"
-			"permpants"
-			"permhat"
-			"permrtag"
-			"startergear"
-			"permmaxhealth"
-		}}
-		{{$morphParts := cslice}}
-		{{range $_, $key := $orderedKeys}}
-			{{$dataKey := $morphKeys.Get $key}}
-			{{$value := $morphData.Get $dataKey}}
-			{{if $value}}
-				{{if eq $key "permrtag"}}
-					{{$value = $value.Text}}
-				{{end}}
-				{{$morphParts = $morphParts.Append (printf "%s %s %v" $key $rblxName $value)}}
-			{{end}}
-		{{end}}
-		{{$fullMorphViaRun := print "run " (joinStr " & " $morphParts)}}
-		{{$morphContainer := (componentBuilder
-			"allowed_mentions" (sdict
-				"parse" (cslice)
-			)
-			"container" (sdict
-				"color" 0x3D1585
-				"components" (componentBuilder
-					"text" (printf "# Iota-4 Veilrunners Morph Retrieved\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
-					"separator" true
-					"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $morphData.Health $morphData.StarterGear $morphData.RTag.Text)
-					"separator" true
-					"text" (printf "```%s```" $fullMorphViaRun)
-				)
-			)
-		)}}
+		{{$morphContainer := execTemplate "getReturnMorphContainer" (sdict "TargetMember" $targetMember "RblxName" $rblxName "TargetRank" $targetRank "DB" $db)}}
 		{{try}}
 			{{sendTargetDM $targetMember.User.ID $morphContainer}}
 			{{editResponse .Interaction.Token $x (componentBuilder "text" "Done! (Sent you a DM)" "ephemeral" true)}}
@@ -136,8 +89,35 @@
 			{{break}}
 		{{end}}
 	{{end}}
-	{{$targetEchelon := $db.EchelonLookup.Get $targetRank.Echelon}}
-	{{$morphData := $targetRank.MorphData}}
+	{{$morphContainer := execTemplate "getReturnMorphContainer" (sdict "TargetMember" $targetMember "RblxName" $rblxName "TargetRank" $targetRank "DB" $db)}}
+	{{if not (reFind `true` .StrippedID)}}
+		{{deleteInteractionResponse .Interaction.Token $x 0}}
+		{{sendMessage nil $morphContainer}}
+	{{else}}
+		{{try}}
+			{{sendTargetDM $targetMember.User.ID $morphContainer}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "Done! (Sent you a DM)" "ephemeral" true)}}
+		{{catch}}
+			{{editResponse .Interaction.Token $x (componentBuilder "text" "Was unable to send you a DM with your morph, please contact our Coordination Bureau" "ephemeral" true)}}
+		{{end}}
+	{{end}}
+{{end}}
+
+{{define "getReturnMorphContainer"}}
+	{{$targetMember := getMember .TargetMember.User.ID}}
+	{{$actualTargetRank := .TargetRank}}
+	{{$divisionRanks := .DB.RanksByDivision.Get .TargetRank.Division}}
+	{{if in (cslice 1536242563751616542 1536113330379427871 1536246816864206878 1536113429004292108) .TargetRank.RoleID}}
+		{{range $divisionRanks}}
+			{{$rankData := $.DB.RankLookup.Get .}}
+			{{if and (in $targetMember.Roles $rankData.RoleID) (not (in (cslice 1536242563751616542 1536113330379427871 1536246816864206878 1536113429004292108) $rankData.RoleID))}}
+				{{$actualTargetRank = $rankData}}
+				{{break}}
+			{{end}}
+		{{end}}
+	{{end}}
+	{{$targetEchelon := .DB.EchelonLookup.Get .TargetRank.Echelon}}
+	{{$morphData := .TargetRank.MorphData}}
 	{{$morphKeys := sdict
 		"permmorph" "Morph"
 		"permshirt" "Shirt"
@@ -158,17 +138,41 @@
 		"startergear"
 		"permmaxhealth"
 	}}
+	{{$deployedAsTHH := in (cslice 1536242563751616542 1536113330379427871 ) $.TargetRank.RoleID}}
+	{{$deployedAsVW := in (cslice 1536246816864206878 1536113429004292108 ) $.TargetRank.RoleID}}
+	{{$health := $morphData.Health}}
+	{{if $deployedAsTHH}}
+		{{$health = 225}}
+		{{if eq $actualTargetRank.Echelon "VG-C"}}
+			{{$health = 250}}
+		{{end}}
+	{{else if $deployedAsVW}}
+		{{$health = $actualTargetRank.MorphData.Health}}
+	{{end}}
+	{{$rTagText := $morphData.RTag.Text}}
+	{{$rTagColour := $morphData.RTag.Colour}}
+
+	{{if $deployedAsTHH}}
+		{{$rTagText = printf "[Iota-4] | \"The Hidden Hand\" | %s" $actualTargetRank.Name}}
+	{{else if $deployedAsVW}}
+		{{$rTagText = printf "[Iota-4] | \"The Veilwatch\" | %s" $actualTargetRank.Name}}
+	{{end}}
+
 	{{$morphParts := cslice}}
 	{{range $_, $key := $orderedKeys}}
 		{{$dataKey := $morphKeys.Get $key}}
 		{{$value := $morphData.Get $dataKey}}
+
+		{{if eq $key "permrtag"}}
+			{{$value = $rTagText}}
+		{{else if eq $key "permcrtag"}}
+			{{$value = $rTagColour}}
+		{{else if eq $key "permmaxhealth"}}
+			{{$value = $health}}
+		{{end}}
+
 		{{if $value}}
-			{{if eq $key "permrtag"}}
-				{{$value = $value.Text}}
-			{{else if eq $key "permcrtag"}}
-				{{$value = $value.Colour}}
-			{{end}}
-			{{$morphParts = $morphParts.Append (printf "%s %s %v" $key $rblxName $value)}}
+			{{$morphParts = $morphParts.Append (printf "%s %s %v" $key $.RblxName $value)}}
 		{{end}}
 	{{end}}
 	{{$fullMorphViaRun := print "run " (joinStr " & " $morphParts)}}
@@ -179,23 +183,13 @@
 		"container" (sdict
 			"color" 0x3D1585
 			"components" (componentBuilder
-				"text" (printf "# Iota-4 Veilrunners Morph\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
+				"text" (printf "# Iota-4 Veilrunners Morph\n>>> **User:** @%s (%s)\n**Rank:** %s (%s)\n**Division:** %s\n**Echelon:** %s" .RblxName $targetMember.User.Mention $actualTargetRank.Name .TargetRank.Name .TargetRank.Division $targetEchelon.Name)
 				"separator" true
-				"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`\n**RTag Colour:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $morphData.Health $morphData.StarterGear $morphData.RTag.Text $morphData.RTag.Text)
+				"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`\n**RTag Colour:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $health $morphData.StarterGear $rTagText $rTagColour)
 				"separator" true
 				"text" (printf "```%s```" $fullMorphViaRun)
 			)
 		)
 	)}}
-	{{if not (reFind `true` .StrippedID)}}
-		{{deleteInteractionResponse .Interaction.Token $x 0}}
-		{{sendMessage nil $morphContainer}}
-	{{else}}
-		{{try}}
-			{{sendTargetDM $targetMember.User.ID $morphContainer}}
-			{{editResponse .Interaction.Token $x (componentBuilder "text" "Done! (Sent you a DM)" "ephemeral" true)}}
-		{{catch}}
-			{{editResponse .Interaction.Token $x (componentBuilder "text" "Was unable to send you a DM with your morph, please contact our Coordination Bureau" "ephemeral" true)}}
-		{{end}}
-	{{end}}
+	{{return $morphContainer}}
 {{end}}

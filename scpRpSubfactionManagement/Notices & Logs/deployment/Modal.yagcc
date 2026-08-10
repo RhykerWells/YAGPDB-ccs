@@ -98,7 +98,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{$userData.LogsByRank.Set $deploymentLog.DeployedAs $logsByRank}}
 	{{dbSet $deploymentLog.User.ID "deploymentData" $userData}}
 	{{editResponse .Interaction.Token $x (componentBuilder "text" (printf "Done!\nLog created [here](https://discord.com/channels/%d/%d/%d)" .Guild.ID $logChannel $dLogID) "ephemeral" true)}}
-	{{template "checkRequestPromotion" (sdict "UserID" $deploymentLog.User.ID "RankID" $deploymentLog.DeployedAs "UserData" $userData "LogChannel" $logChannel "FactionData" $factionData.Value)}}
+	{{template "checkRequestPromotion" (sdict "GuildID" .Guild.ID "UserID" $deploymentLog.User.ID "RankID" $deploymentLog.DeployedAs "UserData" $userData "LogChannel" $logChannel "FactionData" $factionData.Value)}}
 	{{deleteInteractionResponse .Interaction.Token $x}}
 {{end}}
 
@@ -116,21 +116,20 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 		{{return}}
 	{{end}}
 
-	{{if lt (len .UserData.LogsByRank) $currentRank.PromotionData.DeploymentsRequired}}
+	{{$rankLogs := or (.UserData.LogsByRank.Get $currentRank.RoleID) cslice}}
+	{{if lt (len $rankLogs) $currentRank.PromotionData.DeploymentsRequired}}
 		{{return}}
 	{{end}}
 
-	{{$nextRank := .FactionData.RankLookup.Get $currentRank.PromotionData.NextRankShortName}}
+	{{$nextRank := .FactionData.RankLookup.Get $currentRank.PromotionData.NextRankID}}
 
 	{{$links := cslice}}
-	{{range .UserData.LogsByRank}}
-		{{range .}}
-			{{$logID := .}}
-			{{range $.UserData.Logs}}
-				{{if eq .ID $logID}}
-					{{$links = $links.Append (printf "- [#%d](https://discord.com/channels/%d/%d/%d)" .ID $.Guild.ID $.LogChannel .MsgID)}}
-					{{break}}
-				{{end}}
+	{{range $rankLogs}}
+		{{$logID := .}}
+		{{range $.UserData.Logs}}
+			{{if eq .ID $logID}}
+				{{$links = $links.Append (printf "- [#%d](https://discord.com/channels/%d/%d/%d)" .ID .GuildID $.LogChannel .MsgID)}}
+				{{break}}
 			{{end}}
 		{{end}}
 	{{end}}

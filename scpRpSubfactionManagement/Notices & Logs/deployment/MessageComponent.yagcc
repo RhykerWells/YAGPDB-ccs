@@ -66,7 +66,7 @@
 	{{end}}
 	{{$currentEchelon := $factionData.EchelonLookup.Get $currentRank.Echelon}}
 
-	{{$nextRank := $factionData.RankLookup.Get $currentRank.PromotionData.NextRankShortName}}
+	{{$nextRank := $factionData.RankLookup.Get $currentRank.PromotionData.NextRankID}}
 	{{$nextEchelon := $factionData.EchelonLookup.Get $nextRank.Echelon}}
 
 	{{$action := "Confirmed"}}

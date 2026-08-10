@@ -95,12 +95,12 @@
 	{{range $_, $key := $orderedKeys}}
 		{{$dataKey := $morphKeys.Get $key}}
 		{{$value := $morphData.Get $dataKey}}
+		{{if eq $key "permrtag"}}
+			{{$value = $value.Text}}
+		{{else if eq $key "permcrtag"}}
+			{{$value = $value.Colour}}
+		{{end}}
 		{{if $value}}
-			{{if eq $key "permrtag"}}
-				{{$value = $value.Text}}
-			{{else if eq $key "permcrtag"}}
-				{{$value = $value.Colour}}
-			{{end}}
 			{{$morphParts = $morphParts.Append (printf "%s %s %v" $key $rblxName $value)}}
 		{{end}}
 	{{end}}
@@ -112,7 +112,7 @@
 		"container" (sdict
 			"color" 0x3D1585
 			"components" (componentBuilder
-				"text" (printf "# Iota-4 Veilrunners Morph Retrieved\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
+				"text" (printf "# Iota-4 Veilrunners Morph\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
 				"separator" true
 				"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`\n**RTag Colour:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $morphData.Health $morphData.StarterGear $morphData.RTag.Text $morphData.RTag.Colour)
 				"separator" true
