@@ -1,0 +1,54 @@
+{{/*
+		Made by ranger_4297 (765316548516380732)
+
+	Trigger Type: `Regex`
+	Trigger: `.*
+
+    Name: "Accept join request"
+
+	©️ RhykerWells 2020-Present
+	GNU, GPLV3 License
+	Repository: https://github.com/RhykerWells/YAGPDB-ccs
+*/}}
+
+{{/* Only edit below if you know what you're doing (: */}}
+
+{{/* Initiates variables */}}
+{{$robloxGroup := getRobloxGroupByID 36098297}}
+
+{{$factionData := (dbGet 0 "FactionDataV2")}}
+{{if not $factionData}}
+	{{return}}
+{{end}}
+
+{{$requests := false}}
+{{try}}
+	{{$requests = $robloxGroup.GetJoinRequests}}
+{{catch}}
+	{{return}}
+{{end}}
+
+{{if not $requests}}
+    {{return}}
+{{end}}
+
+{{$rblxName := reReplace $factionData.NicknameRegex .Nick ""}}
+{{$memberRequest := false}}
+{{range $requests}}
+    {{if eq .Username $rblxName}}
+        {{$memberRequest}}
+        {{break}}
+    {{end}}
+{{end}}
+
+{{$robloxMember := getRobloxUserByID (toString $memberRequest.ID)}}
+{{if not $robloxGroup}}
+    {{return}}
+{{end}}
+
+{{$ok := $robloxGroup.JoinRequestAccept (toString $robloxMember.ID)}}
+{{if not $ok}}
+    {{return}}
+{{end}}
+
+{{addMessageReactions nil .MessageID "✅"}}
