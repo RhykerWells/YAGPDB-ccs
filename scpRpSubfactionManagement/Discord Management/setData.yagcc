@@ -39,7 +39,7 @@ Changes here will not take affect until the command is re-run.
 		"Text" ""
 		"Font" ""
 	)
-	"StarterGear"  "bp-77,pistol"
+	"StarterGear"  "l3,bp-77,pistol"
 }}
 
 {{/*
@@ -226,7 +226,7 @@ This ordering is used when generating database data.
 			)
 		)
 		(sdict
-			"Name" "Co-ordination Bureau"
+			"Name" "Coordination Bureau"
 			"ShortName" "CB"
 			"RoleID" 1461895105676972176
 			"MorphData" (sdict
@@ -399,7 +399,7 @@ This ordering is used when generating database data.
 			)
 			"Ranks" (cslice
 				(sdict
-					"Name" "Sentinel"
+					"Name" "Veil Sentinel"
 					"ShortName" "Sentinel"
 					"RoleID" 1429564916561346641
 				)
@@ -416,12 +416,12 @@ This ordering is used when generating database data.
 			)
 			"Ranks" (cslice
 				(sdict
-					"Name" "Paladin"
+					"Name" "Veil Paladin"
 					"ShortName" "Paladin"
 					"RoleID" 1510589691794296903
 				)
 				(sdict
-					"Name" "Knight"
+					"Name" "Veil Knight"
 					"ShortName" "Knight"
 					"RoleID" 1510594915531489381
 				)

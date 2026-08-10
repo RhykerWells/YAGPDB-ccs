@@ -6,7 +6,7 @@
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
-	Repository: https://github.com/RhykerWells/YAGPDB-ccs/tree/iota-4
+	Repository: https://github.com/RhykerWells/YAGPDB-cc
 */}}
 
 {{$factionDataEntry := dbGet 0 "FactionDataV2"}}
@@ -144,6 +144,7 @@
 		"permpants" "Pants"
 		"permhat" "Hats"
 		"permrtag" "RTag"
+		"permcrtag" "RTag"
 		"startergear" "StarterGear"
 		"permmaxhealth" "Health"
 	}}
@@ -153,6 +154,7 @@
 		"permpants"
 		"permhat"
 		"permrtag"
+		"permcrtag"
 		"startergear"
 		"permmaxhealth"
 	}}
@@ -163,6 +165,8 @@
 		{{if $value}}
 			{{if eq $key "permrtag"}}
 				{{$value = $value.Text}}
+			{{else if eq $key "permcrtag"}}
+				{{$value = $value.Colour}}
 			{{end}}
 			{{$morphParts = $morphParts.Append (printf "%s %s %v" $key $rblxName $value)}}
 		{{end}}
@@ -177,7 +181,7 @@
 			"components" (componentBuilder
 				"text" (printf "# Iota-4 Veilrunners Morph\n>>> **User:** @%s (%s)\n**Rank:** %s\n**Division:** %s\n**Echelon:** %s" $rblxName $targetMember.User.Mention $targetRank.Name $targetRank.Division $targetEchelon.Name)
 				"separator" true
-				"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $morphData.Health $morphData.StarterGear $morphData.RTag.Text)
+				"text" (printf "**Morph Type:** `%s`\n**Hats:** `%s`\n**Shirt:** `%d`\n**Pants:** `%d`\n**Health:** `%v`\n**Starter Gear:** `%s`\n\n**RTag:** `%s`\n**RTag Colour:** `%s`" $morphData.Morph $morphData.Hats $morphData.Shirt $morphData.Pants $morphData.Health $morphData.StarterGear $morphData.RTag.Text $morphData.RTag.Text)
 				"separator" true
 				"text" (printf "```%s```" $fullMorphViaRun)
 			)
