@@ -51,7 +51,7 @@
 					"components" (componentBuilder
 						"text" "# Deployment Still Active"
 						"separator" true
-						"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Link**: %s\n\nThis deployment has not been ended yet. Please press the **End** button once the training is complete." $db.ID (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID) (printf "https://discord.com/channels/1375370805575155782/1532346772578373864/%d" $db.DeployMsg)
+						"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Link**: %s\n\nThis deployment has not been ended yet. Please press the **End** button once the deployment is complete." $db.ID $db.Host.Roblox $db.Host.ID (printf "https://discord.com/channels/1375370805575155782/1532346772578373864/%d" $db.DeployMsg))
 					)
 				)
 			)}}
@@ -68,7 +68,7 @@
 					"components" (componentBuilder
 						"text" (printf "# Missing Deployment Outcome Report")
 						"separator" true
-						"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Link**: %s\n\nThe following users are waiting for the training outcome to be recorded:\n- %s" $db.ID (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID (printf "https://discord.com/channels/1375370805575155782/1532346772578373864/%d" $db.DeployMsg) (joinStr "\n-" $strConfirmed))
+						"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Link**: %s\n\nThe following users are waiting for the deployment outcome to be recorded:\n- %s" $db.ID $db.Host.Roblox $db.Host.ID (printf "https://discord.com/channels/1375370805575155782/1532346772578373864/%d" $db.DeployMsg) (joinStr "\n-" $strConfirmed))
 					)
 				)
 			)}}
@@ -162,7 +162,7 @@
 	{{if gt (len .CmdArgs) 2}}
 		{{$reason = joinStr " " (slice .CmdArgs 1)}}
 	{{end}}
-	{{if ne $db.Status 1}}
+	{{if eq $db.Status 3}}
 		{{sendMessage nil (printf "You are unable to cancel this deployment at it's current stage.")}}
 		{{return}}
 	{{end}}
@@ -201,17 +201,42 @@
 {{end}}
 
 {{if reFind `^-(?:e|emergency)-?` .Cmd}}
-	{{sendMessage nil (printf "Cmd=%q\nContent=%q\nTrigger=%q" .Cmd .Message.Content .CCTrigger)}}	{{$x := sendMessageRetID nil (componentBuilder
+	{{$reason := "(No reason provided)"}}
+	{{with .CmdArgs}}
+		{{$reason = joinStr " " (slice . 0)}}
+	{{end}}
+	{{$ID := dbIncr 0 "deploymentNotice" 1 | toInt}}
+	{{$x := sendMessageRetID nil (componentBuilder
 		"text" "Press the button below to start an emergency deployment."
 		"buttons" (cslice
 			(cbutton
 				"label" "Start Emergency Deployment"
-				"custom_id" "iota_deploymentStartEmergency"
+				"custom_id" (printf "iota_deploymentStartEmergency-%s" $ID)
 				"style" "danger"
 			)
 		)
 	)}}
-	{{scheduleUniqueCC .CCID nil  (toDuration "5m").Seconds "TimeoutStartEmergency" (sdict "MID" $x)}}
+	{{$dbData := sdict
+		"ID" $ID
+		"CCID" .CCID
+		"Host" (sdict "Roblox" (reReplace ` \|.*` .Member.Nick "") "ID" .User.ID)
+		"Time"  currentTime.Unix
+
+		"Confirmed" cslice
+
+		"Summary" ""
+		"Proof" ""
+		"Reason" $reason
+
+		"Logged" false
+		"Status" 1
+
+		"DeployMsg" 0
+
+		"MinConfirms" 0
+	}}
+	{{dbSetExpire $dbData.ID "deploymentData" $dbData (toInt (toDuration "14d").Seconds)}}
+	{{scheduleUniqueCC .CCID nil  (toDuration "10s").Seconds "TimeoutStartEmergency" (sdict "MID" $x  "Emergency" true)}}
 	{{return}}
 {{end}}
 
@@ -240,12 +265,12 @@
 		{{return}}
 	{{end}}
 {{end}}
-{{$ID := dbIncr 0 "trainingNotice" 1 | toInt}}
+{{$ID := dbIncr 0 "deploymentNotice" 1 | toInt}}
 
 {{$dbData := sdict
 	"ID" $ID
 	"CCID" .CCID
-	"Host" .Member
+	"Host" (sdict "Roblox" (reReplace ` \|.*` .Member.Nick "") "ID" .User.ID)
 	"Time"  (currentTime.Add (toDuration $duration)).Unix
 
 	"Confirmed" cslice
@@ -264,12 +289,14 @@
 {{$notificationContainer := (componentBuilder
 	"allowed_mentions" (sdict
 		"roles" (cslice 1375381774204665917)
+		"users" (cslice)
 	)
+	"text" "<@&1375381774204665917>"
 	"container" (sdict
 		"components" (componentBuilder
 			"text" "# Deployment Scheduled"
 			"separator" true
-			"text" (printf "> **ID**: #%d\n> **Host**: @%s (%s)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You cannot log this deployment if you have not PASSED a training for your role**.\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before if there are sufficient confirmations." $dbData.ID (reReplace ` \|.*` $dbData.Host.Nick "") $dbData.Host.User.Mention $dbData.Time $dbData.MinConfirms)
+			"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You cannot log this deployment if you have not PASSED a training for your role**.\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before if there are sufficient confirmations." $dbData.ID $dbData.Host.Roblox $dbData.Host.ID $dbData.Time $dbData.MinConfirms)
 			"buttons" (cslice
 				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_deploymentJoin-%d" $dbData.ID) "style" "success")
 				(cbutton "label" "Confirmed: 0" "custom_id" "iota_deploymentConfirm" "style" "secondary" "disabled" true)
