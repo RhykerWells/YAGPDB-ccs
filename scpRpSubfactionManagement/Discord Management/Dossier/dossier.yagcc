@@ -14,7 +14,7 @@
 	{{return}}
 {{end}}
 
-{{$factionData := dbGet 0 "FactionData"}}
+{{$factionData := dbGet 0 "FactionDataV2"}}
 {{if not $factionData}}
 	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
 	{{return}}
