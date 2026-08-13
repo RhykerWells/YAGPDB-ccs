@@ -199,12 +199,18 @@
 	{{sendMessage nil (printf "Missing required arguments\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
 	{{return}}
 {{end}}
-{{$targetRank := index .CmdArgs 0}}
-{{if not (in $availableRanks $targetRank)}}
+{{$targetRankName := index .CmdArgs 0}}
+{{if not (in $availableRanks $targetRankName)}}
 	{{sendMessage nil (printf "Invalid `Rank` argument.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
 	{{return}}
 {{end}}
-{{$targetRank = $rankLookup.Get $targetRank}}
+{{$targetRank := sdict}}
+{{range $coreRanks}}
+	{{$rank := $rankLookup.Get .}}
+	{{if and (eq $rank.ShortName $targetRankName) $rank.PromotionData}}
+		{{$targetRank = $rank}}
+	{{end}}
+{{end}}
 {{if not (gt (len .CmdArgs) 1)}}
 	{{sendMessage nil "No `Duration` argument provided.\n\n```training <Rank> <Duration> [Minimum Confirmations]```\nIn how long do you want to host the training (please be exact)?\nExample: `2h15m` - 2 hours 15 minutes\nMinimum duration is `10m`."}}
 	{{return}}
@@ -231,7 +237,6 @@
 	{{end}}
 {{end}}
 {{$ID := dbIncr 0 "trainingNotice" 1 | toInt}}
-
 {{$dbData := sdict
 	"ID" $ID
 	"CCID" .CCID
@@ -264,7 +269,7 @@
 		"components" (componentBuilder
 			"text" (printf "# %s Training" $targetRank.Name)
 			"separator" true
-			"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%s>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $dbData.ID (reReplace ` \|.*` $dbData.Host.Nick "") $dbData.Host.User.ID $dbData.Time $dbData.Rank.RoleID $dbData.MinConfirms)
+			"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $dbData.ID (reReplace ` \|.*` $dbData.Host.Nick "") $dbData.Host.User.ID $dbData.Time $dbData.Rank.RoleID $dbData.MinConfirms)
 			"buttons" (cslice
 				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_trainingJoin-%d" $dbData.ID) "style" "success")
 				(cbutton "label" "Confirmed: 0" "custom_id" "iota_trainingConfirm" "style" "secondary" "disabled" true)
