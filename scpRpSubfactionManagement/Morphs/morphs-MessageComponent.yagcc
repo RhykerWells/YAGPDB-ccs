@@ -28,6 +28,7 @@
 		{{end}}
 	{{end}}
 	{{if eq (len $memberRanks) 1}}
+		{{$targetRank = (index $memberRanks 0)}}
 		{{$morphContainer := execTemplate "getReturnMorphContainer" (sdict "TargetMember" $targetMember "RblxName" $rblxName "TargetRank" $targetRank "DB" $db)}}
 		{{try}}
 			{{sendTargetDM $targetMember.User.ID $morphContainer}}
