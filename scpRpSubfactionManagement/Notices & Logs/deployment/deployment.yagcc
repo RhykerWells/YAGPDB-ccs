@@ -68,7 +68,7 @@
 					"components" (componentBuilder
 						"text" (printf "# Missing Deployment Outcome Report")
 						"separator" true
-						"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Link**: %s\n\nThe following users are waiting for the deployment outcome to be recorded:\n- %s" $db.ID $db.Host.Roblox $db.Host.ID (printf "https://discord.com/channels/1375370805575155782/1532346772578373864/%d" $db.DeployMsg) (joinStr "\n-" $strConfirmed))
+						"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Link**: %s\n\nThe following users are waiting for the deployment outcome to be recorded:\n- %s" $db.ID $db.Host.Roblox $db.Host.ID (printf "https://discord.com/channels/1375370805575155782/1532346772578373864/%d" $db.DeployMsg) (joinStr "\n- " $strConfirmed))
 					)
 				)
 			)}}
