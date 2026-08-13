@@ -1,38 +1,37 @@
 {{/*
 		Made by ranger_4297 (765316548516380732)
 
-	Trigger Type: `Regex`
-	Trigger: `dossier|personnel`
+	Trigger Type: `Message Component`
+	Trigger: `\A(?i)iota_dossier`
+
+	Defer: None
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
 	Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 */}}
 
-{{$trigger := print `\A(?i)(?:\` .ServerPrefix `|<@!?` .BotUser.ID `>\*)(` .CCTrigger `)`}}
-{{if not (reFind $trigger .Message.Content)}}
-	{{return}}
-{{end}}
-
 {{$factionData := dbGet 0 "FactionDataV2"}}
 {{if not $factionData}}
-	{{sendMessage nil "FactionData not set up, please modify and run `-updateData`"}}
+	{{sendResponse nil (componentBuilder "text" "FactionData not set up, please modify and run `-setData`" "ephemeral" true)}}
 	{{return}}
 {{end}}
+{{$factionData = $factionData.Value}}
 
-{{$data := $factionData.Value}}
-{{$divisions := $data.Get "Divisions"}}
+{{$divisions := $factionData.Divisions}}
 
+{{$selectedShortName := index .Values 0}}
 {{$selectedDivision := ""}}
 
 {{range $division := $divisions}}
-    {{if eq $division.ShortName "Core"}}
-        {{$selectedDivision = $division}}
-    {{end}}
+	{{if eq $division.ShortName $selectedShortName}}
+		{{$selectedDivision = $division}}
+	{{end}}
 {{end}}
 
 {{if not $selectedDivision}}
-    {{$selectedDivision = index $divisions 0}}
+	{{sendResponse nil (componentBuilder "text" "Invalid division selected." "ephemeral" true)}}
+	{{return}}
 {{end}}
 
 {{$options := cslice}}
@@ -75,4 +74,4 @@
     "menus" $menu
 }}
 
-{{sendMessage nil $message}}
+{{updateMessage $message}}
