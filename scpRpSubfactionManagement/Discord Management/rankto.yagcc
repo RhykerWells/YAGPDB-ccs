@@ -48,14 +48,26 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 	{{sendMessage nil (printf "Invalid `Division` argument.\n\n```rankto <Division> <Rank> <User>```\nAvailable divisions: `%s`" (joinStr "`, `" $availableDivs))}}
 	{{return}}
 {{end}}
-{{$availableRanks := $ranksByDivision.Get $targetDivision}}
+{{$availableRankNames := cslice}}
+{{range $rankID := ($ranksByDivision.Get $targetDivision)}}
+	{{$rankData := $rankLookup.Get $rankID}}
+	{{$availableRankNames = $availableRankNames.Append $rankData.ShortName}}
+{{end}}
 {{if not (gt (len .CmdArgs) 1)}}
-	{{sendMessage nil (printf "No `Rank` argument provided.\n\n```rankto <Division> <Rank> <User>```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
+	{{sendMessage nil (printf "No `Rank` argument provided.\n\n```rankto <Division> <Rank> <User>```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRankNames))}}
 	{{return}}
 {{end}}
-{{$targetRank := index .CmdArgs 1}}
-{{if not (in $availableRanks $targetRank)}}
-	{{sendMessage nil (printf "Invalid `Rank` argument.\n\n```rankto <Division> <Rank> <User>```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRanks))}}
+{{$targetRankName := index .CmdArgs 1}}
+{{$targetRankID := ""}}
+{{range $rankID := ($ranksByDivision.Get $targetDivision)}}
+	{{$rankData := $rankLookup.Get $rankID}}
+	{{if eq $rankData.ShortName $targetRankName}}
+		{{$targetRankID = $rankData.ID}}
+		{{break}}
+	{{end}}
+{{end}}
+{{if not $targetRankID}}
+	{{sendMessage nil (printf "Invalid `Rank` argument.\n\n```rankto <Division> <Rank> <User>```\nAvailable ranks: `%s`" (joinStr "`, `" $availableRankNames))}}
 	{{return}}
 {{end}}
 {{if not (gt (len .CmdArgs) 2)}}
@@ -119,7 +131,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
     {{end}}
 {{end}}
 
-{{$rank := $rankLookup.Get $targetRank}}
+{{$rank := $rankLookup.Get $rank.ID}}
 {{$echelon := $echelonLookup.Get $rank.Echelon}}
 
 {{giveRoleID $targetMember.User.ID $division.RoleID}}
