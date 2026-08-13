@@ -148,7 +148,7 @@
 	{{if gt (len .CmdArgs) 2}}
 		{{$reason = joinStr " " (slice .CmdArgs 1)}}
 	{{end}}
-	{{if ne $db.Status 1}}
+	{{if eq $db.Status 3}}
 		{{sendMessage nil (printf "You are unable to cancel this training at it's current stage.")}}
 		{{return}}
 	{{end}}
