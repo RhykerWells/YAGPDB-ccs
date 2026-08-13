@@ -268,16 +268,19 @@ This ordering is used when generating database data.
 					"Name" "Veer Executor"
 					"ShortName" "Executor"
 					"RoleID" 1461894911807852707
+					"DisplayID" 1536097521372241941
 				)
 				(sdict
 					"Name" "Veer Striker"
 					"ShortName" "Striker"
 					"RoleID" 1461894885794648218
+					"DisplayID" 1536097504905527407
 				)
 				(sdict
 					"Name" "Veer Threader"
 					"ShortName" "Threader"
-					"RoleID" 1375436353202032660
+					"RoleID" 1536097521372241941
+					"DisplayID" 1536097474056290314
 				)
 			)
 		)
