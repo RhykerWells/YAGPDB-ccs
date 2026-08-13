@@ -32,7 +32,7 @@
 					"text" "# Deployment Completed"
 					"button" (cbutton
 						"label" "Deployment Log Closed"
-						"custom_id" "deployment_log_closed"
+						"custom_id" "iota_deploymentLogClosed"
 						"style" "secondary"
 						"disabled" true
 					)
