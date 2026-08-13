@@ -250,7 +250,7 @@
 
 {{if reFind `End` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
-	{{if ne $db.Host.User.ID .User.ID}}
+	{{if ne $db.Host.ID .User.ID}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
 		{{return}}
