@@ -1,0 +1,25 @@
+== Discord Functions
+func getMembers()
+	Returns a slice of member objects of users in the guild
+
+func sendTargetDM(userID)
+	Sends the target a DM
+
+func sendTargetDMRetID(userID)
+	Sends the target a DM and returns the messageID
+
+func cfileUpload(opts...)
+	Creates a file upload components
+
+== Roblox Functions
+func getRobloxGroupByID(groupID)
+	Returns the full Roblox group object specified by the arguments.
+
+func getRobloxUserByID(userID)
+	Returns the full Roblox user object specified by the arguments.
+
+func getRobloxUserByUsername(username)
+	Returns the full Roblox user object specified by the arguments.
+
+func updateMemberRole(groupID, memberID, roleID)
+	Updates & returns the members role
