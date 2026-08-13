@@ -2,7 +2,7 @@
 		Made by ranger_4297 (765316548516380732)
 
 	Trigger Type: `Regex`
-	Trigger: `((e(mergency)?|c(ancel)?)-?)?dep(o|loyment)`
+	Trigger: `((e(mergency)?|c(ancel)?)-?)?dep(o|loy(ment)?)`
 
 	©️ RhykerWells 2020-Present
 	GNU, GPLV3 License
