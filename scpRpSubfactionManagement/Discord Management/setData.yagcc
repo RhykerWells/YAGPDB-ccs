@@ -279,7 +279,7 @@ This ordering is used when generating database data.
 				(sdict
 					"Name" "Veer Threader"
 					"ShortName" "Threader"
-					"RoleID" 1536097521372241941
+					"RoleID" 1375436353202032660
 					"DisplayID" 1536097474056290314
 				)
 			)
@@ -338,6 +338,7 @@ This ordering is used when generating database data.
 					"MorphData" (sdict
 						"StarterGear" "shield"
 					)
+					"DisallowSelfDeployments" true
 				)
 				(sdict
 					"Name" "Rift Chaser"
@@ -348,6 +349,7 @@ This ordering is used when generating database data.
 						"DeploymentsRequired" 2
 						"NextRankID" "FA:Operative"
 					)
+					"DisallowSelfDeployments" true
 				)
 				(sdict
 					"Name" "Riftling"
@@ -358,6 +360,7 @@ This ordering is used when generating database data.
 						"DeploymentsRequired" 1
 						"NextRankID" "FA:Chaser"
 					)
+					"DisallowSelfDeployments" true
 				)
 			)
 		)
@@ -815,6 +818,7 @@ This ordering is used when generating database data.
 				"Echelon" $echelon.ShortName
 				"MorphData" $finalMorph
 				"PromotionData" $promotionData
+				"DisallowSelfDeployments" (or $rank.DisallowSelfDeployments false)
 			}}
 
 			{{/* Rank lookup */}}
