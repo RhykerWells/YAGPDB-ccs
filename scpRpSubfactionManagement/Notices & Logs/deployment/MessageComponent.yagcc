@@ -466,7 +466,7 @@
 						"button" (cbutton "label" "Submit Deployment Log" "custom_id" (printf "iota_deploymentLogSubmit-%d" $db.ID) "style" "success")
 					)
 					"separator" true
-					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above." $db.ID (reReplace $factionData.Settings.NicknameRegex $db.Host.Nick "") $db.Host.User.ID $db.Time)
+					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above." $db.ID $db.Host.Roblox $db.Host.ID $db.Time)
 				)
 			)
 		}}
