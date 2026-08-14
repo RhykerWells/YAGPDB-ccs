@@ -416,7 +416,7 @@
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{else if reFind `Edit` .StrippedID}}
 		{{if reFind `ProofEdit` .StrippedID}}
-			{{if ne $db.User.ID .User.ID}}
+			{{if ne $db.Host.ID .User.ID}}
 				{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
 				{{deleteInteractionResponse .Interaction.Token $x}}
 				{{return}}
@@ -446,7 +446,7 @@
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{else}}
 		{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
-		{{if ne $db.User.ID .User.ID}}
+		{{if ne $db.Host.ID .User.ID}}
 			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
 			{{deleteInteractionResponse .Interaction.Token $x}}
 			{{return}}
