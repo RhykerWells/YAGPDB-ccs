@@ -46,6 +46,118 @@
 	{{return}}
 {{end}}
 
+{{if reFind `SelfLog` .StrippedID}}
+    {{if reFind `Submit` .StrippedID}}
+		{{$memberRanks := cslice}}
+		{{$memberDeployedAs := sdict}}
+		{{range $factionData.AllRanks}}
+			{{if hasRoleID .RoleID}}
+				{{$memberRanks = $memberRanks.Append .}}
+			{{end}}
+		{{end}}
+
+		{{if eq (len $memberRanks) 1}}
+			{{$memberDeployedAs = (index $memberRanks 0)}}
+		{{else if gt (len $memberRanks) 1}}
+			{{if reFind `SelectRank` .StrippedID}}
+				{{$v := .Values}}
+				{{range $memberRanks}}
+					{{if eq .RoleID (index $v 0 | toInt)}}
+						{{$memberDeployedAs = .}}
+						{{break}}
+					{{end}}
+				{{end}}
+			{{else}}
+				{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
+				{{$options := cslice}}
+				{{range $memberRanks}}
+					{{if hasRoleID .RoleID}}
+						{{$division := $factionData.DivisionLookup.Get .Division}}
+						{{$options = $options.Append (sdict
+							"label" .Name
+							"value" (printf "%d" .RoleID)
+							"description" (printf "Submit deployment log (%s)" $division.Name)
+						)}}
+					{{end}}
+				{{end}}
+				{{$menu := cmenu
+					"type" "text"
+					"placeholder" "Select which rank to submit this deployment for"
+					"custom_id" (printf "iota_deploymentSubmitSelfLogSelectRank")
+					"options" $options
+					"min_values" 1
+					"max_values" 1
+				}}
+
+				{{$container := componentBuilder
+					"container" (sdict
+						"components" (componentBuilder
+							"text" "# Deployment Log"
+							"separator" true
+							"text" "You have multiple eligible ranks. Please choose which one this deployment was for."
+							"menus" $menu
+						)
+					)
+				}}
+
+				{{editResponse .Interaction.Token $x $container}}
+				{{deleteInteractionResponse .Interaction.Token $x}}
+				{{return}}
+			{{end}}
+		{{else}}
+			{{$memberDeployedAs = (index $memberRanks 0)}}
+		{{end}}
+
+		{{$trainingDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $memberDeployedAs.RoleID)}}
+		{{if and $memberDeployedAs.PromotionData (not $trainingDB)}}
+			{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot submit a log for this rank as you have not completed the required training" "ephemeral" true)}}
+			{{deleteInteractionResponse .Interaction.Token $x}}
+			{{return}}
+		{{end}}
+
+		{{$dutiesLabel := clabel
+			"label" "Primary Duties"
+			"description" "What duties did you perform during this deployment?"
+			"component" (ctextInput
+				"custom_id" "deploymentDutiesInput"
+				"style" 2
+				"min_length" 30
+				"max_length" 300
+				"placeholder" "e.g. Patrolled designated sectors, responded to player requests, assisted with traffic control..."
+				"required" true
+			)
+		}}
+
+		{{$incidentLabel := clabel
+			"label" "Most Significant Incident"
+			"description" "Describe the most significant incident you dealt with. If nothing notable occurred, enter 'None'."
+			"component" (ctextInput
+				"custom_id" "deploymentIncidentInput"
+				"style" 2
+				"min_length" 4
+				"max_length" 300
+				"placeholder" "Describe the most notable event from your deployment."
+				"required" true
+			)
+		}}
+
+		{{$proofLabel := clabel
+			"label" "Proof"
+			"description" "Screenshot of deployment"
+			"component" (cfileUpload
+				"custom_id" "deploymentProofInput"
+				"required" true
+				"file_types" (cslice "image")
+			)
+		}}
+
+		{{$modal := modalBuilder (printf "iota_deploymentSubmitLogSelf-%d" $memberDeployedAs.RoleID) "Iota-4 | Self Deployment Log Form" $dutiesLabel $incidentLabel $proofLabel}}
+
+		{{sendModal $modal}}
+    {{return}}
+	{{end}}
+{{end}}
+
 {{if reFind `Promotion` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
 	{{$parts := split .StrippedID "-"}}
@@ -54,7 +166,7 @@
 	{{$userData := or (dbGet $userID "deploymentData").Value (sdict "Logs" cslice "LogsByRank" dict)}}
 	{{$member := getMember $userID}}
 	{{$threads := (dbGet 0 "deploymentLogThreads").Value}}
-	{{$memberRobloxUsername := (reReplace ` \|.*` $member.Nick "")}}
+	{{$memberRobloxUsername := (reReplace $factionData.Settings.NicknameRegex $member.Nick "")}}
 	{{$logChannel := $threads.Get $memberRobloxUsername}}
 
 	{{range $factionData.AllRanks}}
@@ -126,7 +238,7 @@
 				)
 				"text" (printf "## Logs at current rank\n%s" (joinStr "\n" $links))
 				"separator" false
-				"text" (printf "%s by @%s (%s)" $action (reReplace ` \|.*` .Member.Nick "") .User.Mention)
+				"text" (printf "%s by @%s (%s)" $action (reReplace $factionData.Settings.NicknameRegex .Member.Nick "") .User.Mention)
 			)
 		)
 	)}}
@@ -280,7 +392,7 @@
 {{if reFind `Outcome` .StrippedID}}
 	{{if reFind `Manage` .StrippedID}}
 		{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
-		{{if ne $db.Host.User.ID .User.ID}}
+		{{if ne $db.Host.ID .User.ID}}
 			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
 			{{deleteInteractionResponse .Interaction.Token $x}}
 			{{return}}
@@ -304,7 +416,7 @@
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{else if reFind `Edit` .StrippedID}}
 		{{if reFind `ProofEdit` .StrippedID}}
-			{{if ne $db.Host.User.ID .User.ID}}
+			{{if ne $db.User.ID .User.ID}}
 				{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
 				{{deleteInteractionResponse .Interaction.Token $x}}
 				{{return}}
@@ -334,7 +446,7 @@
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{else}}
 		{{$x := sendResponseRetID nil (componentBuilder "text" "Loading... " "ephemeral" true)}}
-		{{if ne $db.Host.User.ID .User.ID}}
+		{{if ne $db.User.ID .User.ID}}
 			{{editResponse .Interaction.Token $x (componentBuilder "text" "You cannot end this deployment as you are not the host." "ephemeral" true)}}
 			{{deleteInteractionResponse .Interaction.Token $x}}
 			{{return}}
@@ -354,7 +466,7 @@
 						"button" (cbutton "label" "Submit Deployment Log" "custom_id" (printf "iota_deploymentLogSubmit-%d" $db.ID) "style" "success")
 					)
 					"separator" true
-					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above." $db.ID (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID $db.Time)
+					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above." $db.ID (reReplace $factionData.Settings.NicknameRegex $db.Host.Nick "") $db.Host.User.ID $db.Time)
 				)
 			)
 		}}

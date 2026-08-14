@@ -24,7 +24,8 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 {{end}}
 {{$entry := dbGet $deploymentID "deploymentData"}}
 {{$db := $entry.Value}}
-{{if not $db}}
+{{$self := (reFind `Self` .StrippedID)}}
+{{if and (not $self) (not $db)}}
 	{{sendResponse nil (componentBuilder "text" "Something went wrong" "ephemeral" true)}}
 	{{return}}
 {{end}}
@@ -46,16 +47,29 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 {{if reFind `SubmitLog` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
 	{{$logID := dbIncr 0 "NewDlog" 1 | toInt}}
+	{{if $self}}
+		{{$db = (sdict
+			"Sessions" 0
+			"User" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick ""))
+			"Host" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick ""))
+		)}}
+		{{range $_, $v := .InteractionData.Resolved.Attachments}}
+			{{$url := reReplace "\u0026" $v.URL "&"}}
+			{{$db.Set "Proof" $url}}
+			{{break}}
+		{{end}}
+	{{end}}
 	{{$deploymentLog := sdict
 		"ID" $logID
 		"Session" $db.ID
 		"MsgID" 0
-		"User" (sdict "ID" .User.ID "RobloxName" (reReplace ` \|.*` .Member.Nick ""))
-		"Host" (sdict "ID" $db.Host.User.ID "RobloxName" (reReplace ` \|.*` $db.Host.Nick ""))
+		"User" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Settings.NicknameRegex .Member.Nick ""))
+		"Host" (sdict "ID" $db.Host.ID "RobloxName" $db.Host.Roblox)
 		"DeployedAs" $deployedAsRoleID
 		"Duties" .ModalValues.deploymentDutiesInput.value
 		"Incident" .ModalValues.deploymentIncidentInput.value
 		"Proof" $db.Proof
+		"Official" (not $self)
 	}}
 	{{$threads := (dbGet 0 "deploymentLogThreads").Value}}
 	{{if not $threads}}
@@ -74,21 +88,52 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 		{{$threads.Set $deploymentLog.User.RobloxName $logChannel}}
 		{{dbSet 0 "deploymentLogThreads" $threads}}
 	{{end}}
-	{{$logContainer := (componentBuilder
-		"allowed_mentions" (sdict "users" cslice)
-		"container" (sdict
-			"color" 0x4b9a4e
-			"components" (componentBuilder
-				"text" (printf "# Deployment Log #%d" $deploymentLog.ID)
-				"separator" true
-				"text" (printf "> **User**: @%s (<@%d>)\n> **Deployment Rank**: <@&%d>\n> **Deployment Host**: @%s (<@%d>)\n> **Duties**: %s\n> **Incident(s)**: %s" $deploymentLog.User.RobloxName $deploymentLog.User.ID $deploymentLog.DeployedAs $deploymentLog.Host.RobloxName $deploymentLog.Host.ID $deploymentLog.Duties $deploymentLog.Incident)
-				"separator" false
-				"gallery" (cslice
-					(sdict "media" (or $deploymentLog.Proof "https://iota-4.org/missingProof.png"))
+	{{$logContainer := false}}
+	{{if $self}}
+		{{$logContainer = (componentBuilder
+			"allowed_mentions" (sdict
+				"parse" cslice
+			)
+			"container" (sdict
+				"accent_color" 0x4b9a4e
+				"components" (componentBuilder
+					"text" (printf "# Self Deployment Log #%d" $deploymentLog.ID)
+					"separator" true
+					"text" (printf
+						"**Self Deployment**\n\n**User**\n%s (<@%d>)\n\n**Deployment Rank**\n<@&%d>\n\n**Duties**\n%s\n\n**Incident(s)**\n%s" $deploymentLog.User.RobloxName $deploymentLog.User.ID $deploymentLog.DeployedAs $deploymentLog.Duties $deploymentLog.Incident
+					)
+					"separator" false
+					"gallery" (cslice
+						(sdict
+							"media" (or $deploymentLog.Proof "https://iota-4.org/missingProof.png")
+						)
+					)
 				)
 			)
-		)
-	)}}
+		)}}
+	{{else}}
+		{{$logContainer = (componentBuilder
+			"allowed_mentions" (sdict
+				"parse" cslice
+			)
+			"container" (sdict
+				"accent_color" 0x4b9a4e
+				"components" (componentBuilder
+					"text" (printf "# Deployment Log #%d" $deploymentLog.ID)
+					"separator" true
+					"text" (printf
+						"**User**\n%s (<@%d>)\n\n**Deployment Rank**\n<@&%d>\n\n**Deployment Host**\n%s (<@%d>)\n\n**Duties**\n%s\n\n**Incident(s)**\n%s" $deploymentLog.User.RobloxName $deploymentLog.User.ID $deploymentLog.DeployedAs $deploymentLog.Host.RobloxName $deploymentLog.Host.ID $deploymentLog.Duties $deploymentLog.Incident
+					)
+					"separator" false
+					"gallery" (cslice
+						(sdict
+							"media" (or $deploymentLog.Proof "https://iota-4.org/missingProof.png")
+						)
+					)
+				)
+			)
+		)}}
+	{{end}}
 	{{$dLogID := sendMessageRetID $logChannel $logContainer}}
 	{{$deploymentLog.Set "MsgID" $dLogID}}
 	{{$userData := or (dbGet $deploymentLog.User.ID "deploymentData").Value (sdict "Logs" cslice "LogsByRank" dict)}}
@@ -116,22 +161,32 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 		{{return}}
 	{{end}}
 
-	{{$rankLogs := or (.UserData.LogsByRank.Get $currentRank.RoleID) cslice}}
-	{{if lt (len $rankLogs) $currentRank.PromotionData.DeploymentsRequired}}
+	{{$rankLogIDs := or (.UserData.LogsByRank.Get $currentRank.RoleID) cslice}}
+
+	{{/* Only count official deployment logs */}}
+	{{$rankLogs := cslice}}
+	{{$officialRankLogs := cslice}}
+	{{range $rankLogIDs}}
+		{{$logID := .}}
+		{{range $.UserData.Logs}}
+			{{$rankLogs = $rankLogs.Append .}}
+			{{if and (eq .ID $logID) .Official}}
+				{{$officialRankLogs = $officialRankLogs.Append .}}
+				{{break}}
+			{{end}}
+		{{end}}
+	{{end}}
+
+	{{/* Check official deployment requirement */}}
+	{{if lt (len $officialRankLogs) $currentRank.PromotionData.DeploymentsRequired}}
 		{{return}}
 	{{end}}
 
 	{{$nextRank := .FactionData.RankLookup.Get $currentRank.PromotionData.NextRankID}}
 
 	{{$links := cslice}}
-	{{range $rankLogs}}
-		{{$logID := .}}
-		{{range $.UserData.Logs}}
-			{{if eq .ID $logID}}
-				{{$links = $links.Append (printf "- [#%d](https://discord.com/channels/%d/%d/%d)" .ID .GuildID $.LogChannel .MsgID)}}
-				{{break}}
-			{{end}}
-		{{end}}
+	{{range $officialRankLogs}}
+		{{$links = $links.Append (printf "- [#%d](https://discord.com/channels/%d/%d/%d)" .ID $.GuildID $.LogChannel .MsgID)}}
 	{{end}}
 
 	{{$promotionContainer := (componentBuilder
@@ -147,7 +202,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 						"media" ($member.User.AvatarURL "1024")
 					)
 				)
-				"text" (printf "## Logs at current rank\n%s" (joinStr "\n" $links))
+				"text" (printf "## Eligible Deployments\n%s" (joinStr "\n" $links))
 				"buttons" (cslice
 					(cbutton "label" "Confirm promotion" "custom_id" (printf "iota_deploymentsPromotionConfirm-%d-%d" $member.User.ID $currentRank.RoleID) "style" "success")
 					(cbutton "label" "Deny promotion" "custom_id" (printf "iota_deploymentsPromotionDeny-%d-%d" $member.User.ID $currentRank.RoleID) "style" "danger")
