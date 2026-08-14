@@ -95,7 +95,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 				"parse" cslice
 			)
 			"container" (sdict
-				"accent_color" 0x4b9a4e
+				"color" 0x4b9a4e
 				"components" (componentBuilder
 					"text" (printf "# Self Deployment Log #%d" $deploymentLog.ID)
 					"separator" true
@@ -117,7 +117,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 				"parse" cslice
 			)
 			"container" (sdict
-				"accent_color" 0x4b9a4e
+				"color" 0x4b9a4e
 				"components" (componentBuilder
 					"text" (printf "# Deployment Log #%d" $deploymentLog.ID)
 					"separator" true
