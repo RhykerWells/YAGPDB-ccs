@@ -131,7 +131,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
     {{end}}
 {{end}}
 
-{{$rank := $rankLookup.Get $rank.ID}}
+{{$rank := $rankLookup.Get $targetRankID}}
 {{$echelon := $echelonLookup.Get $rank.Echelon}}
 
 {{giveRoleID $targetMember.User.ID $division.RoleID}}
