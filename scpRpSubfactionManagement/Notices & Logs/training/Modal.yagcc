@@ -68,8 +68,8 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 	{{$trainingLog := sdict
 		"ID" 0
 		"MsgID" 0
-		"User" (sdict "ID" .User.ID "RobloxName" (reReplace ` \|.*` .Member.Nick ""))
-		"Host" (sdict "ID" $db.Host.User.ID "RobloxName" (reReplace ` \|.*` $db.Host.Nick ""))
+		"User" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick ""))
+		"Host" (sdict "ID" $db.Host.User.ID "RobloxName" (reReplace $factionData.Value.Settings.NicknameRegex $db.Host.Nick ""))
 		"Type" $db.Rank.RoleID
 		"Approval" ""
 		"Confidence" $confidence

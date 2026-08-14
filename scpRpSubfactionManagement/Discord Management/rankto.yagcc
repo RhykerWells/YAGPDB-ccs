@@ -157,7 +157,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs
 				)
 			)
 			"separator" false
-			"text" (printf "Updated by @%s (%s)" (reReplace ` \|.*` .Member.Nick "") .User.Mention)
+			"text" (printf "Updated by @%s (%s)" (reReplace $data.Settings.NicknameRegex .Member.Nick "") .User.Mention)
 		)
 	)
 )}}

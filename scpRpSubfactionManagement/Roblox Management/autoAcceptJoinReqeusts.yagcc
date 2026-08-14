@@ -33,7 +33,7 @@
     {{return}}
 {{end}}
 
-{{$rblxName := reReplace $db.NicknameRegex .Nick ""}}
+{{$rblxName := reReplace $db.Settings.NicknameRegex .Nick ""}}
 {{$memberRequest := false}}
 {{range $requests}}
     {{if eq .Username $rblxName}}

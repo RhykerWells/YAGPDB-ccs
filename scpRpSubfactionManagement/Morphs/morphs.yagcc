@@ -57,7 +57,7 @@
 	{{end}}
 	{{$targetMember = getMember $target}}
 {{end}}
-{{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
+{{$rblxName := reReplace $db.Settings.NicknameRegex $targetMember.Nick ""}}
 
 {{$memberRanks := cslice}}
 {{$targetRank := sdict}}

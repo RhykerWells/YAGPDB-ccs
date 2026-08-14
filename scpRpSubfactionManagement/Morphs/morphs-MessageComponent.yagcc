@@ -19,7 +19,7 @@
 {{if reFind `GetMorph` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
 	{{$targetMember := .Member}}
-	{{$rblxName := reReplace ` \|.*` $targetMember.Nick ""}}
+	{{$rblxName := reReplace $db.Settings.NicknameRegex $targetMember.Nick ""}}
 	{{$memberRanks := cslice}}
 	{{$targetRank := sdict}}
 	{{range $db.AllRanks}}
@@ -75,7 +75,7 @@
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
 	{{$memberID := reFind `\d+` .StrippedID}}
 	{{$targetMember := getMember $memberID}}
-	{{$rblxName := (reReplace ` \|.*` $targetMember.Nick "")}}
+	{{$rblxName := (reReplace $db.Settings.NicknameRegex $targetMember.Nick "")}}
 	{{$memberRanks := cslice}}
 	{{$targetRank := sdict}}
 	{{range $db.AllRanks}}

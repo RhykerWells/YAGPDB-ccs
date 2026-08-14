@@ -219,7 +219,7 @@
 	{{$dbData := sdict
 		"ID" $ID
 		"CCID" .CCID
-		"Host" (sdict "Roblox" (reReplace ` \|.*` .Member.Nick "") "ID" .User.ID)
+		"Host" (sdict "Roblox" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick "") "ID" .User.ID)
 		"Time"  currentTime.Unix
 
 		"Confirmed" cslice
@@ -270,7 +270,7 @@
 {{$dbData := sdict
 	"ID" $ID
 	"CCID" .CCID
-	"Host" (sdict "Roblox" (reReplace ` \|.*` .Member.Nick "") "ID" .User.ID)
+	"Host" (sdict "Roblox" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick "") "ID" .User.ID)
 	"Time"  (currentTime.Add (toDuration $duration)).Unix
 
 	"Confirmed" cslice

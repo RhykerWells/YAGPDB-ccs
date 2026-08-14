@@ -38,7 +38,7 @@
                     )
                 )
                 "separator" true
-                "text" (printf "> **Host**: @%s <@%d>\n\nThe training log submission period has ended." (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID)
+                "text" (printf "> **Host**: @%s <@%d>\n\nThe training log submission period has ended." (reReplace $factionData.Value.Settings.NicknameRegex $db.Host.Nick "") $db.Host.User.ID)
             )
         )
     }}
@@ -124,7 +124,7 @@
 					(sdict "media" (or $db.Proof "https://iota-4.org/missingProof.png"))
 				)
 				"separator" false
-				"text" (printf "%s by @%s (%s)" $type (reReplace ` \|.*` .Member.Nick "") .User.Mention)
+				"text" (printf "%s by @%s (%s)" $type (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick "") .User.Mention)
 			)
 		)
 	)}}
@@ -193,7 +193,7 @@
 			"components" (componentBuilder
 				"text" (printf "# %s Training" $db.Rank.Name)
 				"separator" true
-				"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $db.ID (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID $db.Time $db.Rank.RoleID $db.MinConfirms)
+				"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You do not need to attend if you have PASSED a <@&%d> training**\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before with the server name if there are sufficient confirmations." $db.ID (reReplace $factionData.Value.Settings.NicknameRegex $db.Host.Nick "") $db.Host.User.ID $db.Time $db.Rank.RoleID $db.MinConfirms)
 				"buttons" (cslice
 					(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_trainingJoin-%d" $db.ID) "style" "success")
 					(cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed))) "custom_id" "iota_trainingConfirm" "style" "secondary" "disabled" true)
@@ -271,7 +271,7 @@
 			{{$confirmedUsersSlice := cslice}}
 			{{range $db.Confirmed}}
 				{{$member := getMember .}}
-				{{$rblxName := reReplace ` \|.*` $member.Nick ""}}
+				{{$rblxName := reReplace $factionData.Value.Settings.NicknameRegex $member.Nick ""}}
 				{{$selected := false}}{{if in $db.Attended $member.User.ID}}{{$selected = true}}{{end}}
 				{{$confirmedUsersSlice = $confirmedUsersSlice.Append (sdict "value" (str $member.User.ID) "label" $rblxName "default" $selected)}}
 			{{end}}
@@ -293,7 +293,7 @@
 			{{$confirmedUsersSlice := cslice}}
 			{{range $db.Attended}}
 				{{$member := getMember .}}
-				{{$rblxName := reReplace ` \|.*` $member.Nick ""}}
+				{{$rblxName := reReplace $factionData.Value.Settings.NicknameRegex $member.Nick ""}}
 				{{$selected := false}}{{if in $db.Passed $member.User.ID}}{{$selected = true}}{{end}}
 				{{$confirmedUsersSlice = $confirmedUsersSlice.Append (sdict "value" (str $member.User.ID) "label" $rblxName "default" $selected)}}
 			{{end}}
@@ -355,7 +355,7 @@
 						"button" (cbutton "label" "Submit Training Log" "custom_id" (printf "iota_trainingLogSubmit-%d" $db.ID) "style" "success")
 					)
 					"separator" true
-					"text" (printf "> **Host**: @%s (<@%d>)\n\nAttendees may now submit their training logs using the button above." (reReplace ` \|.*` $db.Host.Nick "") $db.Host.User.ID)
+					"text" (printf "> **Host**: @%s (<@%d>)\n\nAttendees may now submit their training logs using the button above." (reReplace $factionData.Value.Settings.NicknameRegex $db.Host.Nick "") $db.Host.User.ID)
 				)
 			)
 		}}
