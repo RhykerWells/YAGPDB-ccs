@@ -21,12 +21,15 @@
 {{end}}
 
 {{with .ExecData}}
-	{{$db := 0}}
+	{{$db := false}}
 	{{$strConfirmed := cslice}}
 	{{if .Notice}}
-		{{$db = (dbGet (toInt .Notice) "deploymentData").Value}}
-		{{range $db.Confirmed}}
-			{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
+		{{$dbEntry := (dbGet (toInt .Notice) "deploymentData")}}
+		{{if $dbEntry}}
+			{{$db = $dbEntry.Value}}
+			{{range $db.Confirmed}}
+				{{$strConfirmed = $strConfirmed.Append (printf "<@%d>" .)}}
+			{{end}}
 		{{end}}
 	{{end}}
 	{{if .MID}}
@@ -43,6 +46,10 @@
 		)}}
 		{{return}}
 	{{end}}
+	{{if not $db}}
+		{{sendMessage 1384154677951856730 (printf "Issue somewhere??\n\n%v" .)}}
+		{{return}}
+	{{end}}
 	{{if .ActiveCheck}}
 		{{if eq $db.Status 2}}
 			{{$notificationContainer := (componentBuilder
@@ -56,7 +63,7 @@
 				)
 			)}}
 			{{sendMessageNoEscape 1532358370433171628 $notificationContainer}}
-			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) (printf "ActiveCheck-%d" .Notice) (sdict "Notice" .Notice "ActiveCheck" true)}}
+			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) (printf "ActiveCheck-%d" $db.ID) (sdict "Notice" .Notice "ActiveCheck" true)}}
 		{{end}}
 		{{return}}
 	{{end}}
@@ -73,7 +80,7 @@
 				)
 			)}}
 			{{sendMessage 1532358370433171628 $notificationContainer}}
-			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "2h").Seconds) (printf "MissingLog-%d" .Notice) (sdict "Notice" .Notice "MissingLog" true)}}
+			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "2h").Seconds) (printf "MissingLog-%d" .Notice) (sdict "Notice" $db.ID "MissingLog" true)}}
 		{{end}}
 		{{return}}
 	{{end}}
@@ -91,55 +98,57 @@
 			"disabled" true
 		)
 	}}
-	{{if lt (len $strConfirmed) $db.MinConfirms}}
-		{{$cancelledContainer := componentBuilder
+	{{if not $db.Emergency}}
+		{{if lt (len $strConfirmed) $db.MinConfirms}}
+			{{$cancelledContainer := componentBuilder
+				"container" (sdict
+					"color" 0xFF0000
+					"components" (componentBuilder
+						"text" "# Deployment Cancelled"
+						"separator" true
+						"text" "Insufficient confirmations were received within the required timeframe."
+						"buttons" $buttonState
+					)
+				)
+			}}
+			{{dbDel $db.ID "deploymentData"}}
+			{{editMessage 1532346772578373864 $db.DeployMsg $cancelledContainer}}
+			{{$confirmedUsers := ""}}
+			{{if gt (len $strConfirmed) 0}}
+				{{$confirmedUsers = printf "\n\nThe following users confirmed the deployment:\n%s" (joinStr "\n" $strConfirmed)}}
+			{{end}}
+			{{sendMessage nil (componentBuilder "allowed_mentions" (sdict "users" (cslice)) "text" (printf "Insufficient confirmations within the time frame for the deployment.%s" $confirmedUsers))}}
+			{{return}}
+		{{end}}
+		{{$successContainer := componentBuilder
 			"container" (sdict
-				"color" 0xFF0000
+				"color" 0x4b9a4e
 				"components" (componentBuilder
-					"text" "# Deployment Cancelled"
+					"section" (sdict
+						"text" "# Deployment"
+						"button" (cbutton "label" "End" "custom_id" (printf "iota_deploymentEnd-%d" $db.ID) "style" "primary")
+					)
 					"separator" true
-					"text" "Insufficient confirmations were received within the required timeframe."
-					"buttons" $buttonState
+					"text" (printf "The deployment has enough confirmations and will proceed.\n\nThe host will provide the server name shortly.")
 				)
 			)
 		}}
-		{{dbDel $db.ID "deploymentData"}}
-		{{editMessage 1532346772578373864 $db.DeployMsg $cancelledContainer}}
-		{{$confirmedUsers := ""}}
-		{{if gt (len $strConfirmed) 0}}
-			{{$confirmedUsers = printf "\n\nThe following users confirmed the deployment:\n%s" (joinStr "\n" $strConfirmed)}}
-		{{end}}
-		{{sendMessage nil (componentBuilder "allowed_mentions" (sdict "users" (cslice)) "text" (printf "Insufficient confirmations within the time frame for the deployment.%s" $confirmedUsers))}}
+		{{editMessage 1532346772578373864 $db.DeployMsg $successContainer}}
+		{{$successContainer2 := componentBuilder
+			"reply" $db.DeployMsg
+			"container" (sdict
+				"components" (componentBuilder
+					"text" (joinStr ", " $strConfirmed)
+				)
+			)
+		}}
+		{{$db.Set "Status" 2}}
+		{{dbSet $db.ID "deploymentData" $db}}
+		{{$x := sendMessageNoEscapeRetID 1532346772578373864 $successContainer2}}
+		{{deleteMessage 1532346772578373864 $x (toInt (toDuration "5m").Seconds)}}
+		{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) (printf "ActiveCheck-%d" .Notice) (sdict "Notice" .Notice "ActiveCheck" true)}}
 		{{return}}
 	{{end}}
-	{{$successContainer := componentBuilder
-		"container" (sdict
-			"color" 0x4b9a4e
-			"components" (componentBuilder
-				"section" (sdict
-					"text" "# Deployment"
-					"button" (cbutton "label" "End" "custom_id" (printf "iota_deploymentEnd-%d" $db.ID) "style" "primary")
-				)
-				"separator" true
-				"text" (printf "The deployment has enough confirmations and will proceed.\n\nThe host will provide the server name shortly.")
-			)
-		)
-	}}
-	{{editMessage 1532346772578373864 $db.DeployMsg $successContainer}}
-	{{$successContainer2 := componentBuilder
-		"reply" $db.DeployMsg
-		"container" (sdict
-			"components" (componentBuilder
-				"text" (joinStr ", " $strConfirmed)
-			)
-		)
-	}}
-	{{$db.Set "Status" 2}}
-	{{dbSet $db.ID "deploymentData" $db}}
-	{{$x := sendMessageNoEscapeRetID 1532346772578373864 $successContainer2}}
-	{{deleteMessage 1532346772578373864 $x (toInt (toDuration "5m").Seconds)}}
-	{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) (printf "ActiveCheck-%d" .Notice) (sdict "Notice" .Notice "ActiveCheck" true)}}
-	{{return}}
 {{end}}
 
 {{if reFind `^-(?:c|cancel)-?` .Cmd}}
@@ -159,7 +168,7 @@
 	{{end}}
 	{{$db = $db.Value}}
 	{{$reason := "(No reason provided)"}}
-	{{if gt (len .CmdArgs) 2}}
+	{{if gt (len .CmdArgs) 1}}
 		{{$reason = joinStr " " (slice .CmdArgs 1)}}
 	{{end}}
 	{{if eq $db.Status 3}}
@@ -192,9 +201,9 @@
 			)
 		}}
 		{{dbDel $db.ID "deploymentData"}}
-		{{cancelScheduledUniqueCC $db.CCID (printf "Start-%d" .Notice)}}
-		{{cancelScheduledUniqueCC $db.CCID (printf "ActiveCheck-%d" .Notice)}}
-		{{cancelScheduledUniqueCC $db.CCID (printf "MissingLog-%d" .Notice)}}
+		{{cancelScheduledUniqueCC $db.CCID (printf "Start-%d" $db.ID)}}
+		{{cancelScheduledUniqueCC $db.CCID (printf "ActiveCheck-%d" $db.ID)}}
+		{{cancelScheduledUniqueCC $db.CCID (printf "MissingLog-%d" $db.ID)}}
 		{{editMessage 1532346772578373864 $db.DeployMsg $cancelledContainer}}
 		{{sendMessage nil "You have successfully cancelled this deployment"}}
 	{{return}}
@@ -220,23 +229,26 @@
 		"ID" $ID
 		"CCID" .CCID
 		"Host" (sdict "Roblox" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick "") "ID" .User.ID)
-		"Time"  currentTime.Unix
+
+		"Emergency" true
+
+		"ScheduledStart" 0
+		"StartedAt" 0
+		"EndedAt" 0
+
+		"Status" 1
+		"Logged" false
+		"DeployMsg" 0
 
 		"Confirmed" cslice
+		"Shifts" dict
 
 		"Summary" ""
 		"Proof" ""
 		"Reason" $reason
-
-		"Logged" false
-		"Status" 1
-
-		"DeployMsg" 0
-
-		"MinConfirms" 0
 	}}
-	{{dbSetExpire $dbData.ID "deploymentData" $dbData (toInt (toDuration "14d").Seconds)}}
-	{{scheduleUniqueCC .CCID nil  (toDuration "10s").Seconds "TimeoutStartEmergency" (sdict "MID" $x  "Emergency" true)}}
+	{{dbSetExpire $dbData.ID "deploymentData" $dbData (toInt (toDuration "7d").Seconds)}}
+	{{scheduleUniqueCC .CCID nil  (toDuration "2m").Seconds (printf "TimeoutStartEmergency-%d" $dbData.ID) (sdict "MID" $x  "Emergency" true "Notice" $dbData.ID)}}
 	{{return}}
 {{end}}
 
@@ -271,19 +283,23 @@
 	"ID" $ID
 	"CCID" .CCID
 	"Host" (sdict "Roblox" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick "") "ID" .User.ID)
-	"Time"  (currentTime.Add (toDuration $duration)).Unix
 
-	"Confirmed" cslice
+	"Emergency" false
 
-	"Summary" ""
-	"Proof" ""
+	"ScheduledStart" (currentTime.Add (toDuration $duration)).Unix
+	"StartedAt" 0
+	"EndedAt" 0
 
-	"Logged" false
 	"Status" 1
-
+	"Logged" false
 	"DeployMsg" 0
 
 	"MinConfirms" $minimumConfirmations
+	"Confirmed" cslice
+	"Shifts" dict
+
+	"Summary" ""
+	"Proof" ""
 }}
 
 {{$notificationContainer := (componentBuilder
@@ -296,7 +312,7 @@
 		"components" (componentBuilder
 			"text" "# Deployment Scheduled"
 			"separator" true
-			"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You cannot log this deployment if you have not PASSED a training for your role**.\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before if there are sufficient confirmations." $dbData.ID $dbData.Host.Roblox $dbData.Host.ID $dbData.Time $dbData.MinConfirms)
+			"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You cannot log this deployment if you have not PASSED a training for your role**.\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before if there are sufficient confirmations." $dbData.ID $dbData.Host.Roblox $dbData.Host.ID $dbData.ScheduledStart $dbData.MinConfirms)
 			"buttons" (cslice
 				(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_deploymentJoin-%d" $dbData.ID) "style" "success")
 				(cbutton "label" "Confirmed: 0" "custom_id" "iota_deploymentConfirm" "style" "secondary" "disabled" true)
@@ -307,6 +323,6 @@
 
 {{$x := sendMessageRetID 1532346772578373864 $notificationContainer}}
 {{$dbData.Set "DeployMsg" $x}}
-{{sendMessage nil (printf "You've successfully started a deployment notice for <t:%d:f>. [View #%d here](https://discord.com/channels/1375370805575155782/1532346772578373864/%d)" $dbData.Time $ID $x)}}
+{{sendMessage nil (printf "You've successfully started a deployment notice for <t:%d:f>. [View #%d here](https://discord.com/channels/1375370805575155782/1532346772578373864/%d)" $dbData.ScheduledStart $ID $x)}}
 {{dbSetExpire $ID "deploymentData" $dbData (toInt (toDuration "14d").Seconds)}}
 {{scheduleUniqueCC .CCID nil (toDuration (sub (toDuration $duration) (toDuration "5m"))).Seconds (printf "Start-%d" $ID) (sdict "Notice" $ID)}}
