@@ -63,7 +63,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 		"ID" $logID
 		"Session" $db.ID
 		"MsgID" 0
-		"User" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Settings.NicknameRegex .Member.Nick ""))
+		"User" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick ""))
 		"Host" (sdict "ID" $db.Host.ID "RobloxName" $db.Host.Roblox)
 		"DeployedAs" $deployedAsRoleID
 		"Duties" .ModalValues.deploymentDutiesInput.value
