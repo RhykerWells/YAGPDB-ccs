@@ -46,10 +46,10 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 
 {{if reFind `SubmitLog` .StrippedID}}
 	{{$x := sendResponseRetID nil (componentBuilder "text" "Loading..." "ephemeral" true)}}
-	{{$logID := dbIncr 0 "NewDlog" 1 | toInt}}
+	{{$logID := dbIncr 0 "NewDLog" 1 | toInt}}
 	{{if $self}}
 		{{$db = (sdict
-			"Sessions" 0
+			"Session" 0
 			"User" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick ""))
 			"Host" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick ""))
 		)}}
@@ -63,6 +63,8 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 		"ID" $logID
 		"Session" $db.ID
 		"MsgID" 0
+		"ScheduledStart" $db.ScheduledStart
+		"EndedAt" $db.EndedAt
 		"User" (sdict "ID" .User.ID "RobloxName" (reReplace $factionData.Value.Settings.NicknameRegex .Member.Nick ""))
 		"Host" (sdict "ID" $db.Host.ID "RobloxName" $db.Host.Roblox)
 		"DeployedAs" $deployedAsRoleID
@@ -71,6 +73,11 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 		"Proof" $db.Proof
 		"Official" (not $self)
 	}}
+	{{if not $self}}
+		{{$deploymentLog.Set "ScheduledStart" $db.ScheduledStart}}
+		{{$deploymentLog.Set "EndedAt" $db.EndedAt}}
+	{{end}}
+	{{dbSetExpire $deploymentLog.ID "deploymentLogData" $deploymentLog (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
 	{{$threads := (dbGet 0 "deploymentLogThreads").Value}}
 	{{if not $threads}}
 		{{$threads = sdict}}

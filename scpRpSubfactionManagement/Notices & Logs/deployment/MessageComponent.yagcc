@@ -346,7 +346,7 @@
 				"components" (componentBuilder
 					"text" "# Deployment Scheduled"
 					"separator" true
-					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You cannot log this deployment if you have not PASSED a deployment for your role**.\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before if there are sufficient confirmations." $db.ID $db.Host.Roblox $db.Host.ID $db.Time $db.MinConfirms)
+					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Scheduled For**: <t:%d:f>\n\nPlease use the button below to confirm/unconfirm attendance **at least** 5 minutes before.\n**You cannot log this deployment if you have not PASSED a training for your role**.\n\nRequires: `%d`+ confirmations.\nYou will be pinged 5 minutes before if there are sufficient confirmations." $db.ID $db.Host.Roblox $db.Host.ID $db.ScheduledStart $db.MinConfirms)
 					"buttons" (cslice
 						(cbutton "label" "Toggle Confirmation" "custom_id" (printf "iota_deploymentJoin-%d" $db.ID) "style" "success")
 						(cbutton "label" (printf "Confirmed: %s" (humanizeThousands (len $db.Confirmed))) "custom_id" "iota_deploymentConfirm" "style" "secondary" "disabled" true)
@@ -381,6 +381,7 @@
 			)
 		)
 	}}
+	{{$db.Set "EndedAt" currentTime.Unix}}
 	{{editMessage 1532346772578373864 $db.DeployMsg $closedContainer}}
 	{{scheduleUniqueCC $db.CCID nil (toInt (toDuration "45m").Seconds) "MissingLog" (sdict "Notice" $db.ID "MissingLog" true)}}
 	{{dbSetExpire $db.ID "deploymentData" $db (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
@@ -466,7 +467,7 @@
 						"button" (cbutton "label" "Submit Deployment Log" "custom_id" (printf "iota_deploymentLogSubmit-%d" $db.ID) "style" "success")
 					)
 					"separator" true
-					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Time**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above." $db.ID $db.Host.Roblox $db.Host.ID $db.Time)
+					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Scheduled Start**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above until <t:%d:f>." $db.ID $db.Host.Roblox $db.Host.ID $db.ScheduledStart (currentTime.Add (toDuration "72h")).Unix)
 				)
 			)
 		}}
@@ -539,11 +540,16 @@
 			{{$memberDeployedAs = (index $memberRanks 0)}}
 		{{end}}
 
-		{{$trainingDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $memberDeployedAs.RoleID)}}
-		{{if and $memberDeployedAs.PromotionData (not $trainingDB)}}
-			{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot submit a log for this rank as you have not completed the required training" "ephemeral" true)}}
-			{{deleteInteractionResponse .Interaction.Token $x}}
-			{{return}}
+		{{$trainingBypassDB := (dbGet 0 "trainingBypass").Value}}
+		{{if and $memberDeployedAs.PromotionData}}
+			{{if ne ($trainingBypassDB.Get $targetMember.User.ID) $memberDeployedAs.RoleID}}
+				{{$trainingDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $memberDeployedAs.RoleID)}}
+				{{if not $trainingDB}}
+					{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot submit a log for this rank as you have not completed the required training" "ephemeral" true)}}
+					{{deleteInteractionResponse .Interaction.Token $x}}
+					{{return}}
+				{{end}}
+			{{end}}
 		{{end}}
 		{{$userData := or (dbGet $targetMember.User.ID "deploymentData").Value (sdict "Logs" cslice "LogsByRank" dict)}}
 		{{$alreadyLogged := false}}
