@@ -154,9 +154,9 @@
 	{{$rTagColour := $morphData.RTag.Colour}}
 
 	{{if $deployedAsTHH}}
-		{{$rTagText = printf "[Iota-4] | \"The Hidden Hand\" | %s" $actualTargetRank.Name}}
+		{{$rTagText = printf "[Iota-4] | \"The Hidden Hand\" | %s <br/><font face=\"Merriweather\" color=\"#FF0000\">[Heavy Weapons Specialist]</font>" $actualTargetRank.Name}}
 	{{else if $deployedAsVW}}
-		{{$rTagText = printf "[Iota-4] | \"The Veilwatch\" | %s" $actualTargetRank.Name}}
+		{{$rTagText = printf "[Iota-4] | \"The Veilwatch\" | %s <br/><font face=\"Garamond\" color=\"#FF0000\">[Designated Marksman Unit]</font>" $actualTargetRank.Name}}
 	{{end}}
 
 	{{$morphParts := cslice}}
