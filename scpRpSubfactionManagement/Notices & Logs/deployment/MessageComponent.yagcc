@@ -42,7 +42,7 @@
 			)
 		)
 	}}
-	{{editMessage 1532346844712272003 $db.DeployMsg $closedContainer}}
+	{{editMessage 1532346772578373864 $db.DeployMsg $closedContainer}}
 	{{return}}
 {{end}}
 
@@ -467,7 +467,12 @@
 						"button" (cbutton "label" "Submit Deployment Log" "custom_id" (printf "iota_deploymentLogSubmit-%d" $db.ID) "style" "success")
 					)
 					"separator" true
-					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Scheduled Start**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above until <t:%d:f>." $db.ID $db.Host.Roblox $db.Host.ID $db.ScheduledStart (currentTime.Add (toDuration "72h")).Unix)
+					"text" (printf "> **ID**: #%d\n> **Host**: @%s (<@%d>)\n> **Scheduled Start**: <t:%d:f>\n> **Ended At**: <t:%d:f>\n\nAttendees may now submit their deployment logs using the button above until <t:%d:f>." $db.ID $db.Host.Roblox $db.Host.ID $db.ScheduledStart $db.EndedAt (currentTime.Add (toDuration "72h")).Unix)
+					"gallery" (cslice
+						(sdict
+							"media" (or $db.Proof "https://iota-4.org/missingProof.png")
+						)
+					)
 				)
 			)
 		}}
