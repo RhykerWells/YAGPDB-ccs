@@ -271,6 +271,9 @@
 			{{$confirmedUsersSlice := cslice}}
 			{{range $db.Confirmed}}
 				{{$member := getMember .}}
+				{{if not $member}}
+					{{continue}}
+				{{end}}
 				{{$rblxName := reReplace $factionData.Value.Settings.NicknameRegex $member.Nick ""}}
 				{{$selected := false}}{{if in $db.Attended $member.User.ID}}{{$selected = true}}{{end}}
 				{{$confirmedUsersSlice = $confirmedUsersSlice.Append (sdict "value" (str $member.User.ID) "label" $rblxName "default" $selected)}}
@@ -307,7 +310,7 @@
 			{{$modal := modalBuilder (printf "iota_trainingOutcomePassed-%d" $db.ID) "Iota-4 | Training Outcome Form" $attendingLabel}}
 			{{sendModal $modal}}
 		{{else if (reFind `Proof` .StrippedID)}}
-			{{if reFind `ProofEdit` .StrippedID}}
+			{{if in .StrippedID `ProofEdit`}}
 				{{$proofLabel := clabel "label" "Proof" "description" "Screenshot of training" "component" (cfileUpload "custom_id" "uploadForm" "required" true)}}
 				{{$modal := modalBuilder (printf "iota_trainingOutcomeProof-%d" $db.ID) "Iota-4 | Training Outcome Form" $proofLabel}}
 				{{sendModal $modal}}
