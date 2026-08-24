@@ -546,8 +546,9 @@
 		{{end}}
 
 		{{$trainingBypassDB := (dbGet 0 "trainingBypass").Value}}
-		{{if and $memberDeployedAs.PromotionData}}
-			{{if ne ($trainingBypassDB.Get $targetMember.User.ID) $memberDeployedAs.RoleID}}
+		{{if $memberDeployedAs.PromotionData}}
+			{{$bypassRole := $trainingBypassDB.Get $targetMember.User.ID}}
+			{{if and $bypassRole (ne $bypassRole $memberDeployedAs.RoleID)}}
 				{{$trainingDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $memberDeployedAs.RoleID)}}
 				{{if not $trainingDB}}
 					{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot submit a log for this rank as you have not completed the required training" "ephemeral" true)}}
