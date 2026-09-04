@@ -78,7 +78,7 @@
 			{{openThread (toInt $logChannel)}}
 		{{else}}
 			{{try}}
-				{{$logChannel = (createForumPost 1534322694302990406 $db.User.RobloxName (printf "%s's training log" .User.Mention)).ID}}
+				{{$logChannel = (createForumPost 1534322694302990406 $db.User.RobloxName (printf "<@%d>'s training log" $db.User.ID)).ID}}
 			{{catch}}
 				{{editResponse .InteractionToken $x (componentBuilder "text" "Was not able to create a forum post channel for the training log. Your log has not been saved: %s" .Error)}}
 				{{deleteInteractionResponse .Interaction.Token $x}}
