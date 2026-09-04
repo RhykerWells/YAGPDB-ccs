@@ -73,7 +73,7 @@ Repository: https://github.com/RhykerWells/YAGPDB-ccs/
 		"Type" $db.Rank.RoleID
 		"Approval" ""
 		"Confidence" $confidence
-		"Feedback" (or "None" .ModalValues.trainingFeedbackInput.value)
+		"Feedback" (or .ModalValues.trainingFeedbackInput.value "None")
 		"Proof" $db.Proof
 	}}
 	{{if and (in $db.Attended .User.ID) (not (in $db.Passed .User.ID))}}
