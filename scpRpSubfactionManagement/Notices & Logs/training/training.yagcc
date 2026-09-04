@@ -43,8 +43,8 @@
 			)}}
 			{{sendMessageNoEscape 1532358370433171628 $notificationContainer}}
 			{{scheduleUniqueCC $.CCID nil (toInt (toDuration "45m").Seconds) (printf "ActiveCheck-%d" .Notice) (sdict "Notice" .Notice "ActiveCheck" true)}}
-			{{return}}
 		{{end}}
+		{{return}}
 	{{end}}
 	{{if .MissingLog}}
 		{{if not $db.Logged}}
@@ -178,9 +178,9 @@
 			)
 		}}
 		{{dbDel $db.ID "trainingData"}}
-		{{cancelScheduledUniqueCC $db.CCID "start"}}
-		{{cancelScheduledUniqueCC $db.CCID "ActiveCheck"}}
-		{{cancelScheduledUniqueCC $db.CCID "MissingLog"}}
+		{{cancelScheduledUniqueCC $db.CCID (printf "Start-%d" $db.ID)}}
+		{{cancelScheduledUniqueCC $db.CCID (printf "ActiveCheck-%d" $db.ID)}}
+		{{cancelScheduledUniqueCC $db.CCID (printf "MissingLog-%d" $db.ID)}}
 		{{editMessage 1532346844712272003 $db.TrainingMsg $cancelledContainer}}
 		{{sendMessage nil "You have successfully cancelled this training"}}
 	{{return}}
