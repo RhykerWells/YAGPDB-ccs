@@ -289,9 +289,12 @@
 	}}
 	{{$x := sendMessageRetID 1532346772578373864 $notificationContainer}}
 	{{$db.Set "DeployMsg" $x}}
+	{{$db.Set "ScheduledStart" currentTime.Unix}}
+	{{$db.Set "StartedAt" currentTime.Unix}}
+	{{$db.Set "Status" 2}}
 	{{dbSetExpire $db.ID "deploymentData" $db (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
 	{{sendResponse nil (printf "You've successfully started an emergency deployment. [View #%d here](https://discord.com/channels/1375370805575155782/1532346772578373864/%d)" $db.ID $x)}}
-	{{scheduleUniqueCC .CCID nil (toInt (toDuration "5m").Seconds) (printf "Start-%d" $db.ID) (sdict "Notice" $db.ID "Emergency" true)}}
+	{{scheduleUniqueCC .CCID nil (toInt (toDuration "45m").Seconds) (printf "ActiveCheck-%d" $db.ID) (sdict "Notice" $db.ID "ActiveCheck" true)}}
 	{{return}}
 {{end}}
 
@@ -314,7 +317,7 @@
 		{{deleteInteractionResponse .Interaction.Token $x}}
 	{{end}}
 	{{$notificationContainer := 0}}
-	{{if eq $db.MinConfirms 0}}
+	{{if $db.Emergency}}
 		{{$notificationContainer = (componentBuilder
 			"allowed_mentions" (sdict
 				"roles" (cslice 1375381774204665917)
@@ -383,7 +386,7 @@
 	}}
 	{{$db.Set "EndedAt" currentTime.Unix}}
 	{{editMessage 1532346772578373864 $db.DeployMsg $closedContainer}}
-	{{scheduleUniqueCC $db.CCID nil (toInt (toDuration "45m").Seconds) "MissingLog" (sdict "Notice" $db.ID "MissingLog" true)}}
+	{{scheduleUniqueCC $db.CCID nil (toInt (toDuration "45m").Seconds) (printf "MissingLog-%d" $db.ID) (sdict "Notice" $db.ID "MissingLog" true)}}
 	{{dbSetExpire $db.ID "deploymentData" $db (toInt (($entry.ExpiresAt.Sub currentTime).Seconds))}}
 	{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
 	{{deleteInteractionResponse .Interaction.Token $x}}
@@ -477,7 +480,6 @@
 			)
 		}}
 		{{editMessage 1532346772578373864 $db.DeployMsg $logContainer}}
-		{{scheduleUniqueCC $db.CCID nil (toInt (toDuration "45m").Seconds) (printf "MissingLog-%d" $db.ID) (sdict "Notice" .Notice "MissingLog" true)}}
 		{{dbSetExpire $db.ID "deploymentData" $db (toInt ($entry.ExpiresAt.Sub currentTime).Seconds)}}
 		{{editResponse .Interaction.Token $x (componentBuilder "text" "Done!" "ephemeral" true)}}
 		{{deleteInteractionResponse .Interaction.Token $x}}
@@ -496,6 +498,8 @@
 		{{end}}
 
 		{{if eq (len $memberRanks) 1}}
+			{{$memberDeployedAs = (index $memberRanks 0)}}
+		{{else if gt (len $memberRanks) 1}}
 			{{if reFind `SelectRank` .StrippedID}}
 				{{$v := .Values}}
 				{{range $memberRanks}}
@@ -547,8 +551,8 @@
 
 		{{$trainingBypassDB := (dbGet 0 "trainingBypass").Value}}
 		{{if $memberDeployedAs.PromotionData}}
-			{{$bypassRole := $trainingBypassDB.Get $targetMember.User.ID}}
-			{{if and $bypassRole (ne $bypassRole $memberDeployedAs.RoleID)}}
+			{{$bypassRole := toInt ($trainingBypassDB.Get $targetMember.User.ID)}}
+			{{if and (gt $bypassRole 0) (ne $bypassRole $memberDeployedAs.RoleID)}}
 				{{$trainingDB := dbGet $targetMember.User.ID (printf "trainingLog:%d" $memberDeployedAs.RoleID)}}
 				{{if not $trainingDB}}
 					{{$x := sendResponseRetID nil (componentBuilder "text" "You cannot submit a log for this rank as you have not completed the required training" "ephemeral" true)}}
