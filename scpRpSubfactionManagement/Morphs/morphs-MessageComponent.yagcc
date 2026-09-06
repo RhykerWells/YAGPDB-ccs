@@ -128,6 +128,7 @@
 		"permcrtag" "RTag"
 		"startergear" "StarterGear"
 		"permmaxhealth" "Health"
+		"permdamagemultiplier" "DamageMult"
 	}}
 	{{$orderedKeys := cslice
 		"permmorph"
@@ -138,6 +139,7 @@
 		"permcrtag"
 		"startergear"
 		"permmaxhealth"
+		"permdamagemultiplier"
 	}}
 	{{$deployedAsTHH := in (cslice 1536242563751616542 1536113330379427871 ) $.TargetRank.RoleID}}
 	{{$deployedAsVW := in (cslice 1536246816864206878 1536113429004292108 ) $.TargetRank.RoleID}}
@@ -154,9 +156,9 @@
 	{{$rTagColour := $morphData.RTag.Colour}}
 
 	{{if $deployedAsTHH}}
-		{{$rTagText = printf "[Iota-4] | \"The Hidden Hand\" | %s <br/><font face=\"Merriweather\" color=\"#FF0000\">[Heavy Weapons Specialist]</font>" $actualTargetRank.Name}}
+		{{$rTagText = printf "[Iota-4] | \"The Hidden Hand\" | %s <br/><font color=\"#FF0000\">[Heavy Weapons Specialist]</font>" $actualTargetRank.Name}}
 	{{else if $deployedAsVW}}
-		{{$rTagText = printf "[Iota-4] | \"The Veilwatch\" | %s <br/><font face=\"Garamond\" color=\"#FF0000\">[Designated Marksman Unit]</font>" $actualTargetRank.Name}}
+		{{$rTagText = printf "[Iota-4] | \"The Veilwatch\" | %s <br/><font color=\"#FF0000\">[Designated Marksman Unit]</font>" $actualTargetRank.Name}}
 	{{end}}
 
 	{{$morphParts := cslice}}
