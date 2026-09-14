@@ -39,7 +39,7 @@ Changes here will not take affect until the command is re-run.
 		"Text" ""
 		"Font" ""
 	)
-	"StarterGear"  "l3,bp-77,pistol"
+	"StarterGear"  "bp-77,pistol"
 }}
 
 {{/*
@@ -219,9 +219,14 @@ This ordering is used when generating database data.
 					"RoleID" 1375377194330755113
 				)
 				(sdict
+					"Name" "Commander Of The Veil"
+					"ShortName" "Commander"
+					"RoleID" 1375377873241772095
+				)
+				(sdict
 					"Name" "Echo Marshal"
 					"ShortName" "Marshal"
-					"RoleID" 1375377873241772095
+					"RoleID" 1541561684814991450
 				)
 			)
 		)
